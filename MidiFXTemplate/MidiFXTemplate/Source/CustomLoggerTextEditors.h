@@ -3,6 +3,10 @@
 //
 #pragma once
 
+#include <iostream>
+#include <string>
+
+
 #include "PluginProcessor.h"
 
 /*
@@ -256,11 +260,22 @@ public:
             juce::MessageManagerLock mmlock;
 
             if(midiMsgPlayHead.MidiMessage.isNoteOn()){
+                std::string note = to_string(midiMsgPlayHead.MidiMessage.getNoteNumber());
+                note.resize (5, ' ');
+                insertTextAtCaret("Note: " + note + " | ");
 
-                insertTextAtCaret("Note: " + juce::String(midiMsgPlayHead.MidiMessage.getNoteNumber()) + " & ");
-                insertTextAtCaret("Note TimeStamp: " + juce::String(midiMsgPlayHead.MidiMessage.getTimeStamp(), 5) + " & ");
-                insertTextAtCaret("Frame_bpm: " + juce::String(midiMsgPlayHead.playheadInfo.bpm,4) + " & ");
-                insertTextAtCaret("Frame_start_ppqPosition: " + juce::String(midiMsgPlayHead.playheadInfo.ppqPosition, 4) + " & ");
+                std::string Onset_samples = to_string(midiMsgPlayHead.MidiMessage.getTimeStamp());
+                Onset_samples.resize (5, ' ');
+                if (Onset_samples=="0.0  "){Onset_samples="  0  ";}
+                insertTextAtCaret("Onset_samples: " + Onset_samples + " | ");
+
+                std::string qpm = to_string(midiMsgPlayHead.playheadInfo.bpm);
+                qpm.resize (5, ' ');
+                insertTextAtCaret("Frame_qpm: " + qpm + " | ");
+
+                std::string ppqPosition = to_string(midiMsgPlayHead.playheadInfo.ppqPosition);
+                ppqPosition.resize (5, ' ');
+                insertTextAtCaret("Frame_ppq: " + ppqPosition);
                 insertTextAtCaret(juce::newLine);
 
             }
