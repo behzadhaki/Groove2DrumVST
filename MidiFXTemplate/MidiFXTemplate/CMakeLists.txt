@@ -6,7 +6,7 @@ juce_add_plugin("${BaseTargetName}"
         # VERSION ...                               # Set this if the plugin version is different to the project version
         # ICON_BIG ...                              # ICON_* arguments specify a path to an image file to use as an icon for the Standalone
         # ICON_SMALL ...
-        COMPANY_NAME "MyCompany"
+        COMPANY_NAME "BEHZADHAKI"
         IS_SYNTH TRUE
         NEEDS_MIDI_INPUT TRUE
         NEEDS_MIDI_OUTPUT TRUE
@@ -16,7 +16,7 @@ juce_add_plugin("${BaseTargetName}"
         PLUGIN_MANUFACTURER_CODE Juce
         PLUGIN_CODE MFxt
         FORMATS AU VST3 Standalone
-        PRODUCT_NAME "MidiFXTemplate")
+        PRODUCT_NAME "MidiLoggerVST")
 
 target_sources(${BaseTargetName} PRIVATE
         Source/PluginProcessor.cpp
