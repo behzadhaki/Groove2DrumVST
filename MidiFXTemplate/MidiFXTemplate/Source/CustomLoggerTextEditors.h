@@ -6,8 +6,8 @@
 #include <iostream>
 #include <string>
 
-
 #include "PluginProcessor.h"
+
 
 /*
   *
@@ -286,5 +286,89 @@ public:
 private:
     spsc_queue<MidiMsgPlayHead, settings::midi_queue_size>* midiMsgPlayhead_queP;
 
+};
+
+/*
+     * A dedicated TextEditor which displays playhead info from a queue
+     * To use in PluginEditor:
+     *     1.   Instantiate in the private section of the editor class in PluginEditor.h
+     *
+     *          private:
+     *               MidiNoteValueLoggerTextEditor MidiNoteValueLoggerTextEditor;
+     *
+     *     2.   Add the following lines to the constructor of the editor in PluginEditor.cpp
+     *
+     *          addAndMakeVisible (MidiNoteValueLoggerTextEditor);
+     *          MidiNoteValueLoggerTextEditor.start_Thread(queue_pointer);
+     *              NOTE:   queue_pointer comes from the processor.
+     *                      eg. &MidiFXProcessorPointer.midi_message_que
+     *
+*/
+class TorchTensorTextEditor: public LoggerTextEditorTemplate
+{
+public:
+    TorchTensorTextEditor(): LoggerTextEditorTemplate()
+    {
+        TextEditorLabel.setText ("Torch Tensor", juce::dontSendNotification);
+        TextEditorLabel.attachToComponent (this, juce::Justification::top);
+        TextEditorLabel.setColour (juce::Label::textColourId, juce::Colours::red);
+        TextEditorLabel.setJustificationType (juce::Justification::top);
+        addAndMakeVisible (TextEditorLabel);
+    }
+
+    void start_Thread(spsc_queue<torch::Tensor, settings::torch_tensor_queue_size>* torch_tensor_quePointer)
+    {
+        torch_tensor_queP = torch_tensor_quePointer;
+
+        torch_tensor_queP ->push(torch::rand({2, 3})); // TODO added for testing --> to be removed
+
+        this->startThread();
+    }
+
+    void QueueDataProcessor() override
+    {
+        while (torch_tensor_queP->read_available() > 0){
+            torch::Tensor tensor_read;
+            torch_tensor_queP->pop(tensor_read);
+
+            std::ostringstream stream;
+            stream << tensor_read;
+
+            juce::MessageManagerLock mmlock;
+            juce::TextEditor::insertTextAtCaret((juce::String(stream.str())));
+            juce::TextEditor::insertTextAtCaret(juce::NewLine());
+        }
+        /*while (midiMsgPlayhead_queP->read_available() > 0)
+        {
+            MidiMsgPlayHead midiMsgPlayHead;
+            midiMsgPlayhead_queP->pop(midiMsgPlayHead); // here cnt result is 3
+            juce::MessageManagerLock mmlock;
+
+            if(midiMsgPlayHead.MidiMessage.isNoteOn()){
+                std::string note = to_string(midiMsgPlayHead.MidiMessage.getNoteNumber());
+                note.resize (5, ' ');
+                insertTextAtCaret("Note: " + note + " | ");
+
+                std::string Onset_samples = to_string(midiMsgPlayHead.MidiMessage.getTimeStamp());
+                Onset_samples.resize (5, ' ');
+                if (Onset_samples=="0.0  "){Onset_samples="  0  ";}
+                insertTextAtCaret("Onset_samples: " + Onset_samples + " | ");
+
+                std::string qpm = to_string(midiMsgPlayHead.playheadInfo.bpm);
+                qpm.resize (5, ' ');
+                insertTextAtCaret("Frame_qpm: " + qpm + " | ");
+
+                std::string ppqPosition = to_string(midiMsgPlayHead.playheadInfo.ppqPosition);
+                ppqPosition.resize (5, ' ');
+                insertTextAtCaret("Frame_ppq: " + ppqPosition);
+                insertTextAtCaret(juce::newLine);
+
+            }
+
+        }*/
+    }
+
+private:
+    spsc_queue<torch::Tensor, settings::torch_tensor_queue_size>* torch_tensor_queP;
 };
 

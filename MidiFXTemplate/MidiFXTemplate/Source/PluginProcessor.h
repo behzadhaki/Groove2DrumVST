@@ -5,6 +5,7 @@
 #include "settings.h"
 #include "Representations.h"
 #include "queue62.hpp"
+#include <torch/torch.h>
 
 using namespace std;
 
@@ -26,6 +27,7 @@ public:
     spsc_queue<juce::AudioPlayHead::CurrentPositionInfo, settings::playhead_queue_size> playhead_que;
     spsc_queue<Note, settings::note_queue_size> note_que;
     spsc_queue<MidiMsgPlayHead, settings::midi_queue_size> midiMsgPlayhead_que;
+    spsc_queue<torch::Tensor, settings::torch_tensor_queue_size> torchTensor_que;
 
 private:
 

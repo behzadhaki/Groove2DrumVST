@@ -4,6 +4,8 @@
 #include "CustomLoggerTextEditors.h"
 #include "queue62.hpp"
 
+#include <torch/torch.h>
+
 using namespace std;
 
 class MidiFXProcessorEditor : public juce::AudioProcessorEditor
@@ -18,6 +20,7 @@ private:
     PlayheadLoggerTextEditor PlayheadLoggerTextEditor;
     NoteStructLoggerTextEditor NoteStructLoggerTextEditor;
     MidiMsgPlayHeadStructLoggerTextEditor MidiMsgPlayHeadStructLoggerTextEditor;
+    TorchTensorTextEditor TorchTensorTextEditor;
 
     juce::Label SampleRateLabel;
 };

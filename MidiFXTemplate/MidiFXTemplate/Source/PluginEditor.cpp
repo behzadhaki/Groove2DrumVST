@@ -36,8 +36,14 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     MidiMsgPlayHeadStructLoggerTextEditor.setBounds (100, 180, 500, 100);
     MidiMsgPlayHeadStructLoggerTextEditor.start_Thread(&MidiFXProcessorPointer.midiMsgPlayhead_que);
 
+    // Create TextEditor for displaying torch_tensors midiMsgPlayhead Struct
+    addAndMakeVisible (TorchTensorTextEditor);
+    TorchTensorTextEditor.setMultiLine (true);
+    TorchTensorTextEditor.setBounds (100, 320, 500, 100);
+    TorchTensorTextEditor.start_Thread(&MidiFXProcessorPointer.torchTensor_que);
+
     // Set window size
-    setSize (620, 300);
+    setSize (620, 500);
 }
 
 void MidiFXProcessorEditor::paint(juce::Graphics& g)

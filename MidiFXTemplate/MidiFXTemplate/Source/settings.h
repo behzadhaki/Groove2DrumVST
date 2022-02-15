@@ -12,6 +12,7 @@ namespace settings
     constexpr int midi_queue_size { 512 };
     constexpr int playhead_queue_size { 512 };
     constexpr int note_queue_size { 512 };
+    constexpr int torch_tensor_queue_size {16};
 
     // sample rate
     constexpr int sample_rate { 44100 };

@@ -1,9 +1,11 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-#include <torch/torch.h>
+#include "ProcessorMethods.h"
+
 #include "settings.h"
 #include "Representations.h"
-#include "ProcessorMethods.h"
+
+#include <torch/torch.h>
 
 MidiFXProcessor::MidiFXProcessor(){}
 
@@ -26,6 +28,10 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& /*buffer*/,
 
         // Add midi message and playhead to midiMsgPlayhead_que
         place_midiMessagePlayhead_in_queue(midiMessages, playhead, &midiMsgPlayhead_que);
+
+        // Add a random torch tensor to queue
+        // torchTensor_que.push(torch::rand({2, 3}));
+
     }
 
     midiMessages.swapWith(tempBuffer);
