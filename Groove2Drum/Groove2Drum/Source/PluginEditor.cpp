@@ -2,6 +2,11 @@
 #include "PluginEditor.h"
 #include "settings.h"
 
+
+#include <torch/script.h> // One-stop header.
+
+#include <iostream>
+
 MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPointer)
     : AudioProcessorEditor(&MidiFXProcessorPointer)
 {
@@ -44,6 +49,17 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
 
     // Set window size
     setSize (620, 500);
+
+    torch::jit::script::Module model;
+    model = torch::jit::load("/Users/behzadhaki/Documents/School Work (Stored on Catalina and Mega Only)/Groove2DrumVST/Groove2Drum/Groove2Drum/TorchScriptModels/misunderstood_bush_246-epoch_26_tst.pt");
+    std::vector<torch::jit::IValue> inputs;
+    inputs.push_back(torch::rand({32, 27}));
+    auto res = model.forward(inputs).toTuple();    // WE NEED
+    std::cout << res <<endl;
+
+    // MidiFXProcessorPointer.torchTensor_que.push(res);
+    // model = torch::jit::load("/Users/behzadhaki/Library/Application Support/JetBrains/PyCharm2020.2/scratches/scriptmodule.pt");
+
 }
 
 void MidiFXProcessorEditor::paint(juce::Graphics& g)

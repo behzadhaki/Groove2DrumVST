@@ -7,13 +7,20 @@ The only difference with the template above is that cmakelists and the xx_compon
 
 # Installation
 1. Install libtorch (or if you have torch skip) - https://pytorch.org/cppdocs/installing.html
-2. run and get/copy path ({$TORCH_PATH} - must be absolute path!)
 	
-	python -c 'import torch;print(torch.utils.cmake_prefix_path)'
 	
-3. run cmake with {$TORCH_PATH} (in clion can be added in cmake settings)
+	1. go to https://pytorch.org/get-started/locally/ and get the C++ LibTorch Source
+		In my case:	https://download.pytorch.org/libtorch/cpu/libtorch-macos-1.10.2.zip
+	3. unzip the file 
+	4. format the  $TORCH_PATH path as follows:
+		/Users/behzadhaki/Downloads/libtorch/share/cmake
+		This is your {$TORCH_PATH}
+	
+2. run cmake with {$TORCH_PATH} (in clion can be added in cmake settings)
 
+    
 	cmake -DCMAKE_PREFIX_PATH={$TORCH_PATH}
+	example
 
 
 # JUCE CMake Repo Prototype
