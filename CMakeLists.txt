@@ -43,7 +43,7 @@ add_subdirectory(Modules)
 
 if (${BUILD_JUCE_PROTOTYPE_EXAMPLES})
     #adding project folders:
-    add_subdirectory(MidiFXTemplate)
+    add_subdirectory(Groove2Drum)
 endif()
 
 option(BUILD_UNIT_TESTS "Build JUCE prototype examples" ON)
