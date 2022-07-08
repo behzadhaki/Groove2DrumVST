@@ -50,19 +50,25 @@ void place_note_in_queue(
                 // read from midi_message_que
                 frameStartPpq = position.ppqPosition;
                 qpm = position.bpm;
+
+                for (auto m: midiMessages)
+                {
+                    auto message = m.getMessage();
+                    if (message.isNoteOn())
+                    {
+                        Note note(message.getNoteNumber(),
+                                  message.getFloatVelocity(),
+                                  frameStartPpq,
+                                  message.getTimeStamp(),
+                                  qpm);
+                        note_que->push(note);
+                    }
+                }
             }
         }
     }
 
-    for (auto m: midiMessages)
-    {
-        auto message = m.getMessage();
-        if (message.isNoteOn())
-        {
-            Note note(message.getNoteNumber(), frameStartPpq, message.getTimeStamp(), qpm);
-            note_que->push(note);
-        }
-    }
+
 }
 
 
