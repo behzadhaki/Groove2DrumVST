@@ -30,7 +30,7 @@ struct onset_time{
     }
 
     // used usually for finding absolute timing of messages received in processor MIDIBuffer
-    static double calculate_absolute_ppq(double frameStartPpq, double audioSamplePos, double qpm)
+    double calculate_absolute_ppq(double frameStartPpq, double audioSamplePos, double qpm)
     {
         auto tmp_ppq = frameStartPpq + audioSamplePos * qpm / (60 * settings::sample_rate);
         return tmp_ppq;
@@ -50,13 +50,14 @@ struct onset_time{
 // utilities for quick conversions for buffer to processsor OR processor to buffer  cases
 struct Note{
     int note;
+    float velocity;
     onset_time time;
     // default constructor for empty instantiation
     Note(){}
 
     // constructor for placing notes received in the processor from the MIDIBuffer
-    Note(int note_number, double frameStartPpq, double audioSamplePos, double qpm):
-        note(note_number), time(frameStartPpq, audioSamplePos, qpm){
+    Note(int note_number, float velocity_Value, double frameStartPpq, double audioSamplePos, double qpm):
+        note(note_number), velocity(velocity_Value), time(frameStartPpq, audioSamplePos, qpm){
     }
 };
 
