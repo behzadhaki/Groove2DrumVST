@@ -187,7 +187,7 @@ class NoteStructLoggerTextEditor: public LoggerTextEditorTemplate
 public:
     NoteStructLoggerTextEditor(): LoggerTextEditorTemplate()
     {
-        TextEditorLabel.setText ("Note &  ppq", juce::dontSendNotification);
+        TextEditorLabel.setText ("Midi#/Vel/Actual Onset ppq", juce::dontSendNotification);
         TextEditorLabel.attachToComponent (this, juce::Justification::top);
         TextEditorLabel.setColour (juce::Label::textColourId, juce::Colours::white);
         TextEditorLabel.setJustificationType (juce::Justification::top);
@@ -207,7 +207,10 @@ public:
             Note note;
             note_queP->pop(note); // here cnt result is 3
             juce::MessageManagerLock mmlock;
-            insertTextAtCaret(juce::String(note.note)+"\t "+juce::String(note.time.ppq, 5));
+            insertTextAtCaret(
+                juce::String(note.note)+"\t "+
+                juce::String(note.velocity)+"\t "+
+                juce::String(note.time.ppq, 5));
             insertTextAtCaret(juce::newLine);
 
         }

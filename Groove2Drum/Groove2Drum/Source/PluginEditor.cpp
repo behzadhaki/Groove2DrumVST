@@ -15,7 +15,7 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     SampleRateLabel.setText("MAKE SURE SAMPLE RATE IS "+juce::String(settings::sample_rate), juce::dontSendNotification);
     SampleRateLabel.setBounds (0, 0, 300, 30);
 
-    // Create Message Box for Displaying Midi Notes, then start thread for reading
+    /*// Create Message Box for Displaying Midi Notes, then start thread for reading
     // from midi_message_que queue and displaying in message box
     addAndMakeVisible (MidiNoteValueLoggerTextEditor);
     MidiNoteValueLoggerTextEditor.setBounds (100, 40, 100, 100);
@@ -25,13 +25,13 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     addAndMakeVisible (PlayheadLoggerTextEditor);
     PlayheadLoggerTextEditor.setMultiLine (true);
     PlayheadLoggerTextEditor.setBounds (300, 40, 100, 100);
-    PlayheadLoggerTextEditor.start_Thread(&MidiFXProcessorPointer.playhead_que);
+    PlayheadLoggerTextEditor.start_Thread(&MidiFXProcessorPointer.playhead_que);*/
 
 
     // Create TextEditor for Note Struct
     addAndMakeVisible (NoteStructLoggerTextEditor);
     NoteStructLoggerTextEditor.setMultiLine (true);
-    NoteStructLoggerTextEditor.setBounds (500, 40, 100, 100);
+    NoteStructLoggerTextEditor.setBounds (100, 40, 500, 100);
     NoteStructLoggerTextEditor.start_Thread(&MidiFXProcessorPointer.note_que);
 
 
