@@ -320,7 +320,7 @@ public:
     {
         torch_tensor_queP = torch_tensor_quePointer;
 
-        torch_tensor_queP ->push(torch::rand({2, 3})); // TODO added for testing --> to be removed
+        //torch_tensor_queP ->push(torch::rand({2, 3})); // TODO added for testing --> to be removed
 
         this->startThread();
     }

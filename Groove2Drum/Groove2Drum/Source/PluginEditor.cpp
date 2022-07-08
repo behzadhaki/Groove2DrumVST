@@ -42,6 +42,8 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     MidiMsgPlayHeadStructLoggerTextEditor.start_Thread(&MidiFXProcessorPointer.midiMsgPlayhead_que);
 
     // Create TextEditor for displaying torch_tensors midiMsgPlayhead Struct
+
+
     addAndMakeVisible (TorchTensorTextEditor);
     TorchTensorTextEditor.setMultiLine (true);
     TorchTensorTextEditor.setBounds (100, 320, 500, 100);
@@ -53,7 +55,7 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     torch::jit::script::Module model;
     model = torch::jit::load("/Users/behzadhaki/Documents/School Work (Stored on Catalina and Mega Only)/Groove2DrumVST/Groove2Drum/Groove2Drum/TorchScriptModels/misunderstood_bush_246-epoch_26_tst.pt");
     std::vector<torch::jit::IValue> inputs;
-    inputs.push_back(torch::rand({32, 27}));
+    inputs.emplace_back(torch::rand({32, 27})); // todo A wrapper needs to be implemented so as to predict h, v, o and stack them on top into a single hvo tensor within the wrappers internal forward
     auto res = model.forward(inputs).toTuple();    // WE NEED
     std::cout << res <<endl;
 
