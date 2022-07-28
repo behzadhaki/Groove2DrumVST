@@ -22,6 +22,7 @@
 
 #define __CHECK_POWER_OF_2(x) ((x) > 0 && ((x) & ((x) - 1)) == 0)
 
+
 namespace { // not for user
 template <typename T, unsigned int capacity>
 class __spsc_queue;

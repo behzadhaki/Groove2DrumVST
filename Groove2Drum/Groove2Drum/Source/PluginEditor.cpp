@@ -53,13 +53,21 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     setSize (620, 500);
 
     torch::jit::script::Module model;
-    model = torch::jit::load("/Users/behzadhaki/Documents/School Work (Stored on Catalina and Mega Only)/Groove2DrumVST/Groove2Drum/Groove2Drum/TorchScriptModels/misunderstood_bush_246-epoch_26_tst.pt");
+    model = torch::jit::load("/Users/behzadhaki/Github/Groove2DrumVST/Groove2Drum/Groove2Drum/TorchScriptModels/misunderstood_bush_246-epoch_26_tst.pt");
     std::vector<torch::jit::IValue> inputs;
     inputs.emplace_back(torch::rand({32, 27})); // todo A wrapper needs to be implemented so as to predict h, v, o and stack them on top into a single hvo tensor within the wrappers internal forward
-    auto res = model.forward(inputs).toTuple();    // WE NEED
-    std::cout << res <<endl;
+    auto outputs = model.forward(inputs);
+    auto logits_v_o_tuples = outputs.toTuple();    // WE NEED
+    auto hits = logits_v_o_tuples->elements()[0].toTensor();
+    auto velocities = logits_v_o_tuples->elements()[1].toTensor();
+    auto offset = logits_v_o_tuples->elements()[2].toTensor();
 
-    // MidiFXProcessorPointer.torchTensor_que.push(res);
+    // std::cout << res <<endl;
+
+    MidiFXProcessorPointer.torchTensor_que.push(hits);
+    MidiFXProcessorPointer.torchTensor_que.push(velocities);
+    MidiFXProcessorPointer.torchTensor_que.push(offset);
+
     // model = torch::jit::load("/Users/behzadhaki/Library/Application Support/JetBrains/PyCharm2020.2/scratches/scriptmodule.pt");
 
 }
