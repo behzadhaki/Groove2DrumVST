@@ -1,9 +1,11 @@
 //
 // Created by Behzad Haki on 2022-02-11.
 //
+#pragma once
 
-#ifndef CONSTANTS_SETTINGS_H
-#define CONSTANTS_SETTINGS_H
+#include <torch/script.h> // One-stop header.
+
+#define default_sampling_thresholds torch::tensor({0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5})
 
 // define your own namespace to hold constants
 namespace settings
@@ -16,6 +18,13 @@ namespace settings
 
     // sample rate
     constexpr int sample_rate { 44100 };
-}
 
-#endif //CONSTANTS_SETTINGS_H
+    // model_settings
+    constexpr char* default_model_path {"/Users/behzadhaki/Github/Groove2DrumVST/Groove2Drum/Groove2Drum/TorchScriptModels/misunderstood_bush_246-epoch_26_tst.pt"};
+    constexpr int time_steps { 32 };
+    constexpr int num_voices { 9 };
+    }
+
+
+#define DefaultModelPath  "/Users/behzadhaki/Github/Groove2DrumVST/Groove2Drum/Groove2Drum/TorchScriptModels/misunderstood_bush_246-epoch_26_tst.pt"
+

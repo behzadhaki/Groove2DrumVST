@@ -1,7 +1,7 @@
 #pragma once
 
 #include <shared_plugin_helpers/shared_plugin_helpers.h>
-#include <vector>
+//#include <vector>
 #include "settings.h"
 #include "Representations.h"
 #include "queue62.hpp"
@@ -33,7 +33,7 @@ public:
 private:
 
     juce::MidiBuffer tempBuffer;
-    vector<float> in_data {1, 2, 3};
-    vector<float> out_data {0, 0, 0};
+    // vector<float> in_data {1, 2, 3};
+    //vector<float> out_data {0, 0, 0};
 
 };

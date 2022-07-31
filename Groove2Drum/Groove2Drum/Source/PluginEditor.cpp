@@ -1,9 +1,8 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "settings.h"
+#include "Models_API.h"
 
-
-#include <torch/script.h> // One-stop header.
 
 #include <iostream>
 
@@ -52,21 +51,41 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     // Set window size
     setSize (620, 500);
 
+    MonotonicGrooveTransformerV1 modelAPI(settings::default_model_path,
+                                          settings::time_steps,  settings::num_voices);
+
+    modelAPI.forward_pass(torch::rand({32, 27}));
+
+    auto hits_probabilities = modelAPI.get_hits_probabilities();
+    auto velocities = modelAPI.get_velocities();
+    auto offsets = modelAPI.get_offsets();
+
+    MidiFXProcessorPointer.torchTensor_que.push(hits_probabilities);
+    MidiFXProcessorPointer.torchTensor_que.push(velocities);
+    MidiFXProcessorPointer.torchTensor_que.push(offsets);
+
+
+    /*
+
     torch::jit::script::Module model;
-    model = torch::jit::load("/Users/behzadhaki/Github/Groove2DrumVST/Groove2Drum/Groove2Drum/TorchScriptModels/misunderstood_bush_246-epoch_26_tst.pt");
+    model = LoadModel("/Users/behzadhaki/Github/Groove2DrumVST/Groove2Drum/Groove2Drum/TorchScriptModels/misunderstood_bush_246-epoch_26_tst.pt");
+
     std::vector<torch::jit::IValue> inputs;
     inputs.emplace_back(torch::rand({32, 27})); // todo A wrapper needs to be implemented so as to predict h, v, o and stack them on top into a single hvo tensor within the wrappers internal forward
     auto outputs = model.forward(inputs);
-    auto logits_v_o_tuples = outputs.toTuple();    // WE NEED
-    auto hits = logits_v_o_tuples->elements()[0].toTensor();
-    auto velocities = logits_v_o_tuples->elements()[1].toTensor();
-    auto offset = logits_v_o_tuples->elements()[2].toTensor();
+    auto hLogit_v_o_tuples = outputs.toTuple();    // WE NEED
+
+
+    auto hits = hLogit_v_o_tuples->elements()[0].toTensor();
+    auto velocities = hLogit_v_o_tuples->elements()[1].toTensor();
+    auto offset = hLogit_v_o_tuples->elements()[2].toTensor();
 
     // std::cout << res <<endl;
 
     MidiFXProcessorPointer.torchTensor_que.push(hits);
     MidiFXProcessorPointer.torchTensor_que.push(velocities);
     MidiFXProcessorPointer.torchTensor_que.push(offset);
+     */
 
     // model = torch::jit::load("/Users/behzadhaki/Library/Application Support/JetBrains/PyCharm2020.2/scratches/scriptmodule.pt");
 

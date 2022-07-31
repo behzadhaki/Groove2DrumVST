@@ -2,10 +2,6 @@
 
 #include "PluginProcessor.h"
 #include "CustomLoggerTextEditors.h"
-#include "queue62.hpp"
-
-#include <torch/torch.h>
-#include "torch/script.h"
 
 using namespace std;
 
