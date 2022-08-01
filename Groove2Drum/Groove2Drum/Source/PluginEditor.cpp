@@ -54,16 +54,20 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     MonotonicGrooveTransformerV1 modelAPI(settings::default_model_path,
                                           settings::time_steps,  settings::num_voices);
 
-    modelAPI.forward_pass(torch::rand({32, 27}));
+    modelAPI.forward_pass(torch::rand({settings::time_steps, settings::num_voices * 3}));
 
     auto hits_probabilities = modelAPI.get_hits_probabilities();
-    auto velocities = modelAPI.get_velocities();
-    auto offsets = modelAPI.get_offsets();
+    // auto hits_probabilities = modelAPI.get_hits_probabilities();
+    // auto velocities = modelAPI.get_velocities();
+    // auto offsets = modelAPI.get_offsets();
+
+    auto [hits, velocities, offsets] = modelAPI.sample("Threshold");
+
+    DBG(tensor2string(hits));
+    DBG(tensor2string(velocities));
+    DBG(tensor2string(offsets));
 
     MidiFXProcessorPointer.torchTensor_que.push(hits_probabilities);
-    MidiFXProcessorPointer.torchTensor_que.push(velocities);
-    MidiFXProcessorPointer.torchTensor_que.push(offsets);
-
 
     /*
 

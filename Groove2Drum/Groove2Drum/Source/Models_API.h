@@ -5,6 +5,17 @@
 
 #include <torch/script.h> // One-stop header.
 
+using namespace torch::indexing;
+
+// converts a tensor to string to be used with DBG for debugging
+std::string tensor2string (torch::Tensor tensor)
+{
+    std::ostringstream stream;
+    stream << tensor;
+    std::string tensor_string = stream.str();
+    return tensor_string;
+}
+
 // Loads model either in eval mode or train modee
 inline torch::jit::script::Module LoadModel(std::string model_path, bool eval = true)
 {
@@ -78,13 +89,53 @@ public:
         inputs.emplace_back(monotonicGrooveInput);
         auto outputs = model.forward(inputs);
         auto hLogit_v_o_tuples = outputs.toTuple();
-        hits_logits = hLogit_v_o_tuples->elements()[0].toTensor();
-        hits_probabilities = torch::sigmoid(hits_logits);
-        velocities = hLogit_v_o_tuples->elements()[1].toTensor();
-        offsets = hLogit_v_o_tuples->elements()[2].toTensor();
+        hits_logits = hLogit_v_o_tuples->elements()[0].toTensor().view({time_steps, num_voices});
+        hits_probabilities = torch::sigmoid(hits_logits).view({time_steps, num_voices});
+        velocities = hLogit_v_o_tuples->elements()[1].toTensor().view({time_steps, num_voices});
+        offsets = hLogit_v_o_tuples->elements()[2].toTensor().view({time_steps, num_voices});
     }
 
-    /*void sample_hits(std::string sample_mode = "Threshold"):
+    std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sample(std::string sample_mode = "Threshold")
+    {
+        assert (sample_mode=="Threshold" or sample_mode=="SampleProbability");
+
+        hits = torch::zeros({time_steps, num_voices});
+
+        auto row_indices = torch::arange(0, time_steps);
+        if (sample_mode=="Threshold")
+        {
+            //DBG(tensor2string(hits_probabilities));
+
+            // read CPU accessors in  https://pytorch.org/cppdocs/notes/tensor_basics.html
+            // asserts accessed part of tensor is 2-dimensional and holds floats.
+            //auto hits_probabilities_a = hits_probabilities.accessor<float,2>();
+
+            for (int voice_i=0; voice_i < num_voices; voice_i++){
+                // Get voice threshold value
+                auto thres_voice_i  = sampling_thresholds[voice_i];
+                // Get probabilities of voice hits at all timesteps
+                auto voice_hot_probs = hits_probabilities.index(
+                    {row_indices, voice_i});
+                // Find locations exceeding threshold and set to 1 (hit)
+                auto active_time_indices = voice_hot_probs>=thres_voice_i;
+                hits.index_put_({active_time_indices, voice_i}, 1);
+            }
+            // DBG(tensor2string(hits));
+        }
+
+        // Set non-hit vel and offset values to 0
+        velocities = velocities * hits;
+        offsets = offsets * hits;
+
+        // DBG(tensor2string(hits));
+        // DBG(tensor2string(velocities));
+        // DBG(tensor2string(offsets));
+
+        return {hits, velocities, offsets};
+    }
+
+
+    /*void sample_hits(std::string sample_mode = "Threshold")
     {
         assert (sample_mode=="Threshold" or sample_mode=="SampleProbability");
 
@@ -117,4 +168,5 @@ public:
     }*/
 
 };
+
 
