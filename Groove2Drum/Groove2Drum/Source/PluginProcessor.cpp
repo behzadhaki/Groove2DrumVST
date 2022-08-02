@@ -7,7 +7,8 @@
 
 // #include <torch/torch.h>
 
-MidiFXProcessor::MidiFXProcessor(){}
+MidiFXProcessor::MidiFXProcessor(){
+}
 
 void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& /*buffer*/,
                                    juce::MidiBuffer& midiMessages)

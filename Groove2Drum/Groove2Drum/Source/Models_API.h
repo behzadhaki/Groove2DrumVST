@@ -68,7 +68,7 @@ public:
     torch::Tensor get_offsets() { return offsets; }
 
     // setters
-    torch::Tensor set_sampling_thresholds(torch::Tensor per_voice_thresholds)
+    void set_sampling_thresholds(torch::Tensor per_voice_thresholds)
     {
         assert(per_voice_thresholds.sizes()[0]==num_voices &&
                "thresholds dim [num_voices]");
@@ -104,8 +104,6 @@ public:
         auto row_indices = torch::arange(0, time_steps);
         if (sample_mode=="Threshold")
         {
-            //DBG(tensor2string(hits_probabilities));
-
             // read CPU accessors in  https://pytorch.org/cppdocs/notes/tensor_basics.html
             // asserts accessed part of tensor is 2-dimensional and holds floats.
             //auto hits_probabilities_a = hits_probabilities.accessor<float,2>();
@@ -120,7 +118,6 @@ public:
                 auto active_time_indices = voice_hot_probs>=thres_voice_i;
                 hits.index_put_({active_time_indices, voice_i}, 1);
             }
-            // DBG(tensor2string(hits));
         }
 
         // Set non-hit vel and offset values to 0
@@ -128,44 +125,9 @@ public:
         offsets = offsets * hits;
 
         // DBG(tensor2string(hits));
-        // DBG(tensor2string(velocities));
-        // DBG(tensor2string(offsets));
 
         return {hits, velocities, offsets};
     }
-
-
-    /*void sample_hits(std::string sample_mode = "Threshold")
-    {
-        assert (sample_mode=="Threshold" or sample_mode=="SampleProbability");
-
-        hits = torch::zeros({time_steps, num_voices});
-
-        if (sample_mode=="Threshold")
-        {
-            // read CPU accessors in  https://pytorch.org/cppdocs/notes/tensor_basics.html
-            auto hits_probabilities_a = hits_probabilities.accessor<float,2>();
-
-            for (int i=0; i < num_voices; i++){
-                auto thres  = sampling_thresholds[i][0];
-                //todo https://discuss.pytorch.org/t/libtorch-tensor-indexing/105868/4
-                //hits_probabilities_a
-            }
-        }
-
-
-    }*/
-
-
-
-
-    //
-
-
-    /*torch::Tensor sample_hits(std::string sample_mode, int thresholds)
-    {
-
-    }*/
 
 };
 

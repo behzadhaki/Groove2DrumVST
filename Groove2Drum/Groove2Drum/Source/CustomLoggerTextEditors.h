@@ -52,136 +52,10 @@ public:
 
 };
 
-/*
-     * A dedicated TextEditor which displays midi messages received from a queue
-     * To use in PluginEditor:
-     *     1.   Instantiate in the private section of the editor class in PluginEditor.h
-     *
-     *          private:
-     *               MidiNoteValueLoggerTextEditor MidiNoteValueLoggerTextEditor;
-     *
-     *     2.   Add the following lines to the constructor of the editor in PluginEditor.cpp
-     *
-     *          addAndMakeVisible (MidiNoteValueLoggerTextEditor);
-     *          MidiNoteValueLoggerTextEditor.start_Thread(queue_pointer);
-     *              NOTE:   queue_pointer comes from the processor.
-     *                      eg. &MidiFXProcessorPointer.midi_message_que
-     *
-*/
-class MidiNoteValueLoggerTextEditor: public LoggerTextEditorTemplate
-{
-public:
-    MidiNoteValueLoggerTextEditor(): LoggerTextEditorTemplate()
-    {
-        TextEditorLabel.setText ("Midi Note:", juce::dontSendNotification);
-        TextEditorLabel.attachToComponent (this, juce::Justification::top);
-        TextEditorLabel.setColour (juce::Label::textColourId, juce::Colours::orange);
-        TextEditorLabel.setJustificationType (juce::Justification::top);
-        addAndMakeVisible (TextEditorLabel);
-    }
 
-    void start_Thread(spsc_queue<juce::MidiMessage, settings::midi_queue_size>* midi_message_que_P)
-    {
-        midi_message_que = midi_message_que_P;
-        this->startThread();
-    }
 
-    void QueueDataProcessor() override
-    {
-        juce::MidiMessage message_to_read;
 
-        while (midi_message_que->read_available() > 0)
-        {
-            midi_message_que->pop(message_to_read); // here cnt result is 3
-            if (message_to_read.isNoteOn()){
-                // https://forum.juce.com/t/messagemanagerlock-and-thread-shutdown/353/4
-                // read from midi_message_que
-                juce::MessageManagerLock mmlock;
-                insertTextAtCaret(
-                    juce::String(
-                        message_to_read.getNoteNumber())+juce::newLine);
-            }
-        }
-    }
 
-private:
-    spsc_queue<juce::MidiMessage, settings::midi_queue_size>* midi_message_que;
-};
-
-/*
-     * A dedicated TextEditor which displays playhead info from a queue
-     * To use in PluginEditor:
-     *     1.   Instantiate in the private section of the editor class in PluginEditor.h
-     *
-     *          private:
-     *               MidiNoteValueLoggerTextEditor MidiNoteValueLoggerTextEditor;
-     *
-     *     2.   Add the following lines to the constructor of the editor in PluginEditor.cpp
-     *
-     *          addAndMakeVisible (MidiNoteValueLoggerTextEditor);
-     *          MidiNoteValueLoggerTextEditor.start_Thread(queue_pointer);
-     *              NOTE:   queue_pointer comes from the processor.
-     *                      eg. &MidiFXProcessorPointer.midi_message_que
-     *
-*/
-class PlayheadLoggerTextEditor: public LoggerTextEditorTemplate
-{
-
-public:
-    PlayheadLoggerTextEditor(): LoggerTextEditorTemplate()
-    {
-        TextEditorLabel.setText ("Playhead", juce::dontSendNotification);
-        TextEditorLabel.attachToComponent (this, juce::Justification::top);
-        TextEditorLabel.setColour (juce::Label::textColourId, juce::Colours::green);
-        TextEditorLabel.setJustificationType (juce::Justification::top);
-        addAndMakeVisible (TextEditorLabel);
-    }
-
-    void start_Thread(
-        spsc_queue<juce::AudioPlayHead::CurrentPositionInfo, settings::playhead_queue_size>* playhead_quePntr)
-    {
-        playhead_queP = playhead_quePntr;
-        this->startThread();
-    }
-
-    void QueueDataProcessor() override
-    {
-        juce::AudioPlayHead::CurrentPositionInfo read_info;
-
-        while (playhead_queP->read_available() > 0)
-        {
-            playhead_queP->pop(read_info); // here cnt result is 3
-            if (read_info.isPlaying){
-                // https://forum.juce.com/t/messagemanagerlock-and-thread-shutdown/353/4
-                // read from midi_message_que
-                juce::MessageManagerLock mmlock;
-
-                insertTextAtCaret(juce::String(read_info.ppqPosition)+juce::newLine);
-                insertTextAtCaret(juce::String());
-            }
-        }
-    }
-
-private:
-    spsc_queue<juce::AudioPlayHead::CurrentPositionInfo, settings::playhead_queue_size>* playhead_queP;
-};
-
-/*
-     * A dedicated TextEditor which displays playhead info from a queue
-     * To use in PluginEditor:
-     *     1.   Instantiate in the private section of the editor class in PluginEditor.h
-     *
-     *          private:
-     *               MidiNoteValueLoggerTextEditor MidiNoteValueLoggerTextEditor;
-     *
-     *     2.   Add the following lines to the constructor of the editor in PluginEditor.cpp
-     *
-     *          addAndMakeVisible (MidiNoteValueLoggerTextEditor);
-     *          MidiNoteValueLoggerTextEditor.start_Thread(queue_pointer);
-     *              NOTE:   queue_pointer comes from the processor.
-     *                      eg. &MidiFXProcessorPointer.midi_message_que
-     *
-*/
 class NoteStructLoggerTextEditor: public LoggerTextEditorTemplate
 {
 public:
@@ -194,119 +68,32 @@ public:
         addAndMakeVisible (TextEditorLabel);
     }
 
-    void start_Thread(spsc_queue<Note, settings::note_queue_size>* note_quePntr)
+    void start_Thread(NoteQueue& note_quePntr)
     {
-        note_queP = note_quePntr;
+        note_queP = &note_quePntr;
         this->startThread();
     }
 
     void QueueDataProcessor() override
     {
-        while (note_queP->read_available() > 0)
+        while (note_queP->getNumReady() > 0)
         {
             Note note;
-            note_queP->pop(note); // here cnt result is 3
+            note_queP->ReadFrom(&note, 1); // here cnt result is 3
             juce::MessageManagerLock mmlock;
             insertTextAtCaret(
                 juce::String(note.note)+"\t "+
                 juce::String(note.velocity)+"\t "+
                 juce::String(note.time.ppq, 5));
             insertTextAtCaret(juce::newLine);
-
         }
     }
 
-private:
-    spsc_queue<Note, settings::note_queue_size>* note_queP;
+    private:
+    juce::ScopedPointer<NoteQueue> note_queP;
 };
 
-/*
-     * A dedicated TextEditor which displays playhead info from a queue
-     * To use in PluginEditor:
-     *     1.   Instantiate in the private section of the editor class in PluginEditor.h
-     *
-     *          private:
-     *               MidiNoteValueLoggerTextEditor MidiNoteValueLoggerTextEditor;
-     *
-     *     2.   Add the following lines to the constructor of the editor in PluginEditor.cpp
-     *
-     *          addAndMakeVisible (MidiNoteValueLoggerTextEditor);
-     *          MidiNoteValueLoggerTextEditor.start_Thread(queue_pointer);
-     *              NOTE:   queue_pointer comes from the processor.
-     *                      eg. &MidiFXProcessorPointer.midi_message_que
-     *
-*/
-class MidiMsgPlayHeadStructLoggerTextEditor: public LoggerTextEditorTemplate
-{
-public:
-    MidiMsgPlayHeadStructLoggerTextEditor(): LoggerTextEditorTemplate()
-    {
-        TextEditorLabel.setText ("Midi Note &  All Playhead", juce::dontSendNotification);
-        TextEditorLabel.attachToComponent (this, juce::Justification::top);
-        TextEditorLabel.setColour (juce::Label::textColourId, juce::Colours::red);
-        TextEditorLabel.setJustificationType (juce::Justification::top);
-        addAndMakeVisible (TextEditorLabel);
-    }
 
-    void start_Thread(spsc_queue<MidiMsgPlayHead, settings::midi_queue_size>* midiMsgPlayheadPntr)
-    {
-        midiMsgPlayhead_queP = midiMsgPlayheadPntr;
-        this->startThread();
-    }
-
-    void QueueDataProcessor() override
-    {
-        while (midiMsgPlayhead_queP->read_available() > 0)
-        {
-            MidiMsgPlayHead midiMsgPlayHead;
-            midiMsgPlayhead_queP->pop(midiMsgPlayHead); // here cnt result is 3
-            juce::MessageManagerLock mmlock;
-
-            if(midiMsgPlayHead.MidiMessage.isNoteOn()){
-                std::string note = to_string(midiMsgPlayHead.MidiMessage.getNoteNumber());
-                note.resize (5, ' ');
-                insertTextAtCaret("Note: " + note + " | ");
-
-                std::string Onset_samples = to_string(midiMsgPlayHead.MidiMessage.getTimeStamp());
-                Onset_samples.resize (5, ' ');
-                if (Onset_samples=="0.0  "){Onset_samples="  0  ";}
-                insertTextAtCaret("Onset_samples: " + Onset_samples + " | ");
-
-                std::string qpm = to_string(midiMsgPlayHead.playheadInfo.bpm);
-                qpm.resize (5, ' ');
-                insertTextAtCaret("Frame_qpm: " + qpm + " | ");
-
-                std::string ppqPosition = to_string(midiMsgPlayHead.playheadInfo.ppqPosition);
-                ppqPosition.resize (5, ' ');
-                insertTextAtCaret("Frame_ppq: " + ppqPosition);
-                insertTextAtCaret(juce::newLine);
-
-            }
-
-        }
-    }
-
-private:
-    spsc_queue<MidiMsgPlayHead, settings::midi_queue_size>* midiMsgPlayhead_queP;
-
-};
-
-/*
-     * A dedicated TextEditor which displays playhead info from a queue
-     * To use in PluginEditor:
-     *     1.   Instantiate in the private section of the editor class in PluginEditor.h
-     *
-     *          private:
-     *               MidiNoteValueLoggerTextEditor MidiNoteValueLoggerTextEditor;
-     *
-     *     2.   Add the following lines to the constructor of the editor in PluginEditor.cpp
-     *
-     *          addAndMakeVisible (MidiNoteValueLoggerTextEditor);
-     *          MidiNoteValueLoggerTextEditor.start_Thread(queue_pointer);
-     *              NOTE:   queue_pointer comes from the processor.
-     *                      eg. &MidiFXProcessorPointer.midi_message_que
-     *
-*/
 class TorchTensorTextEditor: public LoggerTextEditorTemplate
 {
 public:
@@ -322,9 +109,6 @@ public:
     void start_Thread(spsc_queue<torch::Tensor, settings::torch_tensor_queue_size>* torch_tensor_quePointer)
     {
         torch_tensor_queP = torch_tensor_quePointer;
-
-        //torch_tensor_queP ->push(torch::rand({2, 3})); // TODO added for testing --> to be removed
-
         this->startThread();
     }
 
@@ -341,37 +125,8 @@ public:
             juce::TextEditor::insertTextAtCaret((juce::String(stream.str())));
             juce::TextEditor::insertTextAtCaret(juce::NewLine());
         }
-        /*while (midiMsgPlayhead_queP->read_available() > 0)
-        {
-            MidiMsgPlayHead midiMsgPlayHead;
-            midiMsgPlayhead_queP->pop(midiMsgPlayHead); // here cnt result is 3
-            juce::MessageManagerLock mmlock;
-
-            if(midiMsgPlayHead.MidiMessage.isNoteOn()){
-                std::string note = to_string(midiMsgPlayHead.MidiMessage.getNoteNumber());
-                note.resize (5, ' ');
-                insertTextAtCaret("Note: " + note + " | ");
-
-                std::string Onset_samples = to_string(midiMsgPlayHead.MidiMessage.getTimeStamp());
-                Onset_samples.resize (5, ' ');
-                if (Onset_samples=="0.0  "){Onset_samples="  0  ";}
-                insertTextAtCaret("Onset_samples: " + Onset_samples + " | ");
-
-                std::string qpm = to_string(midiMsgPlayHead.playheadInfo.bpm);
-                qpm.resize (5, ' ');
-                insertTextAtCaret("Frame_qpm: " + qpm + " | ");
-
-                std::string ppqPosition = to_string(midiMsgPlayHead.playheadInfo.ppqPosition);
-                ppqPosition.resize (5, ' ');
-                insertTextAtCaret("Frame_ppq: " + ppqPosition);
-                insertTextAtCaret(juce::newLine);
-
-            }
-
-        }*/
     }
 
 private:
     spsc_queue<torch::Tensor, settings::torch_tensor_queue_size>* torch_tensor_queP;
 };
-
