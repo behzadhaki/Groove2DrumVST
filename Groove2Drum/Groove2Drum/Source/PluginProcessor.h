@@ -5,7 +5,7 @@
 #include "settings.h"
 #include "Representations.h"
 #include "queue62.hpp"
-#include "AbstractFifos.h"
+#include "LockFreeQueueTemplate.h"
 #include <torch/torch.h>
 
 using namespace std;
@@ -22,7 +22,7 @@ public:
 
     // single-producer/single-consumer buffers
     // A lockFree AbstractFifo queue holding
-    NoteQueue note_que;
+    LockFreeQueue<Note, settings::note_queue_size> note_que;  // MUST BE INITIALIZED IN CONSTRUCTOR!!!!!
 
     spsc_queue<torch::Tensor, settings::torch_tensor_queue_size> torchTensor_que;
 

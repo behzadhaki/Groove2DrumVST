@@ -12,7 +12,7 @@
 void place_note_in_queue(
     juce::MidiBuffer& midiMessages,
     juce::AudioPlayHead* playheadP,
-    NoteQueue* note_que)
+    LockFreeQueue<Note, settings::note_queue_size>* note_que)
 {
     double frameStartPpq = 0;
     double qpm = 0;

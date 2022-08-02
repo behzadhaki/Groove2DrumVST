@@ -7,7 +7,7 @@
 #include <string>
 
 #include "PluginProcessor.h"
-
+#include "settings.h"
 
 /*
   *
@@ -68,7 +68,7 @@ public:
         addAndMakeVisible (TextEditorLabel);
     }
 
-    void start_Thread(NoteQueue& note_quePntr)
+    void start_Thread(LockFreeQueue<Note, settings::note_queue_size>& note_quePntr)
     {
         note_queP = &note_quePntr;
         this->startThread();
@@ -90,7 +90,7 @@ public:
     }
 
     private:
-        NoteQueue* note_queP;
+        LockFreeQueue<Note, settings::note_queue_size>* note_queP;
 };
 
 
