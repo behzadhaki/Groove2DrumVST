@@ -90,7 +90,7 @@ public:
     }
 
     private:
-    juce::ScopedPointer<NoteQueue> note_queP;
+        NoteQueue* note_queP;
 };
 
 
