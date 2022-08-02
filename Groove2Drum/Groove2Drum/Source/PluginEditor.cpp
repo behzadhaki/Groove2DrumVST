@@ -35,13 +35,13 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
 
 
     // Create TextEditor for midiMsgPlayhead Struct
-    addAndMakeVisible (MidiMsgPlayHeadStructLoggerTextEditor);
+    /*addAndMakeVisible (MidiMsgPlayHeadStructLoggerTextEditor);
     MidiMsgPlayHeadStructLoggerTextEditor.setMultiLine (true);
     MidiMsgPlayHeadStructLoggerTextEditor.setBounds (100, 180, 500, 100);
     MidiMsgPlayHeadStructLoggerTextEditor.start_Thread(&MidiFXProcessorPointer.midiMsgPlayhead_que);
+    */
 
     // Create TextEditor for displaying torch_tensors midiMsgPlayhead Struct
-
 
     addAndMakeVisible (TorchTensorTextEditor);
     TorchTensorTextEditor.setMultiLine (true);

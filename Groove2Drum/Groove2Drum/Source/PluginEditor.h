@@ -13,10 +13,10 @@ public:
     void resized() override {}
 
 private:
-    MidiNoteValueLoggerTextEditor MidiNoteValueLoggerTextEditor;
-    PlayheadLoggerTextEditor PlayheadLoggerTextEditor;
+    // MidiNoteValueLoggerTextEditor MidiNoteValueLoggerTextEditor;
+    // PlayheadLoggerTextEditor PlayheadLoggerTextEditor;
     NoteStructLoggerTextEditor NoteStructLoggerTextEditor;
-    MidiMsgPlayHeadStructLoggerTextEditor MidiMsgPlayHeadStructLoggerTextEditor;
+    // MidiMsgPlayHeadStructLoggerTextEditor MidiMsgPlayHeadStructLoggerTextEditor;
     TorchTensorTextEditor TorchTensorTextEditor;
 
     juce::Label SampleRateLabel;

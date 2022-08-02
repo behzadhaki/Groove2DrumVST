@@ -24,10 +24,10 @@ public:
 
     // single-producer/single-consumer buffers
     // TODO Replace spsc_queue with an AbstractFIFO implementation
-    spsc_queue<juce::MidiMessage, settings::midi_queue_size> midi_message_que;
-    spsc_queue<juce::AudioPlayHead::CurrentPositionInfo, settings::playhead_queue_size> playhead_que;
+    // spsc_queue<juce::MidiMessage, settings::midi_queue_size> midi_message_que;
+    // spsc_queue<juce::AudioPlayHead::CurrentPositionInfo, settings::playhead_queue_size> playhead_que;
     spsc_queue<Note, settings::note_queue_size> note_que;
-    spsc_queue<MidiMsgPlayHead, settings::midi_queue_size> midiMsgPlayhead_que;
+    // spsc_queue<MidiMsgPlayHead, settings::midi_queue_size> midiMsgPlayhead_que;
     spsc_queue<torch::Tensor, settings::torch_tensor_queue_size> torchTensor_que;
 
 private:
