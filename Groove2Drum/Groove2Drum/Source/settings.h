@@ -21,11 +21,9 @@ namespace settings
     constexpr int sample_rate { 44100 };
 
     // model_settings
-    constexpr char* default_model_path {"/Users/behzadhaki/Github/Groove2DrumVST/Groove2Drum/Groove2Drum/TorchScriptModels/misunderstood_bush_246-epoch_26_tst.pt"};
+    constexpr char* default_model_path {"/Users/behzadhaki/Github/Groove2DrumVST/Groove2Drum/Groove2Drum/Source/model/misunderstood_bush_246-epoch_26_tst.pt"};
     constexpr int time_steps { 32 };
     constexpr int num_voices { 9 };
+
     }
-
-
-#define DefaultModelPath  "/Users/behzadhaki/Github/Groove2DrumVST/Groove2Drum/Groove2Drum/TorchScriptModels/misunderstood_bush_246-epoch_26_tst.pt"
 

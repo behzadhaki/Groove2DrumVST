@@ -1,10 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "settings.h"
-#include "MonotonicGrooveTransformerV1.h"
-
-
-#include <iostream>
 
 MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPointer)
     : AudioProcessorEditor(&MidiFXProcessorPointer)

@@ -2,14 +2,13 @@
 // Created by Behzad Haki on 2022-02-11.
 //
 
-#include "settings.h"
-#include "queue62.hpp"
+#include "../settings.h"
 
 // can be used in processor to pass the messages received in a MidiBuffer as is,
 // sequentially in a queue to be shared with other threads
 
 
-void place_note_in_queue(
+inline void place_note_in_queue(
     juce::MidiBuffer& midiMessages,
     juce::AudioPlayHead* playheadP,
     LockFreeQueue<Note, settings::note_queue_size>* note_que)
@@ -44,4 +43,27 @@ void place_note_in_queue(
             }
         }
     }
+}
+
+
+inline void showMessageinEditor(LockFreeQueue<string, settings::text_message_queue_size>* text_message_queue,
+                         string message, string header, bool clearFirst)
+{
+    auto txt = string("clear");
+    if (clearFirst)
+    {
+        text_message_queue->WriteTo(&txt, 1);
+    }
+
+    if (header != "")
+    {
+        txt = header;
+        text_message_queue->WriteTo(&txt, 1);
+    }
+
+    txt = message;
+    text_message_queue->WriteTo(&txt, 1);
+
+    txt = string("---------------------");
+    text_message_queue->WriteTo(&txt, 1);
 }

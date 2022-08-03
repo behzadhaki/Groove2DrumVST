@@ -1,7 +1,7 @@
 #pragma once
 
 #include "PluginProcessor.h"
-#include "CustomLoggerTextEditors.h"
+#include "gui/CustomGuiTextEditors.h"
 
 using namespace std;
 

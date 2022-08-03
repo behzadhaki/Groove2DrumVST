@@ -5,8 +5,8 @@
 
 // #include <utility>
 
-#include "PluginProcessor.h"
-#include "settings.h"
+#include "../PluginProcessor.h"
+#include "../settings.h"
 
 // the onset of midi message has two attributes: (1) the ppq of the beginning of the frame
 // (2) the number of AUDIO samples from the beginning of the frame

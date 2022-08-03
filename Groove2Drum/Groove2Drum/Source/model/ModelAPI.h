@@ -2,8 +2,8 @@
 // Created by Behzad Haki on 2022-08-03.
 //
 
-#ifndef JUCECMAKEREPO_MONOTONICGROOVETRANSFORMERV1_H
-#define JUCECMAKEREPO_MONOTONICGROOVETRANSFORMERV1_H
+#ifndef JUCECMAKEREPO_MODELAPI_H
+#define JUCECMAKEREPO_MODELAPI_H
 
 #include <torch/script.h> // One-stop header.
 using namespace torch::indexing;
@@ -13,6 +13,7 @@ class MonotonicGrooveTransformerV1
 {
 public:
     // constructor
+    MonotonicGrooveTransformerV1();
     MonotonicGrooveTransformerV1(std::string model_path, int time_steps, int num_voices);
 
     // getters
@@ -48,4 +49,4 @@ private:
 std::string tensor2string (torch::Tensor tensor);
 inline torch::jit::script::Module LoadModel(std::string model_path, bool eval = true);
 
-#endif //JUCECMAKEREPO_MONOTONICGROOVETRANSFORMERV1_H
+#endif //JUCECMAKEREPO_MODELAPI_H

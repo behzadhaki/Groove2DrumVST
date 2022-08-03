@@ -2,9 +2,11 @@
 // Created by Behzad Haki on 2022-08-03.
 //
 
-#include "MonotonicGrooveTransformerV1.h"
-#include "settings.h"
+#include "ModelAPI.h"
+#include "../settings.h"
 
+//default constructor
+MonotonicGrooveTransformerV1::MonotonicGrooveTransformerV1(){}
 
 MonotonicGrooveTransformerV1::MonotonicGrooveTransformerV1(std::string model_path, int time_steps, int num_voices):
     time_steps(time_steps), num_voices(num_voices),per_voice_sampling_thresholds(default_sampling_thresholds)

@@ -3,10 +3,10 @@
 #include <shared_plugin_helpers/shared_plugin_helpers.h>
 //#include <vector>
 #include "settings.h"
-#include "Representations.h"
-#include "queue62.hpp"
-#include "LockFreeQueueTemplate.h"
+#include "includes/Representations.h"
+#include "includes/LockFreeQueueTemplate.h"
 #include <torch/torch.h>
+#include "model/ModelAPI.h"
 
 using namespace std;
 
@@ -29,6 +29,7 @@ public:
 private:
 
     juce::MidiBuffer tempBuffer;
+    MonotonicGrooveTransformerV1 modelAPI;
     // vector<float> in_data {1, 2, 3};
     //vector<float> out_data {0, 0, 0};
 
