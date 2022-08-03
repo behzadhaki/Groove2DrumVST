@@ -14,8 +14,7 @@ public:
 
 private:
     NoteStructLoggerTextEditor NoteStructLoggerTextEditor;
-    TorchTensorTextEditor TorchTensorTextEditor;
-
+    TextMessageLoggerTextEditor TextMessageLoggerTextEditor;
     juce::Label SampleRateLabel;
 };
 

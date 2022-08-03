@@ -23,8 +23,8 @@ public:
     // single-producer/single-consumer buffers
     // A lockFree AbstractFifo queue holding
     LockFreeQueue<Note, settings::note_queue_size> note_que;  // MUST BE INITIALIZED IN CONSTRUCTOR!!!!!
+    LockFreeQueue<string, settings::text_message_queue_size> text_message_queue;
 
-    spsc_queue<torch::Tensor, settings::torch_tensor_queue_size> torchTensor_que;
 
 private:
 

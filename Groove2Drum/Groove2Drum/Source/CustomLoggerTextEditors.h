@@ -53,9 +53,6 @@ public:
 };
 
 
-
-
-
 class NoteStructLoggerTextEditor: public LoggerTextEditorTemplate
 {
 public:
@@ -94,39 +91,70 @@ public:
 };
 
 
-class TorchTensorTextEditor: public LoggerTextEditorTemplate
+
+class TextMessageLoggerTextEditor: public LoggerTextEditorTemplate
 {
 public:
-    TorchTensorTextEditor(): LoggerTextEditorTemplate()
+    TextMessageLoggerTextEditor(): LoggerTextEditorTemplate()
     {
-        TextEditorLabel.setText ("Torch Tensor", juce::dontSendNotification);
+        TextEditorLabel.setText ("TextMessage", juce::dontSendNotification);
         TextEditorLabel.attachToComponent (this, juce::Justification::top);
-        TextEditorLabel.setColour (juce::Label::textColourId, juce::Colours::red);
+        TextEditorLabel.setColour (juce::Label::textColourId, juce::Colours::white);
         TextEditorLabel.setJustificationType (juce::Justification::top);
         addAndMakeVisible (TextEditorLabel);
     }
 
-    void start_Thread(spsc_queue<torch::Tensor, settings::torch_tensor_queue_size>* torch_tensor_quePointer)
+    void start_Thread(LockFreeQueue<string , settings::text_message_queue_size>& text_message_que)
     {
-        torch_tensor_queP = torch_tensor_quePointer;
+        this->text_message_queue = &text_message_que;
         this->startThread();
     }
 
     void QueueDataProcessor() override
     {
-        while (torch_tensor_queP->read_available() > 0){
-            torch::Tensor tensor_read;
-            torch_tensor_queP->pop(tensor_read);
-
-            std::ostringstream stream;
-            stream << tensor_read;
+        while (text_message_queue->getNumReady() > 0)
+        {
+            string msg;
+            text_message_queue->ReadFrom(&msg, 1); // here cnt result is 3
 
             juce::MessageManagerLock mmlock;
-            juce::TextEditor::insertTextAtCaret((juce::String(stream.str())));
-            juce::TextEditor::insertTextAtCaret(juce::NewLine());
+            if (msg == "clear" or msg == "Clear") {
+                this->clear();
+            }
+            else
+            {
+                insertTextAtCaret(msg);
+                insertTextAtCaret(juce::newLine);
+            }
         }
     }
 
 private:
-    spsc_queue<torch::Tensor, settings::torch_tensor_queue_size>* torch_tensor_queP;
+    LockFreeQueue<string, settings::text_message_queue_size>* text_message_queue;
 };
+
+
+/*
+void showMessageinEditor(LockFreeQueue<string, settings::text_message_queue_size>* text_message_queue,
+                  string message, string header = "", bool clearFirst=false)
+{
+    auto txt = string("clear");
+    if (clearFirst)
+    {
+        text_message_queue->WriteTo(&txt, 1);
+    }
+    if (header == "")
+    {
+        txt = string("---------------------");
+        text_message_queue->WriteTo(&txt, 1);
+    }
+    else
+    {
+        txt = header;
+        text_message_queue->WriteTo(&txt, 1);
+    }
+
+    txt = message;
+    text_message_queue->WriteTo(&txt, 1);
+}
+*/

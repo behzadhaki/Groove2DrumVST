@@ -20,11 +20,12 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     NoteStructLoggerTextEditor.setBounds (100, 40, 500, 100);
     NoteStructLoggerTextEditor.start_Thread(MidiFXProcessorPointer.note_que);
 
-    // Create TextEditor for displaying torch_tensors
-    addAndMakeVisible (TorchTensorTextEditor);
-    TorchTensorTextEditor.setMultiLine (true);
-    TorchTensorTextEditor.setBounds (100, 320, 500, 100);
-    TorchTensorTextEditor.start_Thread(&MidiFXProcessorPointer.torchTensor_que);
+    // Create TextEditor for Text Messages
+    addAndMakeVisible (TextMessageLoggerTextEditor);
+    TextMessageLoggerTextEditor.setMultiLine (true);
+    TextMessageLoggerTextEditor.setBounds (100, 200, 500, 100);
+    TextMessageLoggerTextEditor.start_Thread(MidiFXProcessorPointer.text_message_queue);
+
 
     // Set window size
     setSize (620, 500);
@@ -48,8 +49,17 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     DBG(tensor2string(offsets));
     */
 
-    MidiFXProcessorPointer.torchTensor_que.push(hits_probabilities);
-
+    auto txt = string("hits_probabilities");
+    MidiFXProcessorPointer.text_message_queue.WriteTo(&txt, 1);
+    txt = string(tensor2string(hits_probabilities));
+    MidiFXProcessorPointer.text_message_queue.WriteTo(&txt,1);
+    txt = string("clear");
+    MidiFXProcessorPointer.text_message_queue.WriteTo(&txt,1);
+    txt = string("!!!!!");
+    MidiFXProcessorPointer.text_message_queue.WriteTo(&txt,1);
+    /*
+    showMessageinEditor(MidiFXProcessorPointer.text_message_queue,
+                        tensor2string(hits_probabilities), "hits_probabilities", true);*/
 }
 
 void MidiFXProcessorEditor::paint(juce::Graphics& g)
