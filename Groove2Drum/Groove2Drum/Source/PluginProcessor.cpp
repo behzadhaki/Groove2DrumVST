@@ -19,6 +19,7 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         auto playhead = getPlayHead();
         place_note_in_queue(midiMessages, playhead, &note_que);
 
+        // todo send midi buffer to GrooveUpdaterThread --> model thread --> back to processBlock
 
         //todo pass to model thread
         //todo should be replaced with overdubbed input
