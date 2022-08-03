@@ -1,7 +1,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "settings.h"
-#include "Models_API.h"
+#include "MonotonicGrooveTransformerV1.h"
 
 
 #include <iostream>
@@ -38,7 +38,6 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
 
     auto hits_probabilities = modelAPI.get_hits_probabilities();
 
-
     auto [hits, velocities, offsets] = modelAPI.sample("Threshold");
 
     /*
@@ -49,7 +48,7 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     DBG(tensor2string(offsets));
     */
 
-    auto txt = string("hits_probabilities");
+    /*auto txt = string("hits_probabilities");
     MidiFXProcessorPointer.text_message_queue.WriteTo(&txt, 1);
     txt = string(tensor2string(hits_probabilities));
     MidiFXProcessorPointer.text_message_queue.WriteTo(&txt,1);
@@ -57,6 +56,8 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     MidiFXProcessorPointer.text_message_queue.WriteTo(&txt,1);
     txt = string("!!!!!");
     MidiFXProcessorPointer.text_message_queue.WriteTo(&txt,1);
+    */
+
     /*
     showMessageinEditor(MidiFXProcessorPointer.text_message_queue,
                         tensor2string(hits_probabilities), "hits_probabilities", true);*/
