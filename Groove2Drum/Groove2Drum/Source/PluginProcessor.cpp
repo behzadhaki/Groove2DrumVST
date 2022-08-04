@@ -1,6 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-#include "includes/UtilityMethods.h"
+#include "Includes/UtilityMethods.h"
 
 
 MidiFXProcessor::MidiFXProcessor(){
@@ -17,8 +17,9 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         // STEP 1
         // get Playhead info and Add note and onset to note_que using Note structure
         auto playhead = getPlayHead();
-        placeInMBufferCPosQueue(midiMessages, playhead);
 
+        // send notes to the GrooveThread and also gui logger for notes
+        place_note_in_queue(midiMessages, playhead, &incoming_note_que);
         place_note_in_queue(midiMessages, playhead, &note_que);
 
         /*modelAPI.forward_pass(torch::rand({settings::time_steps, settings::num_voices * 3}));
@@ -34,14 +35,6 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
     buffer.clear(); //
 
-}
-
-void MidiFXProcessor::placeInMBufferCPosQueue(juce::MidiBuffer mBuffer, juce::AudioPlayHead* playheadP)
-{
-    juce::AudioPlayHead::CurrentPositionInfo position;
-    playheadP->getCurrentPosition (position);
-    tempMidiBufferCurrentPos.update(mBuffer, position);
-    MidiBufferCurrentPosQueue.WriteTo(&tempMidiBufferCurrentPos, 1);
 }
 
 juce::AudioProcessorEditor* MidiFXProcessor::createEditor()

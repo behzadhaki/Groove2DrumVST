@@ -23,6 +23,7 @@ LoggerTextEditorTemplate::LoggerTextEditorTemplate():juce::TextEditor(), juce::T
     this->setReadOnly (false);
     this->setScrollbarsShown (true);
     this->setCaretVisible (true);
+
 }
 
 LoggerTextEditorTemplate::~LoggerTextEditorTemplate() { stopThread(10) ;}
@@ -53,6 +54,8 @@ NoteStructLoggerTextEditor::NoteStructLoggerTextEditor(): LoggerTextEditorTempla
     TextEditorLabel.setColour (juce::Label::textColourId, juce::Colours::white);
     TextEditorLabel.setJustificationType (juce::Justification::top);
     addAndMakeVisible (TextEditorLabel);
+
+    this->setCurrentThreadName("NoteStructureLoggerThread");
 }
 
 void NoteStructLoggerTextEditor::start_Thread(LockFreeQueue<Note, settings::note_queue_size>& note_quePntr)
@@ -85,6 +88,7 @@ TextMessageLoggerTextEditor::TextMessageLoggerTextEditor(): LoggerTextEditorTemp
     TextEditorLabel.setColour (juce::Label::textColourId, juce::Colours::white);
     TextEditorLabel.setJustificationType (juce::Justification::top);
     addAndMakeVisible (TextEditorLabel);
+    this->setCurrentThreadName("TextMessageLoggerThread");
 }
 
 void TextMessageLoggerTextEditor::start_Thread(LockFreeQueue<string , settings::text_message_queue_size>& text_message_que)

@@ -61,37 +61,3 @@ struct Note{
     }
 };
 
-// todo the timings in the struct seem to not work
-
-// structure holding MidiMessage and Playhead info together
-struct MidiMsgPlayHead{
-    juce::MidiMessage MidiMessage;
-    juce::AudioPlayHead::CurrentPositionInfo playheadInfo;
-
-    MidiMsgPlayHead(){}
-
-    // constructor for placing midi message and playhead info in one structure
-    MidiMsgPlayHead(juce::MidiMessage m, juce::AudioPlayHead::CurrentPositionInfo pinfo):
-        MidiMessage(std::move(m)), playheadInfo(pinfo){}
-};
-
-// structure holding midiBuffer and Playhead info together
-struct MidiBufferCurrentPos{
-    juce::MidiBuffer midiBuffer;
-    juce::AudioPlayHead::CurrentPositionInfo CurrentPos;
-
-    MidiBufferCurrentPos(){}
-
-    // constructor for placing midi message and playhead info in one structure
-    MidiBufferCurrentPos(juce::MidiBuffer mbuffer, juce::AudioPlayHead::CurrentPositionInfo pinfo):
-        CurrentPos(pinfo){
-        midiBuffer.swapWith(mbuffer);
-    }
-
-    void update(juce::MidiBuffer mbuffer, juce::AudioPlayHead::CurrentPositionInfo pinfo)
-    {
-        midiBuffer.swapWith(mbuffer);
-        CurrentPos = pinfo;
-    }
-
-};
