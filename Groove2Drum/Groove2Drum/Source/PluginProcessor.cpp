@@ -14,16 +14,13 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
     if (not midiMessages.isEmpty())
     {
-
+        // STEP 1
         // get Playhead info and Add note and onset to note_que using Note structure
         auto playhead = getPlayHead();
+        placeInMBufferCPosQueue(midiMessages, playhead);
+
         place_note_in_queue(midiMessages, playhead, &note_que);
 
-        // todo send midi buffer to GrooveUpdaterThread --> model thread --> back to processBlock
-
-        //todo pass to model thread
-        //todo should be replaced with overdubbed input
-        //todo THe model should run in a separateThread!!! --> otherwise, crash!!
         /*modelAPI.forward_pass(torch::rand({settings::time_steps, settings::num_voices * 3}));
         auto hits_probabilities = modelAPI.get_hits_probabilities();
         auto [hits, velocities, offsets] = modelAPI.sample("Threshold");
@@ -37,6 +34,14 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
     buffer.clear(); //
 
+}
+
+void MidiFXProcessor::placeInMBufferCPosQueue(juce::MidiBuffer mBuffer, juce::AudioPlayHead* playheadP)
+{
+    juce::AudioPlayHead::CurrentPositionInfo position;
+    playheadP->getCurrentPosition (position);
+    tempMidiBufferCurrentPos.update(mBuffer, position);
+    MidiBufferCurrentPosQueue.WriteTo(&tempMidiBufferCurrentPos, 1);
 }
 
 juce::AudioProcessorEditor* MidiFXProcessor::createEditor()
