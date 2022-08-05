@@ -25,10 +25,17 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         /*modelAPI.forward_pass(torch::rand({settings::time_steps, settings::num_voices * 3}));
         auto hits_probabilities = modelAPI.get_hits_probabilities();
         auto [hits, velocities, offsets] = modelAPI.sample("Threshold");
-        showMessageinEditor(&text_message_queue,
+
+         showMessageinEditor(&text_message_queue,
                             string(tensor2string(hits_probabilities)),
                             "hits_probabilities",
                             false);*/
+
+        showMessageinEditor(&text_message_queue,
+                            string("NoteReceived \t"),
+                            "MESSAGE: ",
+                            false);
+
     }
 
     midiMessages.swapWith(tempBuffer);

@@ -56,6 +56,8 @@ NoteStructLoggerTextEditor::NoteStructLoggerTextEditor(): LoggerTextEditorTempla
     addAndMakeVisible (TextEditorLabel);
 
     this->setCurrentThreadName("NoteStructureLoggerThread");
+
+    numNotesPrintedOnLine = 0;
 }
 
 void NoteStructLoggerTextEditor::start_Thread(LockFreeQueue<Note, settings::note_queue_size>& note_quePntr)
@@ -71,11 +73,26 @@ void NoteStructLoggerTextEditor::QueueDataProcessor()
         Note note;
         note_queP->ReadFrom(&note, 1); // here cnt result is 3
         juce::MessageManagerLock mmlock;
+
+        if(this->getTotalNumChars()>gui_settings::NoteStructLoggerTextEditor::maxChars)
+        {
+            this->clear();
+            this->numNotesPrintedOnLine = 0;
+        }
+
         insertTextAtCaret(
+            "N: "+
             juce::String(note.note)+"\t "+
-            juce::String(note.velocity)+"\t "+
-            juce::String(note.time.ppq, 5));
-        insertTextAtCaret(juce::newLine);
+            juce::String(note.velocity, 2)+"\t "+
+            juce::String(note.time.ppq, 4) + "||");
+
+        this->numNotesPrintedOnLine += 1;
+
+        if(this->numNotesPrintedOnLine > 0 and
+            this->numNotesPrintedOnLine % gui_settings::NoteStructLoggerTextEditor::
+                        nNotesPerLine == 0)
+            insertTextAtCaret(juce::newLine);
+
     }
 }
 
@@ -103,6 +120,11 @@ void TextMessageLoggerTextEditor::QueueDataProcessor()
     {
         string msg;
         text_message_queue->ReadFrom(&msg, 1); // here cnt result is 3
+
+        if(this->getTotalNumChars()>gui_settings::TextMessageLoggerTextEditor::maxChars)
+        {
+            this->clear();
+        }
 
         juce::MessageManagerLock mmlock;
         if (msg == "clear" or msg == "Clear") {

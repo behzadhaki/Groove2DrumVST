@@ -10,12 +10,8 @@
     <rect x="217.194" y="312.559" width="160.959" height="136.439" style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0);"/>
     <rect x="216.394" y="29.598" width="160.959" height="227.853" style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0);"/>
     <text style="fill: rgb(51, 51, 51); font-family: Kefa; font-size: 12px; font-weight: 700; text-anchor: middle; white-space: pre;" transform="matrix(0.470711, 0, 0, 0.470711, 287.797913, -18.583092)"><tspan x="21.617" y="122.544">MidiFXProcessor::GrooveThread</tspan><tspan x="21.617000579833984" dy="1em">​</tspan></text>
-    <g transform="matrix(0.826152, 0, 0, 0.826152, 52.200787, -2.473821)" style="">
-      <g transform="matrix(1, 0, 0, 1, -1.760863, 1.964338)">
-        <rect x="215.981" y="125.443" width="160.959" height="13.475" style="stroke: rgb(0, 0, 0); fill: rgb(172, 239, 205);" rx="6.738" ry="6.738"/>
-        <text style="fill: rgb(51, 51, 51); font-family: Arial, sans-serif; font-size: 6px; white-space: pre;" x="238.757" y="134.071">MidiFXProcessor::overdubbedgrooveArr</text>
-      </g>
-    </g>
+    <rect x="229.179" y="102.784" width="132.977" height="11.132" style="stroke: rgb(0, 0, 0); fill: rgb(149, 224, 255);" rx="6.738" ry="6.738"/>
+    <text style="fill: rgb(51, 51, 51); font-family: Arial, sans-serif; font-size: 5px; white-space: pre;" x="247.996" y="109.912">MidiFXProcessor::overdubbedgroove tensor</text>
     <g transform="matrix(1, 0, 0, 1, 0, -9.614155)">
       <rect x="253.62" y="71.331" width="87.917" height="22.828" style="stroke: rgb(0, 0, 0); fill: rgb(249, 207, 207);"/>
       <text style="fill: rgb(51, 51, 51); font-family: Kefa; font-size: 5.6px; font-weight: 700; text-anchor: middle; white-space: pre;" x="297.565" y="84.241">Overdub Groove</text>
@@ -89,7 +85,7 @@
     <text style="fill: rgb(92, 86, 222); font-family: Kefa; font-size: 5.6px; font-weight: 700; text-anchor: middle; white-space: pre;" transform="matrix(1, 0, 0, 1, 267.630035, 308.81955)"><tspan x="203.63" y="48.126" style="font-size: 7px;">MidiFXProcessor::<tspan x="203.6300048828125" dy="1em">​</tspan>SampleThreshQueue</tspan><tspan x="203.6300048828125" dy="1em">​</tspan>LockFreeQueue<tspan>&lt;Tensor,..&gt;</tspan></text>
     <g transform="matrix(1, 0, 0, 1, -25.615685, -22.512434)">
       <rect x="254.109" y="245.27" width="132.977" height="11.132" style="stroke: rgb(0, 0, 0); fill: rgb(149, 223, 255);" rx="6.738" ry="6.738"/>
-      <text style="font-family: Arial, sans-serif; font-size: 5px; white-space: pre;" x="277.988" y="252.608">MidiFXProcessor::scaledgroovetensor</text>
+      <text style="font-family: Arial, sans-serif; font-size: 5px; white-space: pre;" x="277.988" y="252.608">MidiFXProcessor::scaledgroove tensor</text>
     </g>
     <text style="fill: rgb(92, 86, 222); font-family: Kefa; font-size: 5.6px; font-weight: 700; text-anchor: middle; white-space: pre;" transform="matrix(1, 0, 0, 1, -53.099854, 378.48819)"><tspan x="203.63" y="48.126" style="font-size: 7px;">MidiFXProcessor::<tspan x="203.6300048828125" dy="1em">​</tspan>HprobVelOffQueue</tspan><tspan x="203.6300048828125" dy="1em">​</tspan>LockFreeQueue<tspan>&lt;Tensor,..&gt;</tspan></text>
     <path style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0);" d="M 242.937 388.334 L 243.208 426.883"/>
@@ -98,7 +94,7 @@
       <text style="fill: rgb(51, 51, 51); font-family: Kefa; font-size: 5.6px; font-weight: 700; text-anchor: middle; white-space: pre;" x="297.83" y="87.474"> </text>
       <g transform="matrix(1, 0, 0, 1, -17.961613, -122.754005)">
         <rect x="242.613" y="57.6" width="98.844" height="36.677" style="stroke: rgb(0, 0, 0); fill: rgb(249, 207, 207);"/>
-        <text style="fill: rgb(51, 51, 51); font-family: Kefa; font-size: 5.6px; font-weight: 700; white-space: pre;" x="297.57" y="67.172" transform="matrix(1, 0, 0, 1, -54.546093, -0.648417)">If note played:<tspan x="297.57000732421875" dy="2em">​</tspan>       Pack MidiBuffer and Playhead<tspan x="297.57000732421875" dy="2em">​</tspan>       Write to Queue<tspan x="297.57000732421875" dy="2em">​</tspan></text>
+        <text style="fill: rgb(51, 51, 51); font-family: Kefa; font-size: 5.6px; font-weight: 700; white-space: pre;" x="297.57" y="67.172" transform="matrix(1, 0, 0, 1, -54.546093, -0.648417)">If note played:<tspan x="297.57000732421875" dy="2em">​</tspan>       Strip notes from MidiMessages<tspan x="297.57000732421875" dy="2em">​</tspan>       Write to Queue<tspan x="297.57000732421875" dy="2em">​</tspan></text>
       </g>
       <g transform="matrix(1, 0, 0, 1, -17.961609, 3.268455)">
         <rect x="242.613" y="57.6" width="98.844" height="36.677" style="stroke: rgb(0, 0, 0); fill: rgb(249, 207, 207);"/>

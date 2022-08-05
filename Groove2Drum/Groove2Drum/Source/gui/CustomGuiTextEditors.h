@@ -41,6 +41,8 @@ public:
 
 private:
     LockFreeQueue<Note, settings::note_queue_size>* note_queP;
+    int numNotesPrintedOnLine;
+
 };
 
 

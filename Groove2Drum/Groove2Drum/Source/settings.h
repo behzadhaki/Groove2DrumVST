@@ -12,7 +12,6 @@ namespace settings
 {
     // constants have internal linkage by default
     // constexpr int midi_queue_size { 64 };
-    constexpr int MidiBufferCurrentPos_size { 512 };
     constexpr int note_queue_size { 512 };
     constexpr int torch_tensor_queue_size { 512 };
     constexpr int text_message_queue_size { 512 };
@@ -25,5 +24,20 @@ namespace settings
     constexpr int time_steps { 32 };
     constexpr int num_voices { 9 };
 
+    // gui settings
+
+}
+
+namespace gui_settings{
+    //
+    namespace NoteStructLoggerTextEditor{
+        constexpr int maxChars { 500 };
+        constexpr int nNotesPerLine { 4 };
     }
 
+    namespace TextMessageLoggerTextEditor{
+        constexpr int maxChars { 3000 };
+    }
+
+
+}
