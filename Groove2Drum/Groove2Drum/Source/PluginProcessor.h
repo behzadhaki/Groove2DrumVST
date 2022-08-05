@@ -3,10 +3,10 @@
 #include <shared_plugin_helpers/shared_plugin_helpers.h>
 //#include <vector>
 #include "settings.h"
-#include "includes/Representations.h"
-#include "includes/LockFreeQueueTemplate.h"
+#include "Includes/Representations.h"
+#include "Includes/LockFreeQueueTemplate.h"
 #include <torch/torch.h>
-#include "model/ModelAPI.h"
+#include "Model/ModelAPI.h"
 
 using namespace std;
 

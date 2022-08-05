@@ -10,13 +10,18 @@
 template <typename T, int queue_size> class LockFreeQueue
 {
 private:
-    juce::ScopedPointer<juce::AbstractFifo> lockFreeFifo;
+    //juce::ScopedPointer<juce::AbstractFifo> lockFreeFifo;   depreciated!!
+    std::unique_ptr<juce::AbstractFifo> lockFreeFifo;
+
+
     juce::Array<T> data;
 
 public:
     LockFreeQueue()
     {
-        lockFreeFifo = new juce::AbstractFifo(queue_size);
+        // lockFreeFifo = new juce::AbstractFifo(queue_size);   depreciated!!
+        lockFreeFifo = std::unique_ptr<juce::AbstractFifo> (
+            new juce::AbstractFifo(queue_size));
 
         data.ensureStorageAllocated(queue_size);
 

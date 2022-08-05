@@ -8,15 +8,15 @@
 //default constructor
 MonotonicGrooveTransformerV1::MonotonicGrooveTransformerV1(){}
 
-MonotonicGrooveTransformerV1::MonotonicGrooveTransformerV1(std::string model_path, int time_steps, int num_voices):
-    time_steps(time_steps), num_voices(num_voices),per_voice_sampling_thresholds(default_sampling_thresholds)
+MonotonicGrooveTransformerV1::MonotonicGrooveTransformerV1(std::string model_path, int time_steps_, int num_voices_):
+    time_steps(time_steps_), num_voices(num_voices_),per_voice_sampling_thresholds(default_sampling_thresholds)
 {
     model = LoadModel(model_path, true);
-    hits_logits = torch::zeros({time_steps, num_voices});
-    hits_probabilities = torch::zeros({time_steps, num_voices});
-    hits = torch::zeros({time_steps, num_voices});
-    velocities = torch::zeros({time_steps, num_voices});
-    offsets = torch::zeros({time_steps, num_voices});
+    hits_logits = torch::zeros({time_steps_, num_voices_});
+    hits_probabilities = torch::zeros({time_steps_, num_voices_});
+    hits = torch::zeros({time_steps_, num_voices_});
+    velocities = torch::zeros({time_steps_, num_voices_});
+    offsets = torch::zeros({time_steps_, num_voices_});
 }
 
 // getters

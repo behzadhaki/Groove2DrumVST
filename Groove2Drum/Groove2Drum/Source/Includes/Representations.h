@@ -20,7 +20,7 @@ struct onset_time{
     onset_time(){}
 
     // constructor for desired timing of event in terms of absolute ppq
-    onset_time(double ppq): ppq(ppq) {}
+    onset_time(double ppq_): ppq(ppq_) {}
 
     // constructor for received timing of midi messages
     // Automatically calculates absolute timing of event in terms of ppq

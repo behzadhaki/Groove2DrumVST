@@ -19,6 +19,7 @@ inline void place_note_in_queue(
     if (playheadP)
     {
         juce::AudioPlayHead::CurrentPositionInfo position;
+
         if (playheadP->getCurrentPosition (position))
         {
             if (position.isPlaying){
