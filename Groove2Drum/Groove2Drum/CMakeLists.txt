@@ -22,7 +22,8 @@ target_sources(${BaseTargetName} PRIVATE
         Source/PluginProcessor.cpp
         Source/PluginEditor.cpp
         Source/Model/ModelAPI.cpp
-        Source/gui/CustomGuiTextEditors.cpp)
+        Source/gui/CustomGuiTextEditors.cpp
+        Source/ProcessingThreads/GrooveThread.cpp)
 
 target_compile_definitions(${BaseTargetName}
         PUBLIC

@@ -17,8 +17,7 @@ class LoggerTextEditorTemplate: public juce::TextEditor, public juce::Thread
 public:
     LoggerTextEditorTemplate();
 
-    ~LoggerTextEditorTemplate() override;
-
+    void prepareToStop();
     // Override this with the task to be done on received data from queue
     // See examples of the child classes below
     virtual void QueueDataProcessor();
@@ -35,12 +34,15 @@ class NoteStructLoggerTextEditor: public LoggerTextEditorTemplate
 public:
     NoteStructLoggerTextEditor();
 
+    ~NoteStructLoggerTextEditor();
+
     void start_Thread(LockFreeQueue<Note, settings::note_queue_size>& note_quePntr);
 
     void QueueDataProcessor() override;
 
 private:
     LockFreeQueue<Note, settings::note_queue_size>* note_queP;
+
     int numNotesPrintedOnLine;
 
 };
@@ -50,12 +52,15 @@ class TextMessageLoggerTextEditor: public LoggerTextEditorTemplate
 {
 public:
     TextMessageLoggerTextEditor();
+    ~TextMessageLoggerTextEditor();
 
     void start_Thread(LockFreeQueue<string , settings::text_message_queue_size>& text_message_que);
     void QueueDataProcessor() override;
 
 private:
     LockFreeQueue<string, settings::text_message_queue_size>* text_message_queue;
+
+
 };
 
 

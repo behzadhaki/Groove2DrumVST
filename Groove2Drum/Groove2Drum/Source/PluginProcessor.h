@@ -7,6 +7,7 @@
 #include "Includes/LockFreeQueueTemplate.h"
 #include <torch/torch.h>
 #include "Model/ModelAPI.h"
+#include "ProcessingThreads/GrooveThread.h"
 
 using namespace std;
 
@@ -15,6 +16,8 @@ class MidiFXProcessor : public PluginHelpers::ProcessorBase
 public:
 
     MidiFXProcessor();
+
+    ~MidiFXProcessor() override;
 
     void processBlock(juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
 
@@ -27,6 +30,9 @@ public:
     LockFreeQueue<string, settings::text_message_queue_size> text_message_queue;
 
 
+    // THreads
+    GrooveThread groove_thread;
+    bool groove_thread_ready;
 private:
 
     juce::MidiBuffer tempBuffer;

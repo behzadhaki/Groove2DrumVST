@@ -26,7 +26,7 @@ LoggerTextEditorTemplate::LoggerTextEditorTemplate():juce::TextEditor(), juce::T
 
 }
 
-LoggerTextEditorTemplate::~LoggerTextEditorTemplate() { stopThread(10) ;}
+void LoggerTextEditorTemplate::prepareToStop() { stopThread(10) ;}
 
 // Override this with the task to be done on received data from queue
 // See examples of the child classes below
@@ -49,6 +49,7 @@ void LoggerTextEditorTemplate::run()
 
 NoteStructLoggerTextEditor::NoteStructLoggerTextEditor(): LoggerTextEditorTemplate()
 {
+
     TextEditorLabel.setText ("Midi#/Vel/Actual Onset ppq", juce::dontSendNotification);
     TextEditorLabel.attachToComponent (this, juce::Justification::top);
     TextEditorLabel.setColour (juce::Label::textColourId, juce::Colours::white);
@@ -60,6 +61,12 @@ NoteStructLoggerTextEditor::NoteStructLoggerTextEditor(): LoggerTextEditorTempla
     numNotesPrintedOnLine = 0;
 }
 
+NoteStructLoggerTextEditor::~NoteStructLoggerTextEditor()
+{
+    this->prepareToStop();
+
+}
+
 void NoteStructLoggerTextEditor::start_Thread(LockFreeQueue<Note, settings::note_queue_size>& note_quePntr)
 {
     note_queP = &note_quePntr;
@@ -68,44 +75,57 @@ void NoteStructLoggerTextEditor::start_Thread(LockFreeQueue<Note, settings::note
 
 void NoteStructLoggerTextEditor::QueueDataProcessor()
 {
-    while (note_queP->getNumReady() > 0)
+    if (note_queP != nullptr)
     {
-        Note note;
-        note_queP->ReadFrom(&note, 1); // here cnt result is 3
-        juce::MessageManagerLock mmlock;
-
-        if(this->getTotalNumChars()>gui_settings::NoteStructLoggerTextEditor::maxChars)
+        while (note_queP->getNumReady() > 0)
         {
-            this->clear();
-            this->numNotesPrintedOnLine = 0;
+            Note note;
+            note_queP->ReadFrom(&note, 1); // here cnt result is 3
+            juce::MessageManagerLock mmlock;
+
+            if(this->getTotalNumChars()>gui_settings::NoteStructLoggerTextEditor::maxChars)
+            {
+                this->clear();
+                this->numNotesPrintedOnLine = 0;
+            }
+
+            insertTextAtCaret(
+                "N: "+
+                juce::String(note.note)+"\t "+
+                juce::String(note.velocity, 2)+"\t "+
+                juce::String(note.time.ppq, 4) + "||");
+
+            this->numNotesPrintedOnLine += 1;
+
+            if(this->numNotesPrintedOnLine > 0 and
+                this->numNotesPrintedOnLine % gui_settings::NoteStructLoggerTextEditor::
+                            nNotesPerLine == 0)
+                insertTextAtCaret(juce::newLine);
+
         }
-
-        insertTextAtCaret(
-            "N: "+
-            juce::String(note.note)+"\t "+
-            juce::String(note.velocity, 2)+"\t "+
-            juce::String(note.time.ppq, 4) + "||");
-
-        this->numNotesPrintedOnLine += 1;
-
-        if(this->numNotesPrintedOnLine > 0 and
-            this->numNotesPrintedOnLine % gui_settings::NoteStructLoggerTextEditor::
-                        nNotesPerLine == 0)
-            insertTextAtCaret(juce::newLine);
-
     }
+
 }
 
 
 
 TextMessageLoggerTextEditor::TextMessageLoggerTextEditor(): LoggerTextEditorTemplate()
 {
+    if (text_message_queue==NULL)
+        DBG("NULL text_message_queue");
+
     TextEditorLabel.setText ("TextMessage", juce::dontSendNotification);
     TextEditorLabel.attachToComponent (this, juce::Justification::top);
     TextEditorLabel.setColour (juce::Label::textColourId, juce::Colours::white);
     TextEditorLabel.setJustificationType (juce::Justification::top);
     addAndMakeVisible (TextEditorLabel);
     this->setCurrentThreadName("TextMessageLoggerThread");
+}
+
+TextMessageLoggerTextEditor::~TextMessageLoggerTextEditor()
+{
+    this->prepareToStop();
+
 }
 
 void TextMessageLoggerTextEditor::start_Thread(LockFreeQueue<string , settings::text_message_queue_size>& text_message_que)
@@ -116,25 +136,29 @@ void TextMessageLoggerTextEditor::start_Thread(LockFreeQueue<string , settings::
 
 void TextMessageLoggerTextEditor::QueueDataProcessor()
 {
-    while (text_message_queue->getNumReady() > 0)
+    if (text_message_queue != nullptr)
     {
-        string msg;
-        text_message_queue->ReadFrom(&msg, 1); // here cnt result is 3
-
-        if(this->getTotalNumChars()>gui_settings::TextMessageLoggerTextEditor::maxChars)
+        while (text_message_queue->getNumReady() > 0)
         {
-            this->clear();
-        }
+            string msg;
+            text_message_queue->ReadFrom(&msg, 1); // here cnt result is 3
 
-        juce::MessageManagerLock mmlock;
-        if (msg == "clear" or msg == "Clear") {
-            this->clear();
-        }
-        else
-        {
-            insertTextAtCaret(msg);
-            insertTextAtCaret(juce::newLine);
+            if(this->getTotalNumChars()>gui_settings::TextMessageLoggerTextEditor::maxChars)
+            {
+                this->clear();
+            }
+
+            juce::MessageManagerLock mmlock;
+            if (msg == "clear" or msg == "Clear") {
+                this->clear();
+            }
+            else
+            {
+                insertTextAtCaret(msg);
+                insertTextAtCaret(juce::newLine);
+            }
         }
     }
+
 }
 

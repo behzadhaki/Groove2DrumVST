@@ -38,6 +38,15 @@ namespace gui_settings{
     namespace TextMessageLoggerTextEditor{
         constexpr int maxChars { 3000 };
     }
+}
 
+namespace thread_settings{
+//
+namespace GrooveThread{
+    constexpr int waitTimeBtnIters {1}; //ms between two consecutive iterations of the thread loop in run()
+}
 
+namespace TextMessageLoggerTextEditor{
+    constexpr int maxChars { 3000 };
+}
 }
