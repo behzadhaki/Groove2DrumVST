@@ -13,6 +13,7 @@ MidiFXProcessor::MidiFXProcessor(){
     //groove_thread.startThread();
     //groove_thread_ready = true;
     note_que = make_unique<LockFreeQueue<Note, settings::note_queue_size>>();
+    text_message_queue = make_unique<StringLockFreeQueue<settings::text_message_queue_size>>();
 }
 
 
@@ -36,9 +37,12 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         // place_note_in_queue(midiMessages, playhead, incoming_note_que.get());
         place_note_in_queue(midiMessages, playhead, note_que.get());
 
+        text_message_queue->addText("TEST");
+
         /*modelAPI.forward_pass(torch::rand({settings::time_steps, settings::num_voices * 3}));
         auto hits_probabilities = modelAPI.get_hits_probabilities();
         auto [hits, velocities, offsets] = modelAPI.sample("Threshold");
+
 
          showMessageinEditor(&text_message_queue,
                             string(tensor2string(hits_probabilities)),

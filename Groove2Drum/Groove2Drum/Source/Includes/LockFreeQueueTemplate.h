@@ -7,13 +7,63 @@
 #include "../PluginProcessor.h"
 #include "Representations.h"
 
+template<int queue_size> class StringLockFreeQueue
+{
+private:
+    //juce::ScopedPointer<juce::AbstractFifo> lockFreeFifo;   depreciated!!
+    std::unique_ptr<juce::AbstractFifo> lockFreeFifo;
+    char* data[queue_size];
+
+public:
+    StringLockFreeQueue()
+    {
+        // lockFreeFifo = new juce::AbstractFifo(queue_size);   depreciated!!
+        lockFreeFifo = std::unique_ptr<juce::AbstractFifo> (
+            new juce::AbstractFifo(queue_size));
+    }
+
+    void addText (char* writeText)
+    {
+        int start1, start2, blockSize1, blockSize2;
+
+        lockFreeFifo ->prepareToWrite(
+            1, start1, blockSize1,
+            start2, blockSize2);
+
+        data[start1] = writeText;
+
+        lockFreeFifo->finishedWrite(1);
+    }
+
+    char* getText()
+    {
+        int start1, start2, blockSize1, blockSize2;
+
+        lockFreeFifo ->prepareToRead(
+            1, start1, blockSize1,
+            start2, blockSize2);
+
+        char* retrievedText;
+        retrievedText = data[start1];
+
+        lockFreeFifo -> finishedRead(1);
+
+        return retrievedText;
+    }
+
+    int getNumReady()
+    {
+        return lockFreeFifo -> getNumReady();
+    }
+
+
+};
+
 template <typename T, int queue_size> class LockFreeQueue
 {
 private:
     //juce::ScopedPointer<juce::AbstractFifo> lockFreeFifo;   depreciated!!
     std::unique_ptr<juce::AbstractFifo> lockFreeFifo;
-
-
     juce::Array<T> data;
 
 public:
@@ -99,3 +149,4 @@ public:
 
 
 };
+

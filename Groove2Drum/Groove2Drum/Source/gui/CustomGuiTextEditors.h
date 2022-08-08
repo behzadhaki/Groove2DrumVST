@@ -54,18 +54,19 @@ public:
     TextMessageLoggerTextEditor();
     ~TextMessageLoggerTextEditor();
 
-    void start_Thread(LockFreeQueue<string , settings::text_message_queue_size>& text_message_que);
+    void start_Thread(StringLockFreeQueue<settings::text_message_queue_size>* text_message_quePntr);
     void QueueDataProcessor() override;
 
 private:
-    LockFreeQueue<string, settings::text_message_queue_size>* text_message_queue;
-
+    StringLockFreeQueue<settings::text_message_queue_size>* text_message_queue;
 
 };
 
 
+/*
 void showMessageinEditor(LockFreeQueue<string, settings::text_message_queue_size>* text_message_queue,
                   string message, string header = "", bool clearFirst=false);
+*/
 
 
 

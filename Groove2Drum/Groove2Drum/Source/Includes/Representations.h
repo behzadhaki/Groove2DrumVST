@@ -60,4 +60,3 @@ struct Note{
         note(note_number), velocity(velocity_Value), time(frameStartPpq, audioSamplePos, qpm){
     }
 };
-

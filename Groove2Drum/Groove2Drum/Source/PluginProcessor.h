@@ -30,7 +30,7 @@ public:
     // LockFreeQueue<string, settings::text_message_queue_size> text_message_queue;
 
     unique_ptr<LockFreeQueue<Note, settings::note_queue_size>> note_que; // used to communicate with note logger
-
+    unique_ptr<StringLockFreeQueue<settings::text_message_queue_size>> text_message_queue;
 
     // THreads
     //GrooveThread groove_thread;

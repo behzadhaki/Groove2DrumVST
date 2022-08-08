@@ -128,10 +128,10 @@ TextMessageLoggerTextEditor::~TextMessageLoggerTextEditor()
 
 }
 
-void TextMessageLoggerTextEditor::start_Thread(LockFreeQueue<string , settings::text_message_queue_size>& text_message_que)
+void TextMessageLoggerTextEditor::start_Thread(StringLockFreeQueue<settings::text_message_queue_size>* text_message_quePntr)
 {
-    this->text_message_queue = &text_message_que;
-    this->startThread();
+    text_message_queue = text_message_quePntr;
+    startThread();
 }
 
 void TextMessageLoggerTextEditor::QueueDataProcessor()
@@ -140,15 +140,15 @@ void TextMessageLoggerTextEditor::QueueDataProcessor()
     {
         while (text_message_queue->getNumReady() > 0)
         {
-            string msg;
-            text_message_queue->ReadFrom(&msg, 1); // here cnt result is 3
+            char* msg;
+            msg = text_message_queue->getText();
+            juce::MessageManagerLock mmlock;
 
             if(this->getTotalNumChars()>gui_settings::TextMessageLoggerTextEditor::maxChars)
             {
                 this->clear();
             }
 
-            juce::MessageManagerLock mmlock;
             if (msg == "clear" or msg == "Clear") {
                 this->clear();
             }

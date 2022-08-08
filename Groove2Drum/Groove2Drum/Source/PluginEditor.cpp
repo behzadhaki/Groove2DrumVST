@@ -16,11 +16,11 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     NoteStructLoggerTextEditor.setBounds (100, 40, 500, 100);
     NoteStructLoggerTextEditor.start_Thread(MidiFXProcessorPointer.note_que.get());
 
-    /*// Create TextEditor for Text Messages
+    // Create TextEditor for Text Messages
     addAndMakeVisible (TextMessageLoggerTextEditor);
     TextMessageLoggerTextEditor.setMultiLine (true);
     TextMessageLoggerTextEditor.setBounds (100, 200, 500, 100);
-    TextMessageLoggerTextEditor.start_Thread(MidiFXProcessorPointer.text_message_queue);*/
+    TextMessageLoggerTextEditor.start_Thread(MidiFXProcessorPointer.text_message_queue.get());
 
 
     // Set window size
