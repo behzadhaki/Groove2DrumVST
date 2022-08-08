@@ -7,7 +7,7 @@
 #include "Includes/LockFreeQueueTemplate.h"
 #include <torch/torch.h>
 #include "Model/ModelAPI.h"
-#include "ProcessingThreads/GrooveThread.h"
+//#include "ProcessingThreads/GrooveThread.h"
 
 using namespace std;
 
@@ -25,13 +25,15 @@ public:
 
     // single-producer/single-consumer queues
     // for inter-Thread Communication
-    LockFreeQueue<Note, settings::note_queue_size> incoming_note_que;  // used to communicate with GrooveThread
-    LockFreeQueue<Note, settings::note_queue_size> note_que;        // used to communicate with note logger
-    LockFreeQueue<string, settings::text_message_queue_size> text_message_queue;
+    // LockFreeQueue<Note, settings::note_queue_size> incoming_note_que;   // used to communicate with GrooveThread
+    // LockFreeQueue<Note, settings::note_queue_size> note_que;        // used to communicate with note logger
+    // LockFreeQueue<string, settings::text_message_queue_size> text_message_queue;
+
+    unique_ptr<LockFreeQueue<Note, settings::note_queue_size>> note_que; // used to communicate with note logger
 
 
     // THreads
-    GrooveThread groove_thread;
+    //GrooveThread groove_thread;
     bool groove_thread_ready;
 private:
 

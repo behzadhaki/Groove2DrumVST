@@ -67,9 +67,9 @@ NoteStructLoggerTextEditor::~NoteStructLoggerTextEditor()
 
 }
 
-void NoteStructLoggerTextEditor::start_Thread(LockFreeQueue<Note, settings::note_queue_size>& note_quePntr)
+void NoteStructLoggerTextEditor::start_Thread(LockFreeQueue<Note, settings::note_queue_size>* note_quePntr)
 {
-    note_queP = &note_quePntr;
+    note_queP = note_quePntr;
     this->startThread();
 }
 
@@ -77,7 +77,7 @@ void NoteStructLoggerTextEditor::QueueDataProcessor()
 {
     if (note_queP != nullptr)
     {
-        while (note_queP->getNumReady() > 0)
+        while (note_queP->getNumReady() > 0 and not this->threadShouldExit())
         {
             Note note;
             note_queP->ReadFrom(&note, 1); // here cnt result is 3

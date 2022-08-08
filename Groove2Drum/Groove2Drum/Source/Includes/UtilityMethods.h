@@ -22,7 +22,9 @@ inline void place_note_in_queue(
 
         if (playheadP->getCurrentPosition (position))
         {
-            if (position.isPlaying){
+            // if (position.isPlaying)
+            if (true) // todo replace with previous
+            {
                 // https://forum.juce.com/t/messagemanagerlock-and-thread-shutdown/353/4
                 // read from midi_message_que
                 frameStartPpq = position.ppqPosition;

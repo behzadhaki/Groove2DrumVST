@@ -36,7 +36,7 @@ public:
 
     ~NoteStructLoggerTextEditor();
 
-    void start_Thread(LockFreeQueue<Note, settings::note_queue_size>& note_quePntr);
+    void start_Thread(LockFreeQueue<Note, settings::note_queue_size>* note_quePntr);
 
     void QueueDataProcessor() override;
 

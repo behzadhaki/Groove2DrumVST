@@ -12,11 +12,12 @@ MidiFXProcessor::MidiFXProcessor(){
 
     //groove_thread.startThread();
     //groove_thread_ready = true;
+    note_que = make_unique<LockFreeQueue<Note, settings::note_queue_size>>();
 }
 
 
 MidiFXProcessor::~MidiFXProcessor(){
-    groove_thread.prepareToStop();
+    //groove_thread.prepareToStop();
 }
 
 
@@ -32,8 +33,8 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         auto playhead = getPlayHead();
 
         // send notes to the GrooveThread and also gui logger for notes
-        place_note_in_queue(midiMessages, playhead, &incoming_note_que);
-        place_note_in_queue(midiMessages, playhead, &note_que);
+        // place_note_in_queue(midiMessages, playhead, incoming_note_que.get());
+        place_note_in_queue(midiMessages, playhead, note_que.get());
 
         /*modelAPI.forward_pass(torch::rand({settings::time_steps, settings::num_voices * 3}));
         auto hits_probabilities = modelAPI.get_hits_probabilities();
@@ -44,10 +45,10 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
                             "hits_probabilities",
                             false);*/
 
-        showMessageinEditor(&text_message_queue,
+        /*showMessageinEditor(&text_message_queue,
                             string("NoteReceived \t"),
                             "MESSAGE: ",
-                            false);
+                            false);*/
 
     }
 

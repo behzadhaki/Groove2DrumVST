@@ -14,7 +14,7 @@ public:
 
 private:
     NoteStructLoggerTextEditor NoteStructLoggerTextEditor;
-    TextMessageLoggerTextEditor TextMessageLoggerTextEditor;
+    // TextMessageLoggerTextEditor TextMessageLoggerTextEditor;
     juce::Label SampleRateLabel;
 };
 
