@@ -49,24 +49,19 @@ inline void place_note_in_queue(
 }
 
 
-inline void showMessageinEditor(LockFreeQueue<string, settings::text_message_queue_size>* text_message_queue,
-                         string message, string header, bool clearFirst)
+inline void showMessageinEditor(StringLockFreeQueue<settings::text_message_queue_size>* text_message_queue,
+                                string message, char* header, bool clearFirst)
 {
-    auto txt = string("clear");
     if (clearFirst)
     {
-        text_message_queue->WriteTo(&txt, 1);
+        text_message_queue->addText((char*) "clear");
     }
 
-    if (header != "")
-    {
-        txt = header;
-        text_message_queue->WriteTo(&txt, 1);
-    }
+    text_message_queue->addText(header);
 
-    txt = message;
-    text_message_queue->WriteTo(&txt, 1);
+    char* c_message = const_cast<char*>(message.c_str()); // fixme JUCE Assertion failure in juce_String.cpp:315
+    text_message_queue->addText(c_message);
 
-    txt = string("---------------------");
-    text_message_queue->WriteTo(&txt, 1);
+    text_message_queue->addText((char*) "---------------------");
+
 }
