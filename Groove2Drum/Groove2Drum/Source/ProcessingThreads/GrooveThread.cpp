@@ -4,6 +4,7 @@
 
 #include "GrooveThread.h"
 #include "../settings.h"
+#include "../Includes/UtilityMethods.h"
 
 using namespace torch::indexing;
 
@@ -40,7 +41,8 @@ GrooveThread::GrooveThread():
 void GrooveThread::start_Thread(
     LockFreeQueue<Note, settings::note_queue_size>* incomingNoteQuePntr,
     LockFreeQueue<torch::Tensor, settings::torch_tensor_queue_size>* scaledGrooveQuePntr,
-    float* VelScaleParamPntr
+    float* VelScaleParamPntr,
+    StringLockFreeQueue<settings::text_message_queue_size>* text_message_queue_for_debuggingPntr
 )
 {
     // get the pointer to queues and control parameters instantiated
@@ -48,6 +50,8 @@ void GrooveThread::start_Thread(
     incomingNoteQue = incomingNoteQuePntr;
     VelScaleParam = VelScaleParamPntr;
     scaledGrooveQue = scaledGrooveQuePntr;
+
+    text_message_queue_for_debugging = text_message_queue_for_debuggingPntr;
 
     startThread();
 
@@ -84,8 +88,19 @@ void GrooveThread::run()
 
                 auto groove_event = get_loc_and_offset(read_note);
 
-                DBG("Note PPQ " << read_note.time.ppq << " Pitch " << read_note.note << " Velocity " << read_note.velocity);
-                DBG("Onset Index " << groove_event.grid_index << " Offset " << groove_event.offset << " Velocity " << groove_event.velocity  );
+
+                if (text_message_queue_for_debugging!= nullptr)
+                    {
+                        DBG("HERERERERE");
+                        std::ostringstream oss;
+                        oss << "Note PPQ " << read_note.time.ppq << " Pitch "
+                            << read_note.note << " Velocity " << read_note.velocity;
+                        auto msg = oss.str();
+                        DBG(msg);
+                        showMessageinEditor(
+                            text_message_queue_for_debugging, msg, "", false);
+                    }
+
                 /*NoteProcessor(read_note);
                 GrooveScaler();
                 Send();*/

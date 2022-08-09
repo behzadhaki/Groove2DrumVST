@@ -7,6 +7,7 @@
 // can be used in processor to pass the messages received in a MidiBuffer as is,
 // sequentially in a queue to be shared with other threads
 
+using namespace std;
 
 inline void place_note_in_queue(
     juce::MidiBuffer& midiMessages,
@@ -59,7 +60,7 @@ inline void showMessageinEditor(StringLockFreeQueue<settings::text_message_queue
 
     text_message_queue->addText(header);
 
-    char* c_message = const_cast<char*>(message.c_str()); // fixme JUCE Assertion failure in juce_String.cpp:315
+    char* c_message = const_cast<char*>(message.c_str());
     text_message_queue->addText(c_message);
 
     text_message_queue->addText((char*) "---------------------");

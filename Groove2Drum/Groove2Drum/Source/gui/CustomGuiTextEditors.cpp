@@ -140,8 +140,12 @@ void TextMessageLoggerTextEditor::QueueDataProcessor()
     {
         while (text_message_queue->getNumReady() > 0)
         {
-            char* msg;
-            msg = text_message_queue->getText();
+            char* msg_received;
+            msg_received = text_message_queue->getText();
+            DBG("msg_received");
+            std::string msg(msg_received);
+            DBG(msg);
+
             juce::MessageManagerLock mmlock;
 
             if(this->getTotalNumChars()>gui_settings::TextMessageLoggerTextEditor::maxChars)

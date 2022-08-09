@@ -19,7 +19,8 @@ public:
     void start_Thread(
         LockFreeQueue<Note, settings::note_queue_size>* incomingNoteQuePntr,
         LockFreeQueue<torch::Tensor, settings::torch_tensor_queue_size>* scaledGrooveQuePntr,
-        float* VelScaleParamPntr
+        float* VelScaleParamPntr,
+        StringLockFreeQueue<settings::text_message_queue_size>* text_message_queue_for_debuggingPntr = nullptr
         );
 
     // destructor
@@ -37,7 +38,6 @@ public:
     void reset_groove();
 
 private:
-
 
     void NoteProcessor(Note latest_Note); // updates the internal groove
     void GrooveScaler();                  // scales the groove
@@ -76,8 +76,10 @@ private:
     // int find_nearest_gridline(float ppq);
     // bool shouldReplace(Note latest_Note);
 
+    //----------------------------------------------------------------------
 
-
+    //---- Debugger -------------------------------------
+    StringLockFreeQueue<settings::text_message_queue_size>* text_message_queue_for_debugging;
     //----------------------------------------------------------------------
 
 };

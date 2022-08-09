@@ -21,7 +21,8 @@ MidiFXProcessor::MidiFXProcessor(){
     VelScaleParam = make_unique<float>();
     scaledGrooveQue = make_unique<LockFreeQueue<torch::Tensor, settings::torch_tensor_queue_size>> ();
 
-    grooveThread.start_Thread(incomingNoteQue.get(), scaledGrooveQue.get(), VelScaleParam.get());
+
+    grooveThread.start_Thread(incomingNoteQue.get(), scaledGrooveQue.get(), VelScaleParam.get(), text_message_queue.get());
 
 
 }
@@ -67,7 +68,7 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
                             false);*/
 
         //text_message_queue->addText("TEST");
-        showMessageinEditor(text_message_queue.get(),
+        /*showMessageinEditor(text_message_queue.get(),
                             tensor2string(test_tensor),
                             "hits_probabilities",
                             true);
@@ -75,7 +76,7 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         showMessageinEditor(text_message_queue.get(),
                             "xsdgsd",
                             "test",
-                            false);
+                            false);*/
 
 
     }
