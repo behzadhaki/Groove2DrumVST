@@ -111,9 +111,6 @@ void NoteStructLoggerTextEditor::QueueDataProcessor()
 
 TextMessageLoggerTextEditor::TextMessageLoggerTextEditor(): LoggerTextEditorTemplate()
 {
-    if (text_message_queue==nullptr)
-        DBG("NULL text_message_queue");
-
     TextEditorLabel.setText ("TextMessage", juce::dontSendNotification);
     TextEditorLabel.attachToComponent (this, juce::Justification::top);
     TextEditorLabel.setColour (juce::Label::textColourId, juce::Colours::white);
@@ -138,13 +135,10 @@ void TextMessageLoggerTextEditor::QueueDataProcessor()
 {
     if (text_message_queue != nullptr)
     {
+        string msg_received;
         while (text_message_queue->getNumReady() > 0)
         {
-            char* msg_received;
             msg_received = text_message_queue->getText();
-            DBG("msg_received");
-            std::string msg(msg_received);
-            DBG(msg);
 
             juce::MessageManagerLock mmlock;
 
@@ -153,12 +147,12 @@ void TextMessageLoggerTextEditor::QueueDataProcessor()
                 this->clear();
             }
 
-            if (msg == "clear" or msg == "Clear") {
+            if (msg_received == "clear" or msg_received == "Clear") {
                 this->clear();
             }
             else
             {
-                insertTextAtCaret(msg);
+                insertTextAtCaret(msg_received);
                 insertTextAtCaret(juce::newLine);
             }
         }

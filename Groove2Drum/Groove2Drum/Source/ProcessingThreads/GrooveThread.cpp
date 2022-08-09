@@ -88,17 +88,15 @@ void GrooveThread::run()
 
                 auto groove_event = get_loc_and_offset(read_note);
 
-
                 if (text_message_queue_for_debugging!= nullptr)
-                    {
-                        DBG("HERERERERE");
-                        std::ostringstream oss;
-                        oss << "Note PPQ " << read_note.time.ppq << " Pitch "
-                            << read_note.note << " Velocity " << read_note.velocity;
-                        auto msg = oss.str();
-                        DBG(msg);
+                    {std::ostringstream msg_stream;
+                        msg_stream << "groove_event grid_index" << groove_event.grid_index
+                                   << " offset " << groove_event.offset
+                                   << " velocity " << groove_event.velocity;
+
                         showMessageinEditor(
-                            text_message_queue_for_debugging, msg, "", false);
+                            text_message_queue_for_debugging, msg_stream.str(),
+                            "groove_event in groove_thread", false);
                     }
 
                 /*NoteProcessor(read_note);

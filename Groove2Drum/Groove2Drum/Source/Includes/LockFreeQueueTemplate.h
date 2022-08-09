@@ -7,12 +7,14 @@
 #include <shared_plugin_helpers/shared_plugin_helpers.h>
 #include "Representations.h"
 
+using namespace std;
+
 template<int queue_size> class StringLockFreeQueue
 {
 private:
     //juce::ScopedPointer<juce::AbstractFifo> lockFreeFifo;   depreciated!!
-    std::unique_ptr<juce::AbstractFifo> lockFreeFifo;
-    char* data[queue_size];
+    unique_ptr<juce::AbstractFifo> lockFreeFifo;
+    string data[queue_size];
 
 public:
     StringLockFreeQueue()
@@ -22,7 +24,7 @@ public:
             new juce::AbstractFifo(queue_size));
     }
 
-    void addText (char* writeText)
+    void addText (string writeText)
     {
         int start1, start2, blockSize1, blockSize2;
 
@@ -35,7 +37,7 @@ public:
         lockFreeFifo->finishedWrite(1);
     }
 
-    char* getText()
+    string getText()
     {
         int start1, start2, blockSize1, blockSize2;
 
@@ -43,7 +45,7 @@ public:
             1, start1, blockSize1,
             start2, blockSize2);
 
-        char* retrievedText;
+        string retrievedText;
         retrievedText = data[start1];
 
         lockFreeFifo -> finishedRead(1);
