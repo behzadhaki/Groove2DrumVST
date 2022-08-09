@@ -6,14 +6,24 @@
 
 using namespace std;
 
+
 MidiFXProcessor::MidiFXProcessor(){
     modelAPI = MonotonicGrooveTransformerV1 (settings::default_model_path, settings::time_steps,  settings::num_voices);
     //groove_thread_ready = false;
 
-    //groove_thread.startThread();
-    //groove_thread_ready = true;
+    //editor queues
     note_que = make_unique<LockFreeQueue<Note, settings::note_queue_size>>();
     text_message_queue = make_unique<StringLockFreeQueue<settings::text_message_queue_size>>();
+
+    //groove thread params
+
+    incomingNoteQue = make_unique<LockFreeQueue<Note, settings::note_queue_size>>();
+    VelScaleParam = make_unique<float>();
+    scaledGrooveQue = make_unique<LockFreeQueue<torch::Tensor, settings::torch_tensor_queue_size>> ();
+
+    grooveThread.start_Thread(incomingNoteQue.get(), scaledGrooveQue.get(), VelScaleParam.get());
+
+
 }
 
 auto test_tensor = torch::randn({32, 9});
@@ -37,6 +47,7 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         // send notes to the GrooveThread and also gui logger for notes
         // place_note_in_queue(midiMessages, playhead, incoming_note_que.get());
         place_note_in_queue(midiMessages, playhead, note_que.get());
+        place_note_in_queue(midiMessages, playhead, incomingNoteQue.get());
 
 
 

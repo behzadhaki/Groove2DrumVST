@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../PluginProcessor.h"
+#include <shared_plugin_helpers/shared_plugin_helpers.h>
 #include "Representations.h"
 
 template<int queue_size> class StringLockFreeQueue

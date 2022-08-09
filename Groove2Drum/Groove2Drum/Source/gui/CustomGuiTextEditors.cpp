@@ -111,7 +111,7 @@ void NoteStructLoggerTextEditor::QueueDataProcessor()
 
 TextMessageLoggerTextEditor::TextMessageLoggerTextEditor(): LoggerTextEditorTemplate()
 {
-    if (text_message_queue==NULL)
+    if (text_message_queue==nullptr)
         DBG("NULL text_message_queue");
 
     TextEditorLabel.setText ("TextMessage", juce::dontSendNotification);

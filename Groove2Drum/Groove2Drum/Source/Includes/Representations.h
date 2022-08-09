@@ -5,7 +5,6 @@
 
 // #include <utility>
 
-#include "../PluginProcessor.h"
 #include "../settings.h"
 
 // the onset of midi message has two attributes: (1) the ppq of the beginning of the frame
@@ -59,4 +58,18 @@ struct Note{
     Note(int note_number, float velocity_Value, double frameStartPpq, double audioSamplePos, double qpm):
         note(note_number), velocity(velocity_Value), time(frameStartPpq, audioSamplePos, qpm){
     }
+};
+
+
+struct GrooveEvent{
+    int grid_index;
+    double offset;
+    double velocity;
+    GrooveEvent()
+    {}
+
+    GrooveEvent(int grid_index_, double offset_, double velocity_):
+        grid_index(grid_index_), offset(offset_), velocity(velocity_)
+    {}
+
 };

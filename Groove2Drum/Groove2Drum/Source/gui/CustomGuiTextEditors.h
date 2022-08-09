@@ -34,7 +34,7 @@ class NoteStructLoggerTextEditor: public LoggerTextEditorTemplate
 public:
     NoteStructLoggerTextEditor();
 
-    ~NoteStructLoggerTextEditor();
+    ~NoteStructLoggerTextEditor() override;
 
     void start_Thread(LockFreeQueue<Note, settings::note_queue_size>* note_quePntr);
 
@@ -52,7 +52,7 @@ class TextMessageLoggerTextEditor: public LoggerTextEditorTemplate
 {
 public:
     TextMessageLoggerTextEditor();
-    ~TextMessageLoggerTextEditor();
+    ~TextMessageLoggerTextEditor() override;
 
     void start_Thread(StringLockFreeQueue<settings::text_message_queue_size>* text_message_quePntr);
     void QueueDataProcessor() override;
