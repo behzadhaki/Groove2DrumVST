@@ -49,25 +49,32 @@ inline void place_note_in_queue(
     }
 }
 
+
 inline string stream2string(std::ostringstream msg_stream)
 {
     return msg_stream.str();
 }
 
+
+
 inline void showMessageinEditor(StringLockFreeQueue<settings::text_message_queue_size>* text_message_queue,
                                 string message, string header, bool clearFirst)
 {
-    if (clearFirst)
+    if (text_message_queue!=nullptr)
     {
-        text_message_queue->addText((char*) "clear");
+        if (clearFirst)
+        {
+            text_message_queue->addText((char*) "clear");
+        }
+
+        text_message_queue->addText(header);
+
+        /*char* c_message = const_cast<char*>(message.c_str());
+        text_message_queue->addText(c_message);*/
+
+        text_message_queue->addText(message);
+        text_message_queue->addText((char*) "---------------------");
     }
 
-    text_message_queue->addText(header);
-
-    /*char* c_message = const_cast<char*>(message.c_str());
-    text_message_queue->addText(c_message);*/
-
-    text_message_queue->addText(message);
-    text_message_queue->addText((char*) "---------------------");
 
 }

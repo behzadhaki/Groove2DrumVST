@@ -5,26 +5,10 @@
 #include "GrooveThread.h"
 #include "../settings.h"
 #include "../Includes/UtilityMethods.h"
+#include "../Includes/Representations.h"
 
 using namespace torch::indexing;
 
-GrooveEvent get_loc_and_offset (Note note_)
-{
-    // Converts a note to a groove event
-
-    auto ppq = note_.time.ppq;
-    std::vector<double> a{0, 0};
-    auto _16_note_ppq = 0.25;
-    auto _32_note_ppq = 0.125;
-    auto _n_16_notes = 32;
-    auto _max_offset = 0.5;
-
-    auto div = round(ppq / _16_note_ppq);
-    auto offset = (ppq - (div * _16_note_ppq)) /_32_note_ppq * _max_offset;
-    auto index = fmod(div, _n_16_notes);
-
-    return GrooveEvent(index, offset, note_.velocity);
-}
 
 GrooveThread::GrooveThread():
     juce::Thread("Groove_Thread")
@@ -76,28 +60,22 @@ void GrooveThread::run()
 
     Note read_note;
 
-
-
     while (!bExit)
     {
         if (incomingNoteQue != nullptr)
         {
             while (incomingNoteQue->getNumReady() > 0 and not this->threadShouldExit())
             {
+                // Step 1. Convert Note to GrooveEvent
+                //      (i.e. get rid of pitch info, and calculate grid_index and
+                //      offset)
                 incomingNoteQue->ReadFrom(&read_note, 1); // here cnt result is 3
+                GrooveEvent groove_event(read_note);
+                showMessageinEditor(
+                    text_message_queue_for_debugging, groove_event.getStringDescription(),
+                    "groove_event in groove_thread", false);
 
-                auto groove_event = get_loc_and_offset(read_note);
 
-                if (text_message_queue_for_debugging!= nullptr)
-                    {std::ostringstream msg_stream;
-                        msg_stream << "groove_event grid_index" << groove_event.grid_index
-                                   << " offset " << groove_event.offset
-                                   << " velocity " << groove_event.velocity;
-
-                        showMessageinEditor(
-                            text_message_queue_for_debugging, msg_stream.str(),
-                            "groove_event in groove_thread", false);
-                    }
 
                 /*NoteProcessor(read_note);
                 GrooveScaler();

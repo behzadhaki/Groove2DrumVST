@@ -7,11 +7,19 @@
 
 #include "../settings.h"
 
-// the onset of midi message has two attributes: (1) the ppq of the beginning of the frame
-// (2) the number of AUDIO samples from the beginning of the frame
-// hence we need to use the sample rate and the qpm from the daw to calculate
-// absolute ppq of the onset. Look into NppqPosB structure
+using namespace std;
+
+/**the onset of midi message has two attributes: (1) the ppq of the beginning of the frame
+     * (2) the number of AUDIO samples from the beginning of the frame
+     * hence we need to use the sample rate and the qpm from the daw to calculate
+     * absolute ppq of the onset. Look into NppqPosB structure
+     *
+     * \param ppq (double): time in ppq
+     *
+     * Used in Note Structure (see for instantiation example)
+     */
 struct onset_time{
+
     // exact position of onset with respect to ppq
     double ppq;
 
@@ -43,11 +51,20 @@ struct onset_time{
 
 };
 
-// A note structure holding the note number for an onset along with
-// ppq position -->  defined as the ration of quarter note
-// onset_time (struct see above) --> structure holding absolute ppq with implemented
-// utilities for quick conversions for buffer to processsor OR processor to buffer  cases
+
+/**
+     * A note structure holding the note number for an onset along with
+     * ppq position -->  defined as the ration of quarter note
+     * onset_time (struct see above) --> structure holding absolute ppq with implemented
+     * utilities for quick conversions for buffer to processsor OR processor to buffer  cases
+     *
+     * \param note (int): midi note number of the Note object
+     * \param velocity (float): velocity of the note
+     * \param time (onset_time): structure for onset time of the note (see onset_time)
+     *
+     */
 struct Note{
+
     int note;
     float velocity;
     onset_time time;
@@ -61,15 +78,58 @@ struct Note{
 };
 
 
+/**
+     * Structure holding the information regarding a registered note to be placed in
+     * groove_buffer
+     *
+     * \param grid_index (int): grid index closest to the onset
+     * \param actual_onset_time (double): actual ppq of the registered onset
+     * \param  offset (double): deviation from the gridline
+     * \param velocity (double): velocity of note
+     */
+
 struct GrooveEvent{
+
     int grid_index;
+    double actual_onset_time;
     double offset;
     double velocity;
+
     GrooveEvent()
     {}
 
-    GrooveEvent(int grid_index_, double offset_, double velocity_):
-        grid_index(grid_index_), offset(offset_), velocity(velocity_)
+    GrooveEvent(int grid_index_, double actual_onset_time_, double offset_, double velocity_):
+        grid_index(grid_index_), actual_onset_time(actual_onset_time_), offset(offset_), velocity(velocity_)
     {}
+
+    GrooveEvent(Note note_)
+    {
+        // Converts a note to a groove event
+
+        auto ppq = note_.time.ppq;
+        auto _16_note_ppq = 0.25;
+        auto _32_note_ppq = 0.125;
+        auto _n_16_notes = 32;
+        auto _max_offset = 0.5;
+        auto div = round(ppq / _16_note_ppq);
+
+        offset = (ppq - (div * _16_note_ppq)) /_32_note_ppq * _max_offset;
+        grid_index = fmod(div, _n_16_notes);
+
+        actual_onset_time = ppq;
+        velocity = note_.velocity;
+
+    }
+
+    // converts the data to a string message to be printed/displayed
+    string getStringDescription()
+    {
+        std::ostringstream msg_stream;
+        msg_stream << "groove_event " << actual_onset_time
+                   << ", grid_index " << grid_index
+                   << ", offset " << offset
+                   << ", velocity " << velocity;
+        return msg_stream.str();
+    }
 
 };
