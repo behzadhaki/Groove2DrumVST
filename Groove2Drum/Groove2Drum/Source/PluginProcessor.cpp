@@ -15,14 +15,17 @@ MidiFXProcessor::MidiFXProcessor(){
     note_que = make_unique<LockFreeQueue<Note, settings::note_queue_size>>();
     text_message_queue = make_unique<StringLockFreeQueue<settings::text_message_queue_size>>();
 
-    //groove thread params
+    // control paramer queues
+    VelScaleParamQue = make_unique<LockFreeQueue<float, settings::control_params_queue_size>>();
+    samplingThreshQue = make_unique<LockFreeQueue<std::vector<float>, settings::control_params_queue_size>>();
 
+
+    //groove thread params
     incomingNoteQue = make_unique<LockFreeQueue<Note, settings::note_queue_size>>();
-    VelScaleParam = make_unique<float>();
     scaledGrooveQue = make_unique<LockFreeQueue<torch::Tensor, settings::torch_tensor_queue_size>> ();
 
 
-    grooveThread.start_Thread(incomingNoteQue.get(), scaledGrooveQue.get(), VelScaleParam.get(), text_message_queue.get());
+    grooveThread.start_Thread(incomingNoteQue.get(), scaledGrooveQue.get(), VelScaleParamQue.get(), text_message_queue.get());
 
 
 }

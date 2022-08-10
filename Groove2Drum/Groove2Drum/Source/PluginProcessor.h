@@ -33,6 +33,9 @@ public:
     unique_ptr<LockFreeQueue<Note, settings::note_queue_size>> note_que; // used to communicate with note logger
     unique_ptr<StringLockFreeQueue<settings::text_message_queue_size>> text_message_queue;
 
+    // control parameter queues (shared between threads and editor)
+    unique_ptr<LockFreeQueue<float, settings::control_params_queue_size>>  VelScaleParamQue;
+    unique_ptr<LockFreeQueue<std::vector<float>, settings::control_params_queue_size>>  samplingThreshQue;
 
 
 private:
@@ -43,8 +46,8 @@ private:
     // THreads
     //GrooveThread groove_thread;
     unique_ptr<LockFreeQueue<Note, settings::note_queue_size>>  incomingNoteQue;
-    unique_ptr<float>  VelScaleParam;
     unique_ptr<LockFreeQueue<torch::Tensor, settings::torch_tensor_queue_size>>  scaledGrooveQue;
+
 
     // groove thread
     GrooveThread grooveThread;

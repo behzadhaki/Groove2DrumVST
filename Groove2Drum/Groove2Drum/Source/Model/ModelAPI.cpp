@@ -5,11 +5,22 @@
 #include "ModelAPI.h"
 #include "../settings.h"
 
+using namespace std;
+
+static torch::Tensor vector2tensor(vector<float> vec)
+{
+    auto opts = torch::TensorOptions().dtype(torch::kFloat32);
+    auto size = (int) vec.size();
+    torch::Tensor t = torch::from_blob(vec.data(), {size}, opts).to(torch::kFloat32);
+    return t;
+}
+
+
 //default constructor
 MonotonicGrooveTransformerV1::MonotonicGrooveTransformerV1(){}
 
 MonotonicGrooveTransformerV1::MonotonicGrooveTransformerV1(std::string model_path, int time_steps_, int num_voices_):
-    time_steps(time_steps_), num_voices(num_voices_),per_voice_sampling_thresholds(default_sampling_thresholds)
+    time_steps(time_steps_), num_voices(num_voices_)
 {
     model = LoadModel(model_path, true);
     hits_logits = torch::zeros({time_steps_, num_voices_});
@@ -17,6 +28,7 @@ MonotonicGrooveTransformerV1::MonotonicGrooveTransformerV1(std::string model_pat
     hits = torch::zeros({time_steps_, num_voices_});
     velocities = torch::zeros({time_steps_, num_voices_});
     offsets = torch::zeros({time_steps_, num_voices_});
+    per_voice_sampling_thresholds = vector2tensor(default_sampling_thresholds);
 }
 
 // getters
@@ -27,12 +39,12 @@ torch::Tensor MonotonicGrooveTransformerV1::get_offsets() { return offsets; }
 
 
 // setters
-void MonotonicGrooveTransformerV1::set_sampling_thresholds(torch::Tensor per_voice_thresholds)
+void MonotonicGrooveTransformerV1::set_sampling_thresholds(vector<float> per_voice_thresholds)
 {
-    assert(per_voice_thresholds.sizes()[0]==num_voices &&
+    assert(per_voice_thresholds.size()==num_voices &&
            "thresholds dim [num_voices]");
 
-    per_voice_sampling_thresholds = per_voice_thresholds;
+    per_voice_sampling_thresholds = vector2tensor(per_voice_thresholds);
 }
 
 

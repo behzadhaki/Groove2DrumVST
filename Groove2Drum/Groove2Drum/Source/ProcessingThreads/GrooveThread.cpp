@@ -21,19 +21,20 @@ GrooveThread::GrooveThread():
 
     gridlines = torch::range(0, 7.9, 0.25);
 
+    VelScaleParam = 1.0;
 }
 
 void GrooveThread::start_Thread(
     LockFreeQueue<Note, settings::note_queue_size>* incomingNoteQuePntr,
     LockFreeQueue<torch::Tensor, settings::torch_tensor_queue_size>* scaledGrooveQuePntr,
-    float* VelScaleParamPntr,
+    LockFreeQueue<float, settings::control_params_queue_size>* VelScaleParamQuePntr,
     StringLockFreeQueue<settings::text_message_queue_size>* text_message_queue_for_debuggingPntr
 )
 {
     // get the pointer to queues and control parameters instantiated
     // in the main processor thread
     incomingNoteQue = incomingNoteQuePntr;
-    VelScaleParam = VelScaleParamPntr;
+    VelScaleParamQue = VelScaleParamQuePntr;
     scaledGrooveQue = scaledGrooveQuePntr;
 
     text_message_queue_for_debugging = text_message_queue_for_debuggingPntr;
@@ -118,7 +119,7 @@ void GrooveThread::NoteProcessor(Note latest_Note)
 
 void GrooveThread::GrooveScaler()
 {
-    groove_overdubbed = groove_overdubbed * (*VelScaleParam);
+    groove_overdubbed = groove_overdubbed * (VelScaleParam);
 }
 
 void GrooveThread::Send()

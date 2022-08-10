@@ -7,7 +7,7 @@
 
 #include <torch/script.h> // One-stop header.
 
-#define default_sampling_thresholds torch::tensor({0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5})
+#define default_sampling_thresholds std::vector<float>({0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5})
 
 // Voice Mappings corresponding to Kick, Snare, CH, OH, LoT, MidT, HiT, Crash, Ride
 #define nine_voice_kit std::vector<int>({36, 38, 42, 46, 43, 47, 50, 49, 51})
@@ -21,6 +21,7 @@ namespace settings
     constexpr int note_queue_size { 512 };
     constexpr int torch_tensor_queue_size { 512 };
     constexpr int text_message_queue_size { 512 };
+    constexpr int control_params_queue_size { 512 };
 
     // sample rate
     constexpr int sample_rate { 44100 };

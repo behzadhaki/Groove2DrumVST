@@ -7,7 +7,7 @@
 
 #include <torch/script.h> // One-stop header.
 using namespace torch::indexing;
-
+using namespace std;
 
 /**
  * API for loading the trained MonotonicGroove model
@@ -26,7 +26,7 @@ public:
     torch::Tensor get_offsets();
 
     // setters
-    void set_sampling_thresholds(torch::Tensor per_voice_thresholds);
+    void set_sampling_thresholds(vector<float> per_voice_thresholds);
 
     // Step 1. Passes input through the model and updates logits, vels and offsets
     void forward_pass(torch::Tensor monotonicGrooveInput);
@@ -44,7 +44,6 @@ private:
     torch::Tensor velocities;
     torch::Tensor offsets;
     torch::Tensor per_voice_sampling_thresholds;            // per voice thresholds for sampling
-
 
 };
 
