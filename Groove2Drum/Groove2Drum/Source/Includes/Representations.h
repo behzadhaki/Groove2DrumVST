@@ -70,21 +70,30 @@ struct onset_time{
      * ppq position -->  defined as the ration of quarter note
      * onset_time (struct see above) --> structure holding absolute ppq with implemented
      * utilities for quick conversions for buffer to processsor OR processor to buffer  cases
+     * \n\n
+     *
+     * can create object three ways:
+     *          \n\t\t 1. default empty note using Note()
+     *          \n\t\t 2. notes received in AudioProcessorBlock using second constructor
+     *                  (see place_note_in_queue() in Includes/UtilityMethods.h)
+     *          \n\t\t 3. creating notes obtained from hvo (i.e. using ppq, note number and vel)
+     *                  (see HVO::getNotes() below)
      *
      * \param note (int): midi note number of the Note object
      * \param velocity (float): velocity of the note
      * \param time (onset_time): structure for onset time of the note (see onset_time)
      *
      */
-
-
-
 struct Note{
 
     int note;
     float velocity;
     onset_time time;
 
+    bool capturedInLoop = false;        // useful for overdubbing calculations in
+                                        // HVO::addNote(note_, shouldOverdub)
+    bool capturedInPlaying = false;     // useful for checking if note was played while
+                                        // playhead was playing
     // default constructor for empty instantiation
     Note() = default;
 
@@ -134,7 +143,6 @@ struct Note{
      * \param  offset (double): deviation from the gridline
      * \param velocity (double): velocity of note
      */
-
 struct GrooveEvent{
 
     int grid_index;
@@ -176,6 +184,11 @@ struct GrooveEvent{
 };
 
 
+/**
+ * Converts a torch tensor to a string
+ * @param torch::tensor
+ * @return std::string
+ */
 inline std::string torch2string (const torch::Tensor& tensor)
 {
     std::ostringstream stream;
@@ -185,6 +198,13 @@ inline std::string torch2string (const torch::Tensor& tensor)
 }
 
 
+/// HVO structure for t time_steps and n num_voices
+/// \n . Stores hits, velocities and offsets separately.
+/// \n . can also create a random HVO quickly using HVO::Random()
+/// \n . can automatically prepare and return notes extracted
+///     from the HVO score see HVO::getNotes()
+/// \tparam time_steps_
+/// \tparam num_voices_
 template <int time_steps_, int num_voices_> struct HVO
 {
     int time_steps;
@@ -193,6 +213,7 @@ template <int time_steps_, int num_voices_> struct HVO
     torch::Tensor velocities;
     torch::Tensor offsets;
 
+    /// Default Constructor
     HVO()
     {
         num_voices = num_voices_;
@@ -202,11 +223,17 @@ template <int time_steps_, int num_voices_> struct HVO
         offsets = torch::zeros({time_steps, num_voices});
     }
 
+    /**
+     *
+     * @param hits_
+     * @param velocities_
+     * @param offsets_
+     */
     HVO(torch::Tensor hits_, torch::Tensor velocities_, torch::Tensor offsets_):
         hits(std::move(hits_)), velocities(std::move(velocities_)), offsets(std::move(offsets_)), time_steps(time_steps_),
         num_voices(num_voices_){}
 
-    void Random()
+    void randomize()
     {
         auto hits_old = torch::rand({time_steps, num_voices});
         hits = torch::zeros({time_steps, num_voices});
@@ -226,6 +253,11 @@ template <int time_steps_, int num_voices_> struct HVO
 
         velocities = velocities * hits;
         offsets = offsets * hits;
+    }
+
+    void addNote(Note note_, bool shouldOverdub)
+    {
+
     }
 
     string getStringDescription()

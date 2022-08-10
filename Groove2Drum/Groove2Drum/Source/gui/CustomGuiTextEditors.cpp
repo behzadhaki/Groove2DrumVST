@@ -5,17 +5,7 @@
 #include "CustomGuiTextEditors.h"
 
 
-/*
-  *
-  * A template class for A TextEditor that runs a separate thread in which continuosly
-  * reads data (if any) from a provided queue and prints it on screen
-  * to use the template (see example class MidiNoteValueLoggerTextEditor):
-  *     1.  override the QueueDataProcessor() --> define what needs to be done
-  *             on the data received from the queue
-  *     2.  implement a start_Thread method which gets access to a queue and
-  *             calls the run() method
-  * TO RECAP! MUST override QueueDataProcessor and implement a start_Thread method
-*/
+
 LoggerTextEditorTemplate::LoggerTextEditorTemplate():juce::TextEditor(), juce::Thread("Thread")
 {
     this->setMultiLine (true);
@@ -90,10 +80,7 @@ void NoteStructLoggerTextEditor::QueueDataProcessor()
             }
 
             insertTextAtCaret(
-                "N: "+
-                juce::String(note.note)+"\t "+
-                juce::String(note.velocity, 2)+"\t "+
-                juce::String(note.time.ppq, 4) + "||");
+                note.getStringDescription());
 
             this->numNotesPrintedOnLine += 1;
 

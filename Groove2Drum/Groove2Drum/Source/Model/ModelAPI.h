@@ -9,6 +9,9 @@
 using namespace torch::indexing;
 
 
+/**
+ * API for loading the trained MonotonicGroove model
+ */
 class MonotonicGrooveTransformerV1
 {
 public:

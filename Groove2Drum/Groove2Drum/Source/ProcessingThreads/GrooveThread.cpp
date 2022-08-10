@@ -62,16 +62,16 @@ void GrooveThread::run()
     Note read_note;
 
     HVO<settings::time_steps, 2> groove_unscaled;
-    groove_unscaled.Random();
+    groove_unscaled.randomize();
     vector<Note> notes_from_hvo = groove_unscaled.getNotes();
 
-    DBG(torch2string(groove_unscaled.offsets));
+    /*DBG(torch2string(groove_unscaled.offsets));
 
     for (int i=0; i<notes_from_hvo.size();i++)
     {
         DBG(notes_from_hvo[i].getStringDescription());
     }
-
+    */
 
     while (!bExit)
     {

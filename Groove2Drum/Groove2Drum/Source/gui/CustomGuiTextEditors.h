@@ -12,6 +12,17 @@
 #include "../PluginProcessor.h"
 #include "../settings.h"
 
+/*
+  *
+  * A template class for A TextEditor that runs a separate thread in which continuosly
+  * reads data (if any) from a provided queue and prints it on screen
+  * to use the template (see example class MidiNoteValueLoggerTextEditor):
+  *     1.  override the QueueDataProcessor() --> define what needs to be done
+  *             on the data received from the queue
+  *     2.  implement a start_Thread method which gets access to a queue and
+  *             calls the run() method
+  * TO RECAP! MUST override QueueDataProcessor and implement a start_Thread method
+*/
 class LoggerTextEditorTemplate: public juce::TextEditor, public juce::Thread
 {
 public:
@@ -29,6 +40,10 @@ public:
 };
 
 
+/**
+ * A GUI TextEditor with a separate thread for receiving and displaying
+ * Note instances
+ */
 class NoteStructLoggerTextEditor: public LoggerTextEditorTemplate
 {
 public:
@@ -48,6 +63,10 @@ private:
 };
 
 
+/**
+ * A GUI TextEditor with a separate thread for receiving and displaying
+ * String messages
+ */
 class TextMessageLoggerTextEditor: public LoggerTextEditorTemplate
 {
 public:
@@ -63,10 +82,6 @@ private:
 };
 
 
-/*
-void showMessageinEditor(LockFreeQueue<string, settings::text_message_queue_size>* text_message_queue,
-                  string message, string header = "", bool clearFirst=false);
-*/
 
 
 

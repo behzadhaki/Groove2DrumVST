@@ -11,6 +11,13 @@
 
 using namespace std;
 
+/**
+ * converts a note_on message received in the processor into a Note instance
+ * then sends it to receiver thread using the provided note_que
+ * @param midiMessages (juce::MidiBuffer&)
+ * @param playheadP (juce::AudioPlayHead*)
+ * @param note_que  (LockFreeQueue<Note, settings::note_queue_size>*)
+ */
 inline void place_note_in_queue(
     juce::MidiBuffer& midiMessages,
     juce::AudioPlayHead* playheadP,
@@ -18,6 +25,8 @@ inline void place_note_in_queue(
 {
     double frameStartPpq = 0;
     double qpm = 0;
+    bool isPlaying = false;
+    bool isLooping = false;
 
     if (playheadP)
     {
@@ -25,28 +34,30 @@ inline void place_note_in_queue(
 
         if (playheadP->getCurrentPosition (position))
         {
-            // if (position.isPlaying)
-            if (true) // todo replace with previous
-            {
-                // https://forum.juce.com/t/messagemanagerlock-and-thread-shutdown/353/4
-                // read from midi_message_que
-                frameStartPpq = position.ppqPosition;
-                qpm = position.bpm;
 
-                for (auto m: midiMessages)
+            // https://forum.juce.com/t/messagemanagerlock-and-thread-shutdown/353/4
+            // read from midi_message_que
+            frameStartPpq = position.ppqPosition;
+            qpm = position.bpm;
+            isPlaying = position.isPlaying;
+            isLooping = position.isLooping;
+
+            for (auto m: midiMessages)
+            {
+                auto message = m.getMessage();
+                if (message.isNoteOn())
                 {
-                    auto message = m.getMessage();
-                    if (message.isNoteOn())
-                    {
-                        Note note(message.getNoteNumber(),
-                                  message.getFloatVelocity(),
-                                  frameStartPpq,
-                                  message.getTimeStamp(),
-                                  qpm);
-                        note_que->WriteTo(&note, 1);
-                    }
+                    Note note(message.getNoteNumber(),
+                              message.getFloatVelocity(),
+                              frameStartPpq,
+                              message.getTimeStamp(),
+                              qpm);
+                    note.capturedInPlaying = isPlaying;
+                    note.capturedInLoop = isLooping;
+                    note_que->WriteTo(&note, 1);
                 }
             }
+
         }
     }
 }
@@ -57,8 +68,15 @@ inline string stream2string(std::ostringstream msg_stream)
     return msg_stream.str();
 }
 
-
-
+/**
+ * Sends a string along with header to a logger thread using the specified queue
+ *
+ * @param text_message_queue (StringLockFreeQueue<settings::text_message_queue_size>*):
+ *                          queue for communicating with message receiver thread
+ * @param message (string): main message to display
+ * @param header  (string): message to be printed as a header before showing message
+ * @param clearFirst (bool): if true, empties receiving gui thread before display
+ */
 inline void showMessageinEditor(StringLockFreeQueue<settings::text_message_queue_size>* text_message_queue,
                                 string message, string header, bool clearFirst)
 {
