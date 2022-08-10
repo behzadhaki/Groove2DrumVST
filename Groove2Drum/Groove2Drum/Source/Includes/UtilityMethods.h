@@ -3,6 +3,8 @@
 //
 
 #include "../settings.h"
+#include <torch/torch.h>
+#include "Representations.h"
 
 // can be used in processor to pass the messages received in a MidiBuffer as is,
 // sequentially in a queue to be shared with other threads
@@ -76,5 +78,14 @@ inline void showMessageinEditor(StringLockFreeQueue<settings::text_message_queue
         text_message_queue->addText((char*) "---------------------");
     }
 
+}
 
+
+// converts a tensor to string to be used with DBG for debugging
+inline std::string tensor2string (torch::Tensor tensor)
+{
+    std::ostringstream stream;
+    stream << tensor;
+    std::string tensor_string = stream.str();
+    return tensor_string;
 }

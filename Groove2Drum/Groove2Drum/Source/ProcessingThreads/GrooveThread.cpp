@@ -3,11 +3,12 @@
 //
 
 #include "GrooveThread.h"
-#include "../settings.h"
 #include "../Includes/UtilityMethods.h"
-#include "../Includes/Representations.h"
+
 
 using namespace torch::indexing;
+
+
 
 
 GrooveThread::GrooveThread():
@@ -60,6 +61,18 @@ void GrooveThread::run()
 
     Note read_note;
 
+    HVO<settings::time_steps, 2> groove_unscaled;
+    groove_unscaled.Random();
+    vector<Note> notes_from_hvo = groove_unscaled.getNotes();
+
+    DBG(torch2string(groove_unscaled.offsets));
+
+    for (int i=0; i<notes_from_hvo.size();i++)
+    {
+        DBG(notes_from_hvo[i].getStringDescription());
+    }
+
+
     while (!bExit)
     {
         if (incomingNoteQue != nullptr)
@@ -71,9 +84,9 @@ void GrooveThread::run()
                 //      offset)
                 incomingNoteQue->ReadFrom(&read_note, 1); // here cnt result is 3
                 GrooveEvent groove_event(read_note);
-                showMessageinEditor(
+                /*showMessageinEditor(
                     text_message_queue_for_debugging, groove_event.getStringDescription(),
-                    "groove_event in groove_thread", false);
+                    "groove_event in groove_thread", false);*/
 
 
 
