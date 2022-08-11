@@ -35,13 +35,10 @@ public:
     // run() is explicitly called
     void run() override;
 
-    // resets the overdubbed groove back to zero
-    void reset_groove();
 
 private:
 
     void NoteProcessor(Note latest_Note); // updates the internal groove
-    void GrooveScaler();                  // scales the groove
     void Send();                          // places the scaled groove in scaledGrooveQue
 
 
@@ -52,25 +49,27 @@ private:
 
 
     // ---- Locally Used for calculations ----------------------------------
-    LockFreeQueue<Note, settings::note_queue_size>* incomingNoteQue;    // queue for receiving the new notes
-    LockFreeQueue<torch::Tensor, settings::torch_tensor_queue_size>* scaledGrooveQue; // the queue for sending the updated groove to the next thread
+    LockFreeQueue<Note, settings::note_queue_size>* incomingNoteQue{};    // queue for receiving the new notes
+    LockFreeQueue<torch::Tensor, settings::torch_tensor_queue_size>* scaledGrooveQue{}; // the queue for sending the updated groove to the next thread
     //----------------------------------------------------------------------
 
     //---- Control Parameters from GUI -------------------------------------
-    LockFreeQueue<float, settings::control_params_queue_size>* VelScaleParamQue;
-    float VelScaleParam;
+    LockFreeQueue<float, settings::control_params_queue_size>* VelScaleParamQue{};
+    // ;
     //----------------------------------------------------------------------
 
     // ---- Locally Used for calculations ----------------------------------
 
-    // an internal tensor of size {time_steps, 3)
+    // an internal HVO instance of size {time_steps, 1 voice)
     // for tracking the unscaled groove
-    torch::Tensor groove_overdubbed;
+    MonotonicGroove<settings::time_steps> monotonic_groove;
+
+    // torch::Tensor unscaled_groove_overdubbed;
 
     // an internal tensor of size { time_steps , 1}
     // for tracking the actual onset time of registered
     // notes in the groove_overdubbed tensor
-    torch::Tensor onset_ppqs_in_groove;
+    // torch::Tensor onset_ppqs_in_groove;
 
     // 32 grid line location (in ppq)
     torch::Tensor gridlines;
@@ -81,7 +80,7 @@ private:
     //----------------------------------------------------------------------
 
     //---- Debugger -------------------------------------
-    StringLockFreeQueue<settings::text_message_queue_size>* text_message_queue_for_debugging;
+    StringLockFreeQueue<settings::text_message_queue_size>* text_message_queue_for_debugging{};
     //----------------------------------------------------------------------
 
 };

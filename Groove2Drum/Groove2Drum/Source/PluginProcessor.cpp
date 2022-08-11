@@ -30,7 +30,7 @@ MidiFXProcessor::MidiFXProcessor(){
 
 }
 
-auto test_tensor = torch::randn({32, 9});
+// auto test_tensor = torch::randn({32, 9});
 
 MidiFXProcessor::~MidiFXProcessor(){
     //groove_thread.prepareToStop();

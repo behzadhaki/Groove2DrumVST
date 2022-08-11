@@ -40,6 +40,7 @@ struct onset_time{
         ppq = calculate_absolute_ppq(frameStartPpq, audioSamplePos, qpm); // calculate ppq
     }
 
+    //constructor for calculating ppq using grid_line index and offset
     onset_time(int grid_line, double offset)
     {
         ppq = (offset / HVO_params::_max_offset * HVO_params::_32_note_ppq) + (grid_line * HVO_params::_16_note_ppq);
@@ -142,7 +143,8 @@ struct Note{
      * \param actual_onset_time (double): actual ppq of the registered onset
      * \param  offset (double): deviation from the gridline
      * \param velocity (double): velocity of note
-     */
+     *//*
+
 struct GrooveEvent{
 
     int grid_index;
@@ -182,6 +184,7 @@ struct GrooveEvent{
     }
 
 };
+*/
 
 
 /**
@@ -210,8 +213,12 @@ template <int time_steps_, int num_voices_> struct HVO
     int time_steps;
     int num_voices;
     torch::Tensor hits;
-    torch::Tensor velocities;
-    torch::Tensor offsets;
+    torch::Tensor velocities_unmodified;
+    torch::Tensor offsets_unmodified;
+    torch::Tensor velocities_modified;
+    torch::Tensor offsets_modified;
+    
+
 
     /// Default Constructor
     HVO()
@@ -219,8 +226,10 @@ template <int time_steps_, int num_voices_> struct HVO
         num_voices = num_voices_;
         time_steps = time_steps_;
         hits = torch::zeros({time_steps, num_voices});
-        velocities = torch::zeros({time_steps, num_voices});
-        offsets = torch::zeros({time_steps, num_voices});
+        velocities_unmodified = torch::zeros({time_steps, num_voices}, torch::kFloat32);
+        offsets_unmodified = torch::zeros({time_steps, num_voices}, torch::kFloat32);
+        velocities_modified = torch::zeros({time_steps, num_voices}, torch::kFloat32);
+        offsets_modified = torch::zeros({time_steps, num_voices}, torch::kFloat32);
     }
 
     /**
@@ -230,15 +239,30 @@ template <int time_steps_, int num_voices_> struct HVO
      * @param offsets_
      */
     HVO(torch::Tensor hits_, torch::Tensor velocities_, torch::Tensor offsets_):
-        hits(std::move(hits_)), velocities(std::move(velocities_)), offsets(std::move(offsets_)), time_steps(time_steps_),
-        num_voices(num_voices_){}
+        hits(std::move(hits_)), time_steps(time_steps_),
+        num_voices(num_voices_),
+        velocities_unmodified(std::move(velocities_)),
+        offsets_unmodified(std::move(offsets_)), 
+        velocities_modified(std::move(velocities_)),
+        offsets_modified(std::move(offsets_))
+    {
+    }
+
+    void reset()
+    {
+        hits = torch::zeros({time_steps, num_voices});
+        velocities_unmodified = torch::zeros({time_steps, num_voices}, torch::kFloat32);
+        offsets_unmodified = torch::zeros({time_steps, num_voices}, torch::kFloat32);
+        velocities_modified = torch::zeros({time_steps, num_voices}, torch::kFloat32);
+        offsets_modified = torch::zeros({time_steps, num_voices}, torch::kFloat32);
+    }
 
     void randomize()
     {
         auto hits_old = torch::rand({time_steps, num_voices});
         hits = torch::zeros({time_steps, num_voices});
-        velocities = torch::rand({time_steps, num_voices});
-        offsets = torch::rand({time_steps, num_voices}) - 0.5;
+        velocities_unmodified = torch::rand({time_steps, num_voices});
+        offsets_unmodified = torch::rand({time_steps, num_voices}) - 0.5;
 
         // convert hits to 0 and 1s by thresholding
         auto row_indices = torch::arange(0, time_steps);
@@ -251,30 +275,13 @@ template <int time_steps_, int num_voices_> struct HVO
             hits.index_put_({active_time_indices, voice_i}, 1);
         }
 
-        velocities = velocities * hits;
-        offsets = offsets * hits;
+        velocities_unmodified = velocities_unmodified * hits;
+        offsets_unmodified = offsets_unmodified * hits;
+        velocities_modified = velocities_unmodified * hits;
+        offsets_modified = offsets_unmodified * hits;
     }
 
-    void addNote(Note note_, bool shouldOverdub)
-    {
-
-    }
-
-    string getStringDescription()
-    {
-        string hits_str = torch2string(hits);
-        string vels_str = torch2string(velocities);
-        string offs_str = torch2string(offsets);
-
-        std::ostringstream msg_stream;
-        msg_stream << " HITS " << endl << hits_str
-                   << ", VELOCITIES "<< endl  << vels_str
-                   << ", OFFSETS "<< endl  << offs_str;
-
-        return msg_stream.str();
-    }
-
-    vector<Note> getNotes(std::vector<int> voice_to_midi_map = nine_voice_kit)
+    vector<Note> getUnmodifiedNotes(std::vector<int> voice_to_midi_map = nine_voice_kit)
     {
 
         // get hit locations
@@ -289,8 +296,8 @@ template <int time_steps_, int num_voices_> struct HVO
         {
             int voice_ix =  indices[i][1].template item<int>();
             int grid_line = indices[i][0].template item<int>();
-            auto velocity = velocities[indices[i][0]][indices[i][1]].template item<float>();
-            auto offset = offsets[indices[i][0]][indices[i][1]].template item<double>();
+            auto velocity = velocities_unmodified[indices[i][0]][indices[i][1]].template item<float>();
+            auto offset = offsets_unmodified[indices[i][0]][indices[i][1]].template item<double>();
             Note note_(voice_ix, velocity, grid_line, offset, voice_to_midi_map);
             Notes.push_back(note_);
         }
@@ -300,4 +307,145 @@ template <int time_steps_, int num_voices_> struct HVO
 
         return Notes;
     }
+
+    vector<Note> getModifiedNotes(std::vector<int> voice_to_midi_map = nine_voice_kit)
+    {
+
+        // get hit locations
+        auto indices = hits.nonzero();
+        auto n_notes = indices.sizes()[0];
+
+        // empty vector for notes
+        vector<Note> Notes;
+
+        // for each index create note and add to vector
+        for (int i=0; i<n_notes; i++)
+        {
+            int voice_ix =  indices[i][1].template item<int>();
+            int grid_line = indices[i][0].template item<int>();
+            auto velocity = velocities_modified[indices[i][0]][indices[i][1]].template item<float>();
+            auto offset = offsets_modified[indices[i][0]][indices[i][1]].template item<double>();
+            Note note_(voice_ix, velocity, grid_line, offset, voice_to_midi_map);
+            Notes.push_back(note_);
+        }
+
+        // sort by time
+        std::sort(Notes.begin(), Notes.end());
+
+        return Notes;
+    }
+
+    void compressVelocities(int voice_idx,
+                            float min_val, float max_val)
+    {
+        auto hit_indices = hits > 0;
+
+        for (int i=0; i<time_steps; i++)
+        {
+            velocities_modified[i][voice_idx]  =
+                velocities_unmodified[i][voice_idx] * (max_val - min_val)
+                + min_val;
+        }
+
+        velocities_modified = velocities_modified * hits;
+    }
+
+    void compressOffsets(int voice_idx,
+                            float min_val, float max_val)
+    {
+
+        for (int i=0; i<time_steps; i++)
+        {
+            offsets_modified[i][voice_idx]  =
+                (max_val - min_val)/(2*HVO_params::_max_offset)*
+                    (offsets_unmodified[i][voice_idx]+HVO_params::_max_offset)
+                +min_val;
+        }
+
+        offsets_modified = offsets_modified * hits;
+
+    }
+
+    virtual string getStringDescription(bool needScaled)
+    {
+
+        auto temp = getConcatenatedVersion(needScaled);
+
+        std::ostringstream msg_stream;
+        msg_stream << " HITS, VELOCITIES , OFFSETS " << endl << temp;
+
+        return msg_stream.str();
+    }
+
+    torch::Tensor getConcatenatedVersion(bool needScaled)
+    {
+        if (needScaled)
+        {
+            return torch::cat({hits, velocities_modified, offsets_modified}, 1);
+        }
+        else
+        {
+            return torch::cat({hits, velocities_unmodified, offsets_unmodified}, 1);
+        }
+    }
+};
+
+
+/**
+ * A structure holding the monotonic groove
+ * @tparam time_steps_
+ */
+template <int time_steps_> struct MonotonicGroove
+{
+    torch::Tensor registeration_times;
+
+    HVO<time_steps_, 1> hvo;    // holds the groove as is without modification
+
+    MonotonicGroove()
+    {
+        registeration_times = torch::zeros({time_steps_, 1}, torch::kFloat32);
+
+    }
+
+    void resetGroove()
+    {
+        hvo.reset();
+        registeration_times = torch::zeros({time_steps_, 1}, torch::kFloat32);
+    }
+
+    void ovrerdubWithNote(Note note_)
+    {
+        // only use notes that are received when host is playing
+        if (note_.capturedInPlaying)
+        {
+            // 1. find the nearest grid line and calculate offset
+            auto ppq = note_.time.ppq;
+            auto div = round(ppq / HVO_params::_16_note_ppq);
+            auto offset = (ppq - (div * HVO_params::_16_note_ppq))
+                          / HVO_params::_32_note_ppq * HVO_params::_max_offset;
+            auto grid_index = fmod(div, HVO_params::_n_16_notes);
+
+            // 2. Place note in groove
+            if (note_.velocity >=
+                (hvo.velocities_unmodified[grid_index] * hvo.hits[grid_index]).template item<float>())
+            {
+                hvo.hits[grid_index] = 1;
+                hvo.offsets_unmodified[grid_index] = offset;
+                hvo.velocities_unmodified[grid_index] = note_.velocity;
+                registeration_times[grid_index] = note_.time.ppq;
+            }
+        }
+
+    }
+
+    string getStringDescription(bool needScaled)
+    {
+        return hvo.getStringDescription(needScaled);
+    }
+
+
+
+
+
+
 };

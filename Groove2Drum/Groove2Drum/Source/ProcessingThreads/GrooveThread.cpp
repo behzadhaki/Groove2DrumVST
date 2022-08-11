@@ -14,14 +14,17 @@ using namespace torch::indexing;
 GrooveThread::GrooveThread():
     juce::Thread("Groove_Thread")
 {
+    incomingNoteQue = nullptr;
+    VelScaleParamQue = nullptr;
+    scaledGrooveQue = nullptr;
+    text_message_queue_for_debugging = nullptr;
+
     readyToStop = false;
 
-    groove_overdubbed = torch::zeros({settings::time_steps, 3});
-    onset_ppqs_in_groove = torch::zeros({settings::time_steps, 1});
+    monotonic_groove = MonotonicGroove<time_steps>();
 
     gridlines = torch::range(0, 7.9, 0.25);
 
-    VelScaleParam = 1.0;
 }
 
 void GrooveThread::start_Thread(
@@ -51,20 +54,29 @@ GrooveThread::~GrooveThread()
     }
 }
 
-void GrooveThread::reset_groove()
-{
-    groove_overdubbed = torch::zeros({settings::time_steps, 3});
-}
-
 void GrooveThread::run()
 {
     bool bExit = threadShouldExit();
+    bool shouldReCalc;
 
     Note read_note;
 
-    HVO<settings::time_steps, 2> groove_unscaled;
-    groove_unscaled.randomize();
-    vector<Note> notes_from_hvo = groove_unscaled.getNotes();
+    /*
+    HVO<settings::time_steps, 2> groove_test;
+    groove_test.randomize();
+    vector<Note> notes_from_hvo = groove_test.getModifiedNotes();
+
+    showMessageinEditor(
+        text_message_queue_for_debugging, groove_test.getStringDescription(false),
+        "unscaled groove", false);
+
+    DBG("Unscaled offsets");
+    DBG(groove_test.getStringDescription(false));
+    groove_test.compressOffsets(0, 0, 1);
+    groove_test.compressVelocities(0, 2, 4);
+    DBG("Scaled offsets");
+    DBG(groove_test.getStringDescription(true));*/
+
 
     /*DBG(torch2string(groove_unscaled.offsets));
 
@@ -73,29 +85,52 @@ void GrooveThread::run()
         DBG(notes_from_hvo[i].getStringDescription());
     }
     */
+    float VelScaleParam = 1;
 
     while (!bExit)
     {
+        shouldReCalc = false;
+
         if (incomingNoteQue != nullptr)
         {
             while (incomingNoteQue->getNumReady() > 0 and not this->threadShouldExit())
             {
-                // Step 1. Convert Note to GrooveEvent
-                //      (i.e. get rid of pitch info, and calculate grid_index and
-                //      offset)
+                // Step 1. get new note
                 incomingNoteQue->ReadFrom(&read_note, 1); // here cnt result is 3
-                GrooveEvent groove_event(read_note);
-                /*showMessageinEditor(
-                    text_message_queue_for_debugging, groove_event.getStringDescription(),
-                    "groove_event in groove_thread", false);*/
 
+                // step 2. add to groove
+                monotonic_groove.ovrerdubWithNote(read_note);
 
-
-                /*NoteProcessor(read_note);
-                GrooveScaler();
-                Send();*/
+                shouldReCalc = true;
             }
         }
+
+        /*
+        if (incomingNoteQue != nullptr)
+        {
+            while ()
+            {
+             // check parameters in queues here
+             shouldReCalc = true;
+            }
+        }
+        */
+
+        if (shouldReCalc)
+        {
+            showMessageinEditor(
+                text_message_queue_for_debugging, monotonic_groove.getStringDescription(false),
+                "unscaled groove", false);
+
+            // modify groove if needed
+            monotonic_groove.hvo.compressOffsets(0, -0.1, 0.1);
+            monotonic_groove.hvo.compressVelocities(0, .2, 2);
+
+            showMessageinEditor(
+                text_message_queue_for_debugging, monotonic_groove.getStringDescription(true),
+                "scaled groove", false);
+        }
+
 
         bExit = threadShouldExit();
         sleep (thread_settings::GrooveThread::waitTimeBtnIters); // avoid burning CPU, if reading is returning immediately
@@ -117,14 +152,10 @@ void GrooveThread::NoteProcessor(Note latest_Note)
     // auto vel = latest_Note.velocity;
 }
 
-void GrooveThread::GrooveScaler()
-{
-    groove_overdubbed = groove_overdubbed * (VelScaleParam);
-}
 
 void GrooveThread::Send()
 {
-    scaledGrooveQue->WriteTo(&groove_overdubbed, 1);
+    // scaledGrooveQue->WriteTo(&unscaled_groove_overdubbed, 1);
 }
 
 
