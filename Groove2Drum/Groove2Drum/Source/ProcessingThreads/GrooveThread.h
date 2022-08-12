@@ -20,7 +20,7 @@ public:
     void start_Thread(
         LockFreeQueue<Note, settings::note_queue_size>* incomingNoteQuePntr,
         LockFreeQueue<torch::Tensor, settings::torch_tensor_queue_size>* scaledGrooveQuePntr,
-        LockFreeQueue<float, settings::control_params_queue_size>* VelScaleParamQuePntr,
+        LockFreeQueue<array<float, 4>, control_params_queue_size>* veloffsetScaleParamQuePntr,
         StringLockFreeQueue<settings::text_message_queue_size>* text_message_queue_for_debuggingPntr = nullptr
         );
 
@@ -54,7 +54,10 @@ private:
     //----------------------------------------------------------------------
 
     //---- Control Parameters from GUI -------------------------------------
-    LockFreeQueue<float, settings::control_params_queue_size>* VelScaleParamQue{};
+    LockFreeQueue<array<float, 4>, control_params_queue_size>* veloffsetScaleParamQue{};
+
+
+
     // ;
     //----------------------------------------------------------------------
 

@@ -15,11 +15,13 @@ GrooveThread::GrooveThread():
     juce::Thread("Groove_Thread")
 {
     incomingNoteQue = nullptr;
-    VelScaleParamQue = nullptr;
+    veloffsetScaleParamQue = nullptr;
     scaledGrooveQue = nullptr;
     text_message_queue_for_debugging = nullptr;
 
     readyToStop = false;
+
+
 
     monotonic_groove = MonotonicGroove<time_steps>();
 
@@ -30,14 +32,14 @@ GrooveThread::GrooveThread():
 void GrooveThread::start_Thread(
     LockFreeQueue<Note, settings::note_queue_size>* incomingNoteQuePntr,
     LockFreeQueue<torch::Tensor, settings::torch_tensor_queue_size>* scaledGrooveQuePntr,
-    LockFreeQueue<float, settings::control_params_queue_size>* VelScaleParamQuePntr,
+    LockFreeQueue<array<float, 4>, control_params_queue_size>* veloffsetScaleParamQuePntr,
     StringLockFreeQueue<settings::text_message_queue_size>* text_message_queue_for_debuggingPntr
 )
 {
     // get the pointer to queues and control parameters instantiated
     // in the main processor thread
     incomingNoteQue = incomingNoteQuePntr;
-    VelScaleParamQue = VelScaleParamQuePntr;
+    veloffsetScaleParamQue = veloffsetScaleParamQuePntr;
     scaledGrooveQue = scaledGrooveQuePntr;
 
     text_message_queue_for_debugging = text_message_queue_for_debuggingPntr;
@@ -56,43 +58,27 @@ GrooveThread::~GrooveThread()
 
 void GrooveThread::run()
 {
+    // notify if the thread is still running
     bool bExit = threadShouldExit();
-    bool shouldReCalc;
 
-    Note read_note;
+    // flag to check if groove has been updated in an iteration
+    bool isNewGrooveAvailable;
 
-    /*
-    HVO<settings::time_steps, 2> groove_test;
-    groove_test.randomize();
-    vector<Note> notes_from_hvo = groove_test.getModifiedNotes();
+    // local variables to keep track of vel_range = (min_vel, max_vel) and offset ranges
+    array<float, 2> vel_range = {HVO_params::_min_vel, HVO_params::_max_vel};
+    array<float, 2> offset_range = {HVO_params::_min_offset, HVO_params::_max_offset};
 
-    showMessageinEditor(
-        text_message_queue_for_debugging, groove_test.getStringDescription(false),
-        "unscaled groove", false);
-
-    DBG("Unscaled offsets");
-    DBG(groove_test.getStringDescription(false));
-    groove_test.compressOffsets(0, 0, 1);
-    groove_test.compressVelocities(0, 2, 4);
-    DBG("Scaled offsets");
-    DBG(groove_test.getStringDescription(true));*/
-
-
-    /*DBG(torch2string(groove_unscaled.offsets));
-
-    for (int i=0; i<notes_from_hvo.size();i++)
-    {
-        DBG(notes_from_hvo[i].getStringDescription());
-    }
-    */
-    float VelScaleParam = 1;
 
     while (!bExit)
     {
-        shouldReCalc = false;
+        // only need to recalc if new info received in queues
+        isNewGrooveAvailable = false;
 
+        // see if new notes received from main processblock
         if (incomingNoteQue != nullptr)
         {
+            Note read_note;
+
             while (incomingNoteQue->getNumReady() > 0 and not this->threadShouldExit())
             {
                 // Step 1. get new note
@@ -101,36 +87,54 @@ void GrooveThread::run()
                 // step 2. add to groove
                 monotonic_groove.ovrerdubWithNote(read_note);
 
-                shouldReCalc = true;
+                // activate recalculation flag
+                isNewGrooveAvailable = true;
             }
         }
 
-        /*
-        if (incomingNoteQue != nullptr)
+        // see if new control params received from the gui
+        if (veloffsetScaleParamQue != nullptr)
         {
-            while ()
+            array<float, 4> newVelOffsetrange {};
+
+            while (veloffsetScaleParamQue->getNumReady() > 0
+                   and not this->threadShouldExit())
             {
-             // check parameters in queues here
-             shouldReCalc = true;
+                // Step 1. get new vel/offset ranges received
+                veloffsetScaleParamQue->ReadFrom(&newVelOffsetrange, 1);
+
+                // update local range values
+                vel_range[0] = newVelOffsetrange[0];
+                vel_range[1] = newVelOffsetrange[1];
+                offset_range[0] = newVelOffsetrange[2];
+                offset_range[1] = newVelOffsetrange[3];
             }
-        }
-        */
 
-        if (shouldReCalc)
+            if( vel_range[0] != HVO_params::_min_vel or
+                vel_range[1] != HVO_params::_max_vel)
+            {
+                monotonic_groove.hvo.compressVelocities(0, vel_range[0], vel_range[1]);
+            }
+            if( offset_range[0] != HVO_params::_min_offset or
+                offset_range[1] != HVO_params::_max_offset)
+            {
+                monotonic_groove.hvo.compressOffsets(
+                    0, offset_range[0], offset_range[1]);
+            }
+
+            // activate recalculation flag
+            isNewGrooveAvailable = true;
+
+        }
+
+        // re-calculate the groove
+        if (isNewGrooveAvailable)
         {
-            showMessageinEditor(
-                text_message_queue_for_debugging, monotonic_groove.getStringDescription(false),
-                "unscaled groove", false);
-
-            // modify groove if needed
-            monotonic_groove.hvo.compressOffsets(0, -0.1, 0.1);
-            monotonic_groove.hvo.compressVelocities(0, .2, 2);
-
-            showMessageinEditor(
-                text_message_queue_for_debugging, monotonic_groove.getStringDescription(true),
-                "scaled groove", false);
+            // send the scaled groove to ModelThread
+            // getConcatenatedVersion(true) gives you scaled version
+            // getConcatenatedVersion(true) gives original version
+            auto groove = monotonic_groove.hvo.getConcatenatedVersion(true);
         }
-
 
         bExit = threadShouldExit();
         sleep (thread_settings::GrooveThread::waitTimeBtnIters); // avoid burning CPU, if reading is returning immediately

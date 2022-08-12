@@ -16,7 +16,7 @@ MidiFXProcessor::MidiFXProcessor(){
     text_message_queue = make_unique<StringLockFreeQueue<settings::text_message_queue_size>>();
 
     // control paramer queues
-    VelScaleParamQue = make_unique<LockFreeQueue<float, settings::control_params_queue_size>>();
+    veloffsetScaleParamQue = make_unique<LockFreeQueue<array<float, 4>, control_params_queue_size>>();
     samplingThreshQue = make_unique<LockFreeQueue<std::vector<float>, settings::control_params_queue_size>>();
 
 
@@ -25,7 +25,11 @@ MidiFXProcessor::MidiFXProcessor(){
     scaledGrooveQue = make_unique<LockFreeQueue<torch::Tensor, settings::torch_tensor_queue_size>> ();
 
 
-    grooveThread.start_Thread(incomingNoteQue.get(), scaledGrooveQue.get(), VelScaleParamQue.get(), text_message_queue.get());
+    // queue for displaying the monotonicgroove in editor
+    //grooveDisplyQue = make_unique<LockFreeQueue<MonotonicGroove<time_steps>, control_params_queue_size>>();
+
+    grooveThread.start_Thread(incomingNoteQue.get(), scaledGrooveQue.get(),
+                              veloffsetScaleParamQue.get(), text_message_queue.get());
 
 
 }

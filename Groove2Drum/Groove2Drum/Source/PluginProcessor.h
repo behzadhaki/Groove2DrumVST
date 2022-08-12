@@ -34,8 +34,11 @@ public:
     unique_ptr<StringLockFreeQueue<settings::text_message_queue_size>> text_message_queue;
 
     // control parameter queues (shared between threads and editor)
-    unique_ptr<LockFreeQueue<float, settings::control_params_queue_size>>  VelScaleParamQue;
+    unique_ptr<LockFreeQueue<array<float, 4>, control_params_queue_size>> veloffsetScaleParamQue;
     unique_ptr<LockFreeQueue<std::vector<float>, settings::control_params_queue_size>>  samplingThreshQue;
+
+    // queue for displaying the monotonicgroove in editor
+    // unique_ptr<LockFreeQueue<MonotonicGroove<time_steps>, control_params_queue_size>> grooveDisplyQue;
 
 
 private:
