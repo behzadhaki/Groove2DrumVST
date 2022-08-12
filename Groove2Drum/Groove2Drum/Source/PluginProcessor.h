@@ -38,7 +38,8 @@ public:
     unique_ptr<LockFreeQueue<std::vector<float>, settings::control_params_queue_size>>  samplingThreshQue;
 
     // queue for displaying the monotonicgroove in editor
-    // unique_ptr<LockFreeQueue<MonotonicGroove<time_steps>, control_params_queue_size>> grooveDisplyQue;
+    unique_ptr<MonotonicGrooveQueue<settings::time_steps,
+                             control_params_queue_size>> grooveDisplyQue;
 
 
 private:

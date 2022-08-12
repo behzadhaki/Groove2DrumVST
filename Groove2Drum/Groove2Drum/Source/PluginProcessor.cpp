@@ -26,10 +26,13 @@ MidiFXProcessor::MidiFXProcessor(){
 
 
     // queue for displaying the monotonicgroove in editor
-    //grooveDisplyQue = make_unique<LockFreeQueue<MonotonicGroove<time_steps>, control_params_queue_size>>();
+    grooveDisplyQue = make_unique<MonotonicGrooveQueue<settings::time_steps,
+                                                       control_params_queue_size>>();
+
 
     grooveThread.start_Thread(incomingNoteQue.get(), scaledGrooveQue.get(),
-                              veloffsetScaleParamQue.get(), text_message_queue.get());
+                              veloffsetScaleParamQue.get(), grooveDisplyQue.get(),
+                              text_message_queue.get());
 
 
 }

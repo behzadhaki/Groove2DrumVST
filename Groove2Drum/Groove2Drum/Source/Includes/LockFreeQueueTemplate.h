@@ -86,6 +86,8 @@ public:
 
     }
 
+
+
     void WriteTo (const T* writeData, int numTowrite)
     {
         int start1, start2, blockSize1, blockSize2;
@@ -150,5 +152,81 @@ public:
     }
 
 
+    void push (const T writeData)
+    {
+        int start1, start2, blockSize1, blockSize2;
+
+        lockFreeFifo ->prepareToWrite(
+            1, start1, blockSize1,
+            start2, blockSize2);
+
+        auto start_data_ptr = data.getRawDataPointer() + start1;
+        *start_data_ptr =  writeData;
+
+        lockFreeFifo->finishedWrite(1);
+    }
+
+    T pop()
+    {
+        int start1, start2, blockSize1, blockSize2;
+
+        lockFreeFifo ->prepareToRead(
+            1, start1, blockSize1,
+            start2, blockSize2);
+
+        auto start_data_ptr = data.getRawDataPointer() + start1;
+        return *(start_data_ptr);
+    }
 };
 
+
+template <int time_steps_, int queue_size> class MonotonicGrooveQueue
+{
+private:
+    //juce::ScopedPointer<juce::AbstractFifo> lockFreeFifo;   depreciated!!
+    std::unique_ptr<juce::AbstractFifo> lockFreeFifo;
+    juce::Array<MonotonicGroove<time_steps_>> data{};
+
+public:
+    MonotonicGrooveQueue(){
+        // lockFreeFifo = new juce::AbstractFifo(queue_size);   depreciated!!
+        lockFreeFifo = std::unique_ptr<juce::AbstractFifo> (
+            new juce::AbstractFifo(queue_size));
+
+        data.ensureStorageAllocated(queue_size);
+
+        while (data.size() < queue_size)
+        {
+            auto empty_note = MonotonicGroove<time_steps_>();
+            data.add(empty_note);
+        }
+
+    }
+
+    void push (const MonotonicGroove<time_steps_> writeData)
+    {
+        int start1, start2, blockSize1, blockSize2;
+
+        lockFreeFifo ->prepareToWrite(
+            1, start1, blockSize1,
+            start2, blockSize2);
+
+        auto start_data_ptr = data.getRawDataPointer() + start1;
+        *start_data_ptr =  writeData;
+
+        lockFreeFifo->finishedWrite(1);
+    }
+
+    MonotonicGroove<time_steps_> pop()
+    {
+        int start1, start2, blockSize1, blockSize2;
+
+        lockFreeFifo ->prepareToRead(
+            1, start1, blockSize1,
+            start2, blockSize2);
+
+        auto start_data_ptr = data.getRawDataPointer() + start1;
+        return *(start_data_ptr);
+    }
+
+};

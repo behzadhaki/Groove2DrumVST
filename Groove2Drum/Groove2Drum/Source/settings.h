@@ -21,7 +21,7 @@ namespace settings
     constexpr int note_queue_size { 512 };
     constexpr int torch_tensor_queue_size { 512 };
     constexpr int text_message_queue_size { 512 };
-    constexpr int control_params_queue_size { 512 };
+    constexpr int control_params_queue_size { 16 };
 
     // sample rate
     constexpr int sample_rate { 44100 };

@@ -21,6 +21,7 @@ public:
         LockFreeQueue<Note, settings::note_queue_size>* incomingNoteQuePntr,
         LockFreeQueue<torch::Tensor, settings::torch_tensor_queue_size>* scaledGrooveQuePntr,
         LockFreeQueue<array<float, 4>, control_params_queue_size>* veloffsetScaleParamQuePntr,
+        MonotonicGrooveQueue<settings::time_steps, control_params_queue_size>* grooveDisplyQuePntr,
         StringLockFreeQueue<settings::text_message_queue_size>* text_message_queue_for_debuggingPntr = nullptr
         );
 
@@ -55,7 +56,12 @@ private:
 
     //---- Control Parameters from GUI -------------------------------------
     LockFreeQueue<array<float, 4>, control_params_queue_size>* veloffsetScaleParamQue{};
+    array<float, 2> vel_range;
+    array<float, 2> offset_range;
 
+    // ---- sends data to gui -----------------------------------------------
+    // the queue for sending the updated groove to the next thread
+    MonotonicGrooveQueue<settings::time_steps, control_params_queue_size>* grooveDisplyQue{};
 
 
     // ;
