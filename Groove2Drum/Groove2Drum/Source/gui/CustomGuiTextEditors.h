@@ -51,12 +51,12 @@ public:
 
     ~NoteStructLoggerTextEditor() override;
 
-    void start_Thread(LockFreeQueue<Note, settings::note_queue_size>* note_quePntr);
+    void start_Thread(LockFreeQueue<Note, settings::gui_io_queue_size>* note_quePntr);
 
     void QueueDataProcessor() override;
 
 private:
-    LockFreeQueue<Note, settings::note_queue_size>* note_queP;
+    LockFreeQueue<Note, settings::gui_io_queue_size>* note_queP;
 
     int numNotesPrintedOnLine;
 
@@ -73,11 +73,11 @@ public:
     TextMessageLoggerTextEditor();
     ~TextMessageLoggerTextEditor() override;
 
-    void start_Thread(StringLockFreeQueue<settings::text_message_queue_size>* text_message_quePntr);
+    void start_Thread(StringLockFreeQueue<settings::gui_io_queue_size>* text_message_quePntr);
     void QueueDataProcessor() override;
 
 private:
-    StringLockFreeQueue<settings::text_message_queue_size>* text_message_queue;
+    StringLockFreeQueue<settings::gui_io_queue_size>* text_message_queue;
 
 };
 

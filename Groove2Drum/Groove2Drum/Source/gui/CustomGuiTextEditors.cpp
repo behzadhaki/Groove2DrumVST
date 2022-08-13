@@ -57,7 +57,7 @@ NoteStructLoggerTextEditor::~NoteStructLoggerTextEditor()
 
 }
 
-void NoteStructLoggerTextEditor::start_Thread(LockFreeQueue<Note, settings::note_queue_size>* note_quePntr)
+void NoteStructLoggerTextEditor::start_Thread(LockFreeQueue<Note, settings::gui_io_queue_size>* note_quePntr)
 {
     note_queP = note_quePntr;
     this->startThread();
@@ -112,7 +112,7 @@ TextMessageLoggerTextEditor::~TextMessageLoggerTextEditor()
 
 }
 
-void TextMessageLoggerTextEditor::start_Thread(StringLockFreeQueue<settings::text_message_queue_size>* text_message_quePntr)
+void TextMessageLoggerTextEditor::start_Thread(StringLockFreeQueue<settings::gui_io_queue_size>* text_message_quePntr)
 {
     text_message_queue = text_message_quePntr;
     startThread();

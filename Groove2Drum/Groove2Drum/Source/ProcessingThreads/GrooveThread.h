@@ -18,11 +18,11 @@ public:
     GrooveThread();
 
     void start_Thread(
-        LockFreeQueue<Note, settings::note_queue_size>* incomingNoteQuePntr,
-        MonotonicGrooveQueue<settings::time_steps,control_params_queue_size>* scaledGrooveQuePntr,
-        LockFreeQueue<array<float, 4>, control_params_queue_size>* veloffsetScaleParamQuePntr,
-        MonotonicGrooveQueue<settings::time_steps, control_params_queue_size>* grooveDisplyQuePntr,
-        StringLockFreeQueue<settings::text_message_queue_size>* text_message_queue_for_debuggingPntr = nullptr
+        LockFreeQueue<Note, settings::processor_io_queue_size>* note_toProcess_quePntr,
+        MonotonicGrooveQueue<settings::time_steps,processor_io_queue_size>* groove_toProcess_quePntr,
+        LockFreeQueue<array<float, 4>, gui_io_queue_size>* veloff_fromGui_quePntr,
+        MonotonicGrooveQueue<settings::time_steps, gui_io_queue_size>* groove_toGui_quePntr,
+        StringLockFreeQueue<settings::gui_io_queue_size>* text_toGui_que_for_debuggingPntr = nullptr
         );
 
     // destructor
@@ -40,7 +40,7 @@ public:
 private:
 
     void NoteProcessor(Note latest_Note); // updates the internal groove
-    void Send();                          // places the scaled groove in scaledGrooveQue
+    void Send();                          // places the scaled groove in groove_toProcess_que
 
 
     // Used to check if thread is ready to be stopped
@@ -50,19 +50,19 @@ private:
 
 
     // ---- Locally Used for calculations ----------------------------------
-    LockFreeQueue<Note, settings::note_queue_size>* incomingNoteQue{};    // queue for receiving the new notes
+    LockFreeQueue<Note, settings::processor_io_queue_size>* note_toProcess_que{};    // queue for receiving the new notes
     MonotonicGrooveQueue<settings::time_steps,
-                         control_params_queue_size>* scaledGrooveQue{}; // the queue for sending the updated groove to the next thread
+                         processor_io_queue_size>* groove_toProcess_que{}; // the queue for sending the updated groove to the next thread
     //----------------------------------------------------------------------
 
     //---- Control Parameters from GUI -------------------------------------
-    LockFreeQueue<array<float, 4>, control_params_queue_size>* veloffsetScaleParamQue{};
+    LockFreeQueue<array<float, 4>, gui_io_queue_size>* veloff_fromGui_que{};
     array<float, 2> vel_range;
     array<float, 2> offset_range;
 
     // ---- sends data to gui -----------------------------------------------
     // the queue for sending the updated groove to the next thread
-    MonotonicGrooveQueue<settings::time_steps, control_params_queue_size>* grooveDisplyQue{};
+    MonotonicGrooveQueue<settings::time_steps, gui_io_queue_size>* groove_toGui_que{};
 
 
     // ;
@@ -90,7 +90,7 @@ private:
     //----------------------------------------------------------------------
 
     //---- Debugger -------------------------------------
-    StringLockFreeQueue<settings::text_message_queue_size>* text_message_queue_for_debugging{};
+    StringLockFreeQueue<settings::gui_io_queue_size>* text_toGui_que_for_debugging{};
     //----------------------------------------------------------------------
 
 };

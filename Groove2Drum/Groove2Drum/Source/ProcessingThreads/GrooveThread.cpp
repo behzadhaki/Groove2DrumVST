@@ -14,11 +14,11 @@ using namespace torch::indexing;
 GrooveThread::GrooveThread():
     juce::Thread("Groove_Thread")
 {
-    incomingNoteQue = nullptr;
-    veloffsetScaleParamQue = nullptr;
-    scaledGrooveQue = nullptr;
-    text_message_queue_for_debugging = nullptr;
-    grooveDisplyQue = nullptr;
+    note_toProcess_que = nullptr;
+    veloff_fromGui_que = nullptr;
+    groove_toProcess_que = nullptr;
+    text_toGui_que_for_debugging = nullptr;
+    groove_toGui_que = nullptr;
     readyToStop = false;
 
 
@@ -30,20 +30,20 @@ GrooveThread::GrooveThread():
 }
 
 void GrooveThread::start_Thread(
-    LockFreeQueue<Note, settings::note_queue_size>* incomingNoteQuePntr,
-    MonotonicGrooveQueue<settings::time_steps, control_params_queue_size>* scaledGrooveQuePntr,
-    LockFreeQueue<array<float, 4>, control_params_queue_size>* veloffsetScaleParamQuePntr,
-    MonotonicGrooveQueue<settings::time_steps, control_params_queue_size>* grooveDisplyQuePntr,
-    StringLockFreeQueue<settings::text_message_queue_size>* text_message_queue_for_debuggingPntr
+    LockFreeQueue<Note, settings::processor_io_queue_size>* note_toProcess_quePntr,
+    MonotonicGrooveQueue<settings::time_steps, processor_io_queue_size>* groove_toProcess_quePntr,
+    LockFreeQueue<array<float, 4>, gui_io_queue_size>* veloff_fromGui_quePntr,
+    MonotonicGrooveQueue<settings::time_steps, gui_io_queue_size>* groove_toGui_quePntr,
+    StringLockFreeQueue<settings::gui_io_queue_size>* text_toGui_que_for_debuggingPntr
 )
 {
     // get the pointer to queues and control parameters instantiated
     // in the main processor thread
-    incomingNoteQue = incomingNoteQuePntr;
-    veloffsetScaleParamQue = veloffsetScaleParamQuePntr;
-    scaledGrooveQue = scaledGrooveQuePntr;
-    grooveDisplyQue = grooveDisplyQuePntr;
-    text_message_queue_for_debugging = text_message_queue_for_debuggingPntr;
+    note_toProcess_que = note_toProcess_quePntr;
+    veloff_fromGui_que = veloff_fromGui_quePntr;
+    groove_toProcess_que = groove_toProcess_quePntr;
+    groove_toGui_que = groove_toGui_quePntr;
+    text_toGui_que_for_debugging = text_toGui_que_for_debuggingPntr;
 
     startThread();
 
@@ -76,14 +76,14 @@ void GrooveThread::run()
         isNewGrooveAvailable = false;
 
         // see if new notes received from main processblock
-        if (incomingNoteQue != nullptr)
+        if (note_toProcess_que != nullptr)
         {
             Note read_note;
 
-            while (incomingNoteQue->getNumReady() > 0 and not this->threadShouldExit())
+            while (note_toProcess_que->getNumReady() > 0 and not this->threadShouldExit())
             {
                 // Step 1. get new note
-                incomingNoteQue->ReadFrom(&read_note, 1); // here cnt result is 3
+                note_toProcess_que->ReadFrom(&read_note, 1); // here cnt result is 3
 
                 // step 2. add to groove
                 monotonic_groove.ovrerdubWithNote(read_note);
@@ -94,15 +94,15 @@ void GrooveThread::run()
         }
 
         // see if new control params received from the gui
-        if (veloffsetScaleParamQue != nullptr)
+        if (veloff_fromGui_que != nullptr)
         {
             array<float, 4> newVelOffsetrange {};
 
-            while (veloffsetScaleParamQue->getNumReady() > 0
+            while (veloff_fromGui_que->getNumReady() > 0
                    and not this->threadShouldExit())
             {
                 // Step 1. get new vel/offset ranges received
-                veloffsetScaleParamQue->ReadFrom(&newVelOffsetrange, 1);
+                veloff_fromGui_que->ReadFrom(&newVelOffsetrange, 1);
 
                 // update local range values
                 vel_range[0] = newVelOffsetrange[0];
@@ -131,15 +131,15 @@ void GrooveThread::run()
         // Send groove to other threads if new one available
         if (isNewGrooveAvailable)
         {
-            if (scaledGrooveQue != nullptr)
+            if (groove_toProcess_que != nullptr)
             {
-                scaledGrooveQue->push(monotonic_groove);
+                groove_toProcess_que->push(monotonic_groove);
             }
 
             // send groove to be displayed on the interface
-            if (grooveDisplyQue != nullptr)
+            if (groove_toGui_que != nullptr)
             {
-                grooveDisplyQue->push(monotonic_groove);
+                groove_toGui_que->push(monotonic_groove);
             }
 
         }
@@ -169,7 +169,7 @@ void GrooveThread::NoteProcessor(Note latest_Note)
 
 void GrooveThread::Send()
 {
-    // scaledGrooveQue->WriteTo(&unscaled_groove_overdubbed, 1);
+    // groove_toProcess_que->WriteTo(&unscaled_groove_overdubbed, 1);
 }
 
 

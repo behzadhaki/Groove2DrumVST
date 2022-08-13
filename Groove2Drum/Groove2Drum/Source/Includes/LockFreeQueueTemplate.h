@@ -77,13 +77,6 @@ public:
 
         data.ensureStorageAllocated(queue_size);
 
-        /*while (data.size() < settings::note_queue_size)
-        {
-            auto empty_note = Note(
-                0, 0, 0, 0, 0);
-            data.add(empty_note);
-        }*/
-
     }
 
 

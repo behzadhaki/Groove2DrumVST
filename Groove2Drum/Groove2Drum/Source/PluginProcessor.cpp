@@ -12,28 +12,28 @@ MidiFXProcessor::MidiFXProcessor(){
     //groove_thread_ready = false;
 
     //editor queues
-    note_que = make_unique<LockFreeQueue<Note, settings::note_queue_size>>();
-    text_message_queue = make_unique<StringLockFreeQueue<settings::text_message_queue_size>>();
+    note_toGui_que = make_unique<LockFreeQueue<Note, settings::gui_io_queue_size>>();
+    text_toGui_que = make_unique<StringLockFreeQueue<settings::gui_io_queue_size>>();
 
     // control paramer queues
-    veloffsetScaleParamQue = make_unique<LockFreeQueue<array<float, 4>, control_params_queue_size>>();
-    samplingThreshQue = make_unique<LockFreeQueue<std::vector<float>, settings::control_params_queue_size>>();
+    veloff_fromGui_que = make_unique<LockFreeQueue<array<float, 4>, gui_io_queue_size>>();
+    thresholds_fromGui_que = make_unique<LockFreeQueue<std::array<float, settings::num_voices>, settings::gui_io_queue_size>>();
 
 
     //groove thread params
-    incomingNoteQue = make_unique<LockFreeQueue<Note, settings::note_queue_size>>();
-    scaledGrooveQue = make_unique<MonotonicGrooveQueue<settings::time_steps,
-                                                       control_params_queue_size>>();
+    note_toProcess_que = make_unique<LockFreeQueue<Note, settings::processor_io_queue_size>>();
+    groove_toProcess_que = make_unique<MonotonicGrooveQueue<settings::time_steps,
+                                                            processor_io_queue_size>>();
 
 
     // queue for displaying the monotonicgroove in editor
-    grooveDisplyQue = make_unique<MonotonicGrooveQueue<settings::time_steps,
-                                                       control_params_queue_size>>();
+    groove_toGui_que = make_unique<MonotonicGrooveQueue<settings::time_steps,
+                                                       gui_io_queue_size>>();
 
 
-    grooveThread.start_Thread(incomingNoteQue.get(), scaledGrooveQue.get(),
-                              veloffsetScaleParamQue.get(), grooveDisplyQue.get(),
-                              text_message_queue.get());
+    grooveThread.start_Thread(note_toProcess_que.get(), groove_toProcess_que.get(),
+                              veloff_fromGui_que.get(), groove_toGui_que.get(),
+                              text_toGui_que.get());
 
 
 }
@@ -53,13 +53,12 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     if (not midiMessages.isEmpty() /*and groove_thread_ready*/)
     {
         // STEP 1
-        // get Playhead info and Add note and onset to note_que using Note structure
+        // get Playhead info and Add note and onset to note_toGui_que using Note structure
         auto playhead = getPlayHead();
 
         // send notes to the GrooveThread and also gui logger for notes
-        // place_note_in_queue(midiMessages, playhead, incoming_note_que.get());
-        place_note_in_queue(midiMessages, playhead, note_que.get());
-        place_note_in_queue(midiMessages, playhead, incomingNoteQue.get());
+        place_note_in_queue<settings::gui_io_queue_size>(midiMessages, playhead, note_toGui_que.get());
+        place_note_in_queue<settings::processor_io_queue_size>(midiMessages, playhead, note_toProcess_que.get());
 
 
 
@@ -68,23 +67,23 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         auto [hits, velocities, offsets] = modelAPI.sample("Threshold");
 
 
-         showMessageinEditor(&text_message_queue,
+         showMessageinEditor(&text_toGui_que,
                             string(tensor2string(hits_probabilities)),
                             "hits_probabilities",
                             false);*/
 
-        /*showMessageinEditor(&text_message_queue,
+        /*showMessageinEditor(&text_toGui_que,
                             string("NoteReceived \t"),
                             "MESSAGE: ",
                             false);*/
 
-        //text_message_queue->addText("TEST");
-        /*showMessageinEditor(text_message_queue.get(),
+        //text_toGui_que->addText("TEST");
+        /*showMessageinEditor(text_toGui_que.get(),
                             tensor2string(test_tensor),
                             "hits_probabilities",
                             true);
 
-        showMessageinEditor(text_message_queue.get(),
+        showMessageinEditor(text_toGui_que.get(),
                             "xsdgsd",
                             "test",
                             false);*/

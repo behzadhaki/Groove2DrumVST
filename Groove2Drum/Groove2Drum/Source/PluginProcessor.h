@@ -26,20 +26,16 @@ public:
 
     // single-producer/single-consumer queues
     // for inter-Thread Communication
-    // LockFreeQueue<Note, settings::note_queue_size> incoming_note_que;   // used to communicate with GrooveThread
-    // LockFreeQueue<Note, settings::note_queue_size> note_que;        // used to communicate with note logger
-    // LockFreeQueue<string, settings::text_message_queue_size> text_message_queue;
-
-    unique_ptr<LockFreeQueue<Note, settings::note_queue_size>> note_que; // used to communicate with note logger
-    unique_ptr<StringLockFreeQueue<settings::text_message_queue_size>> text_message_queue;
+    unique_ptr<LockFreeQueue<Note, settings::gui_io_queue_size>> note_toGui_que; // used to communicate with note logger
+    unique_ptr<StringLockFreeQueue<settings::gui_io_queue_size>> text_toGui_que;
 
     // control parameter queues (shared between threads and editor)
-    unique_ptr<LockFreeQueue<array<float, 4>, settings::control_params_queue_size>> veloffsetScaleParamQue;
-    unique_ptr<LockFreeQueue<std::vector<float>, settings::control_params_queue_size>>  samplingThreshQue;
+    unique_ptr<LockFreeQueue<array<float, 4>, settings::gui_io_queue_size>> veloff_fromGui_que;
+    unique_ptr<LockFreeQueue<std::array<float, settings::num_voices>, settings::gui_io_queue_size>>  thresholds_fromGui_que;
 
     // queue for displaying the monotonicgroove in editor
     unique_ptr<MonotonicGrooveQueue<settings::time_steps,
-                                    settings::control_params_queue_size>> grooveDisplyQue;
+                                    settings::gui_io_queue_size>> groove_toGui_que;
 
 
 private:
@@ -49,9 +45,9 @@ private:
 
     // THreads
     //GrooveThread groove_thread;
-    unique_ptr<LockFreeQueue<Note, settings::note_queue_size>>  incomingNoteQue;
+    unique_ptr<LockFreeQueue<Note, settings::processor_io_queue_size>>  note_toProcess_que;
     unique_ptr<MonotonicGrooveQueue<settings::time_steps,
-                                    settings::control_params_queue_size>>  scaledGrooveQue;
+                                    settings::processor_io_queue_size>>  groove_toProcess_que;
 
 
     // groove thread

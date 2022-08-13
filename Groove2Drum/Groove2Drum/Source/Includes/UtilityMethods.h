@@ -16,12 +16,15 @@ using namespace std;
  * then sends it to receiver thread using the provided note_que
  * @param midiMessages (juce::MidiBuffer&)
  * @param playheadP (juce::AudioPlayHead*)
- * @param note_que  (LockFreeQueue<Note, settings::note_queue_size>*)
+ * @param note_que  (LockFreeQueue<Note, que_size>*)
+ *
  */
+
+template<int que_size>
 inline void place_note_in_queue(
     juce::MidiBuffer& midiMessages,
     juce::AudioPlayHead* playheadP,
-    LockFreeQueue<Note, settings::note_queue_size>* note_que)
+    LockFreeQueue<Note, que_size>* note_que)
 {
     double frameStartPpq = 0;
     double qpm = 0;
@@ -77,7 +80,7 @@ inline string stream2string(std::ostringstream msg_stream)
  * @param header  (string): message to be printed as a header before showing message
  * @param clearFirst (bool): if true, empties receiving gui thread before display
  */
-inline void showMessageinEditor(StringLockFreeQueue<settings::text_message_queue_size>* text_message_queue,
+inline void showMessageinEditor(StringLockFreeQueue<settings::gui_io_queue_size>* text_message_queue,
                                 string message, string header, bool clearFirst)
 {
     if (text_message_queue!=nullptr)

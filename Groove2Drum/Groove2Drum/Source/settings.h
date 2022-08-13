@@ -17,11 +17,9 @@
 namespace settings
 {
     // constants have internal linkage by default
-    // constexpr int midi_queue_size { 64 };
-    constexpr int note_queue_size { 512 };
-    constexpr int torch_tensor_queue_size { 512 };
-    constexpr int text_message_queue_size { 512 };
-    constexpr int control_params_queue_size { 16 };
+    constexpr int gui_io_queue_size { 16 };
+
+    constexpr int processor_io_queue_size { 64 };
 
     // sample rate
     constexpr int sample_rate { 44100 };
