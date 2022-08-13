@@ -19,7 +19,7 @@ public:
 
     void start_Thread(
         LockFreeQueue<Note, settings::note_queue_size>* incomingNoteQuePntr,
-        LockFreeQueue<torch::Tensor, settings::torch_tensor_queue_size>* scaledGrooveQuePntr,
+        MonotonicGrooveQueue<settings::time_steps,control_params_queue_size>* scaledGrooveQuePntr,
         LockFreeQueue<array<float, 4>, control_params_queue_size>* veloffsetScaleParamQuePntr,
         MonotonicGrooveQueue<settings::time_steps, control_params_queue_size>* grooveDisplyQuePntr,
         StringLockFreeQueue<settings::text_message_queue_size>* text_message_queue_for_debuggingPntr = nullptr
@@ -51,7 +51,8 @@ private:
 
     // ---- Locally Used for calculations ----------------------------------
     LockFreeQueue<Note, settings::note_queue_size>* incomingNoteQue{};    // queue for receiving the new notes
-    LockFreeQueue<torch::Tensor, settings::torch_tensor_queue_size>* scaledGrooveQue{}; // the queue for sending the updated groove to the next thread
+    MonotonicGrooveQueue<settings::time_steps,
+                         control_params_queue_size>* scaledGrooveQue{}; // the queue for sending the updated groove to the next thread
     //----------------------------------------------------------------------
 
     //---- Control Parameters from GUI -------------------------------------

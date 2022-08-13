@@ -31,7 +31,7 @@ GrooveThread::GrooveThread():
 
 void GrooveThread::start_Thread(
     LockFreeQueue<Note, settings::note_queue_size>* incomingNoteQuePntr,
-    LockFreeQueue<torch::Tensor, settings::torch_tensor_queue_size>* scaledGrooveQuePntr,
+    MonotonicGrooveQueue<settings::time_steps, control_params_queue_size>* scaledGrooveQuePntr,
     LockFreeQueue<array<float, 4>, control_params_queue_size>* veloffsetScaleParamQuePntr,
     MonotonicGrooveQueue<settings::time_steps, control_params_queue_size>* grooveDisplyQuePntr,
     StringLockFreeQueue<settings::text_message_queue_size>* text_message_queue_for_debuggingPntr
@@ -128,18 +128,20 @@ void GrooveThread::run()
 
         }
 
-        // re-calculate the groove
+        // Send groove to other threads if new one available
         if (isNewGrooveAvailable)
         {
+            if (scaledGrooveQue != nullptr)
+            {
+                scaledGrooveQue->push(monotonic_groove);
+            }
+
+            // send groove to be displayed on the interface
             if (grooveDisplyQue != nullptr)
             {
                 grooveDisplyQue->push(monotonic_groove);
             }
 
-            // send the scaled groove to ModelThread
-            // getConcatenatedVersion(true) gives you scaled version
-            // getConcatenatedVersion(true) gives original version
-            auto groove = monotonic_groove.hvo.getConcatenatedVersion(true);
         }
 
 

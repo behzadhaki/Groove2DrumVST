@@ -22,7 +22,8 @@ MidiFXProcessor::MidiFXProcessor(){
 
     //groove thread params
     incomingNoteQue = make_unique<LockFreeQueue<Note, settings::note_queue_size>>();
-    scaledGrooveQue = make_unique<LockFreeQueue<torch::Tensor, settings::torch_tensor_queue_size>> ();
+    scaledGrooveQue = make_unique<MonotonicGrooveQueue<settings::time_steps,
+                                                       control_params_queue_size>>();
 
 
     // queue for displaying the monotonicgroove in editor
