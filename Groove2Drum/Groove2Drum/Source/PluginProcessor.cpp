@@ -8,7 +8,7 @@ using namespace std;
 
 
 MidiFXProcessor::MidiFXProcessor(){
-    modelAPI = MonotonicGrooveTransformerV1 (settings::default_model_path, settings::time_steps,  settings::num_voices);
+
     //groove_thread_ready = false;
 
     //editor queues
@@ -25,15 +25,20 @@ MidiFXProcessor::MidiFXProcessor(){
     groove_toProcess_que = make_unique<MonotonicGrooveQueue<settings::time_steps,
                                                             processor_io_queue_size>>();
 
+    HVO_toProcessforPlayback_que = make_unique<HVOQueue<settings::time_steps, settings::num_voices,
+                                                        settings::processor_io_queue_size>>();
 
     // queue for displaying the monotonicgroove in editor
     groove_toGui_que = make_unique<MonotonicGrooveQueue<settings::time_steps,
                                                        gui_io_queue_size>>();
 
 
-    grooveThread.start_Thread(note_toProcess_que.get(), groove_toProcess_que.get(),
+    grooveThread.giveAccesstoResources(note_toProcess_que.get(), groove_toProcess_que.get(),
                               veloff_fromGui_que.get(), groove_toGui_que.get(),
                               text_toGui_que.get());
+
+    modelThread.giveAccesstoResources(groove_toProcess_que.get(), thresholds_fromGui_que.get(),
+                                      HVO_toProcessforPlayback_que.get(), text_toGui_que.get());
 
 
 }

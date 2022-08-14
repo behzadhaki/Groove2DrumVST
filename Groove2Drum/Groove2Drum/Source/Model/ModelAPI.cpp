@@ -5,13 +5,19 @@
 #include "ModelAPI.h"
 #include "../settings.h"
 
+
+
 using namespace std;
 
 static torch::Tensor vector2tensor(vector<float> vec)
 {
-    auto opts = torch::TensorOptions().dtype(torch::kFloat32);
     auto size = (int) vec.size();
-    torch::Tensor t = torch::from_blob(vec.data(), {size}, opts).to(torch::kFloat32);
+    auto t = torch::zeros({size}, torch::kFloat32);
+    for (int i=0; i<size; i++)
+    {
+        t[i] = vec[i];
+    }
+
     return t;
 }
 
@@ -19,16 +25,33 @@ static torch::Tensor vector2tensor(vector<float> vec)
 //default constructor
 MonotonicGrooveTransformerV1::MonotonicGrooveTransformerV1(){}
 
-MonotonicGrooveTransformerV1::MonotonicGrooveTransformerV1(std::string model_path, int time_steps_, int num_voices_):
-    time_steps(time_steps_), num_voices(num_voices_)
+
+bool MonotonicGrooveTransformerV1::loadModel(std::string model_path, int time_steps_, int num_voices_)
 {
-    model = LoadModel(model_path, true);
-    hits_logits = torch::zeros({time_steps_, num_voices_});
-    hits_probabilities = torch::zeros({time_steps_, num_voices_});
-    hits = torch::zeros({time_steps_, num_voices_});
-    velocities = torch::zeros({time_steps_, num_voices_});
-    offsets = torch::zeros({time_steps_, num_voices_});
-    per_voice_sampling_thresholds = vector2tensor(default_sampling_thresholds);
+    time_steps = time_steps_;
+    num_voices = num_voices_;
+    ifstream myFile;
+    myFile.open(model_path);
+    // Check for errors
+
+    if (myFile.fail())
+    {
+        return false;
+    }
+    else
+    {
+        myFile.close();
+
+        model = LoadModel(model_path, true);
+        hits_logits = torch::zeros({time_steps_, num_voices_});
+        hits_probabilities = torch::zeros({time_steps_, num_voices_});
+        hits = torch::zeros({time_steps_, num_voices_});
+        velocities = torch::zeros({time_steps_, num_voices_});
+        offsets = torch::zeros({time_steps_, num_voices_});
+        per_voice_sampling_thresholds = vector2tensor(default_sampling_thresholds);
+        return true;
+    }
+
 }
 
 // getters

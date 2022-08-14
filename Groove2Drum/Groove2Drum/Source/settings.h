@@ -25,10 +25,11 @@ namespace settings
     constexpr int sample_rate { 44100 };
 
     // model_settings
-    char constexpr* default_model_path {(char*)"/Users/behzadhaki/Github/Groove2DrumVST/Groove2Drum/Groove2Drum/Source/model/misunderstood_bush_246-epoch_26_tst.pt"};
+    // char constexpr* default_model_path {(char*)"/Users/behzadhaki/Github/Groove2DrumVST/Groove2Drum/Groove2Drum/Source/model/misunderstood_bush_246-epoch_26_tst.pt"};
+    // FIXME add to readme.me for setup ==> model should be placed in root (/Library/Groove2Drum/trained_models) folder
+    char constexpr* default_model_path {(char*)"/Library/Groove2Drum/trained_models/model.pt"};
     constexpr int time_steps { 32 };
     constexpr int num_voices { 9 };
-
 
 }
 // hvo settings
@@ -41,7 +42,6 @@ constexpr double _max_offset { 0.5 };  // offsets are defined in range (-0.5, 0.
 constexpr double _min_offset { -0.5 };  // offsets are defined in range (-0.5, 0.5)
 constexpr double _max_vel { 1 };  // velocities are defined in range (0, 1)
 constexpr double _min_vel { 1 };  // velocities are defined in range (0, 1)
-
 }
 
 

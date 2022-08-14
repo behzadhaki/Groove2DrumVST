@@ -17,16 +17,17 @@ public:
     // constructor
     GrooveThread();
 
-    void start_Thread(
+    // destructor
+    ~GrooveThread() override;
+
+    // give access to resources needed to communicate with other threads
+    void giveAccesstoResources(
         LockFreeQueue<Note, settings::processor_io_queue_size>* note_toProcess_quePntr,
         MonotonicGrooveQueue<settings::time_steps,processor_io_queue_size>* groove_toProcess_quePntr,
         LockFreeQueue<array<float, 4>, gui_io_queue_size>* veloff_fromGui_quePntr,
         MonotonicGrooveQueue<settings::time_steps, gui_io_queue_size>* groove_toGui_quePntr,
         StringLockFreeQueue<settings::gui_io_queue_size>* text_toGui_que_for_debuggingPntr = nullptr
-        );
-
-    // destructor
-    ~GrooveThread() override;
+    );
 
     // run this in destructor destructing object
     void prepareToStop();
@@ -38,10 +39,6 @@ public:
 
 
 private:
-
-    void NoteProcessor(Note latest_Note); // updates the internal groove
-    void Send();                          // places the scaled groove in groove_toProcess_que
-
 
     // Used to check if thread is ready to be stopped
     // used to check if a parent thread has externally

@@ -19,9 +19,9 @@
   * to use the template (see example class MidiNoteValueLoggerTextEditor):
   *     1.  override the QueueDataProcessor() --> define what needs to be done
   *             on the data received from the queue
-  *     2.  implement a start_Thread method which gets access to a queue and
+  *     2.  implement a giveAccesstoResources method which gets access to a queue and
   *             calls the run() method
-  * TO RECAP! MUST override QueueDataProcessor and implement a start_Thread method
+  * TO RECAP! MUST override QueueDataProcessor and implement a giveAccesstoResources method
 */
 class LoggerTextEditorTemplate: public juce::TextEditor, public juce::Thread
 {
@@ -51,7 +51,7 @@ public:
 
     ~NoteStructLoggerTextEditor() override;
 
-    void start_Thread(LockFreeQueue<Note, settings::gui_io_queue_size>* note_quePntr);
+    void giveAccesstoResources(LockFreeQueue<Note, settings::gui_io_queue_size>* note_quePntr);
 
     void QueueDataProcessor() override;
 
@@ -73,7 +73,7 @@ public:
     TextMessageLoggerTextEditor();
     ~TextMessageLoggerTextEditor() override;
 
-    void start_Thread(StringLockFreeQueue<settings::gui_io_queue_size>* text_message_quePntr);
+    void giveAccesstoResources(StringLockFreeQueue<settings::gui_io_queue_size>* text_message_quePntr);
     void QueueDataProcessor() override;
 
 private:

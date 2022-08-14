@@ -87,9 +87,9 @@ struct onset_time{
      */
 struct Note{
 
-    int note;
-    float velocity;
-    onset_time time;
+    int note =0 ;
+    float velocity = 0;
+    onset_time time = 0;
 
     bool capturedInLoop = false;        // useful for overdubbing calculations in
                                         // HVO::addNote(note_, shouldOverdub)
@@ -210,8 +210,14 @@ inline std::string torch2string (const torch::Tensor& tensor)
 /// \tparam num_voices_
 template <int time_steps_, int num_voices_> struct HVO
 {
-    int time_steps;
-    int num_voices;
+    int time_steps = time_steps_;
+    int num_voices = num_voices_;
+
+    // local variables to keep track of vel_range = (min_vel, max_vel) and offset ranges
+    array<float, 2> vel_range = {HVO_params::_min_vel, HVO_params::_max_vel};
+    array<float, 2> offset_range = {HVO_params::_min_offset, HVO_params::_max_offset};
+
+
     torch::Tensor hits;
     torch::Tensor velocities_unmodified;
     torch::Tensor offsets_unmodified;
@@ -219,12 +225,10 @@ template <int time_steps_, int num_voices_> struct HVO
     torch::Tensor offsets_modified;
     
 
-
     /// Default Constructor
     HVO()
     {
-        num_voices = num_voices_;
-        time_steps = time_steps_;
+
         hits = torch::zeros({time_steps, num_voices});
         velocities_unmodified = torch::zeros({time_steps, num_voices}, torch::kFloat32);
         offsets_unmodified = torch::zeros({time_steps, num_voices}, torch::kFloat32);
@@ -239,14 +243,28 @@ template <int time_steps_, int num_voices_> struct HVO
      * @param offsets_
      */
     HVO(torch::Tensor hits_, torch::Tensor velocities_, torch::Tensor offsets_):
-        hits(std::move(hits_)), time_steps(time_steps_),
+        hits(hits_), time_steps(time_steps_),
         num_voices(num_voices_),
-        velocities_unmodified(std::move(velocities_)),
-        offsets_unmodified(std::move(offsets_)), 
-        velocities_modified(std::move(velocities_)),
-        offsets_modified(std::move(offsets_))
+        velocities_unmodified(velocities_),
+        offsets_unmodified(offsets_),
+        velocities_modified(velocities_),
+        offsets_modified(offsets_)
     {
     }
+
+    void update_hvo(
+        torch::Tensor hits_, torch::Tensor velocities_, torch::Tensor offsets_, bool autoCompress)
+    {
+        hits = hits_;
+        velocities_unmodified = velocities_;
+        offsets_unmodified = offsets_;
+        if (autoCompress)
+        {
+            compressAll();
+        }
+    }
+
+
 
     void reset()
     {
@@ -366,6 +384,58 @@ template <int time_steps_, int num_voices_> struct HVO
 
     }
 
+
+    /***
+     * Automatically compresses the velocities and offsets if need be
+     */
+    void compressAll()
+    {
+        if (vel_range[0] == HVO_params::_min_vel and vel_range[1] == HVO_params::_max_vel)
+        {
+            velocities_modified = velocities_unmodified;
+        }
+        else
+        {
+            for (int i=0; i<num_voices; i++)
+            {
+                compressVelocities(i, vel_range[0], vel_range[1]);
+            }
+        }
+
+        if (offset_range[0] == HVO_params::_min_offset and offset_range[1] == HVO_params::_max_offset)
+        {
+            offsets_modified = offsets_unmodified;
+        }
+        else
+        {
+            for (int i=0; i<num_voices; i++)
+            {
+                compressVelocities(i, vel_range[0], vel_range[1]);
+                compressOffsets(i, offset_range[0], offset_range[1]);
+            }
+        }
+    }
+
+    /***
+     * Updates the compression ranges for vels and offsets
+     * Automatically updates the modified hvo if shouldReApplyCompression is true
+     * @param newVelOffsetrange (array<float, 4>)
+     * @param shouldReApplyCompression  (bool)
+     */
+    void updateCompressionRanges(array<float, 4> newVelOffsetrange,
+                                 bool shouldReApplyCompression)
+    {
+        vel_range [0] = newVelOffsetrange[0];
+        vel_range [1] = newVelOffsetrange[1];
+        offset_range [0] = newVelOffsetrange[2];
+        offset_range [1] = newVelOffsetrange[3];
+
+        if (shouldReApplyCompression)
+        {
+            compressAll();
+        }
+    }
+
     virtual string getStringDescription(bool needScaled)
     {
 
@@ -399,6 +469,7 @@ template <int time_steps_> struct MonotonicGroove
 {
     torch::Tensor registeration_times;
 
+
     HVO<time_steps_, 1> hvo;    // holds the groove as is without modification
 
     MonotonicGroove()
@@ -416,7 +487,7 @@ template <int time_steps_> struct MonotonicGroove
     void ovrerdubWithNote(Note note_)
     {
         // only use notes that are received when host is playing
-        if (note_.capturedInPlaying)
+        // if (note_.capturedInPlaying) // todo make sure uncommented in final app
         {
             // 1. find the nearest grid line and calculate offset
             auto ppq = note_.time.ppq;
@@ -425,17 +496,23 @@ template <int time_steps_> struct MonotonicGroove
                           / HVO_params::_32_note_ppq * HVO_params::_max_offset;
             auto grid_index = fmod(div, HVO_params::_n_16_notes);
 
+            // DBG ("NOTE TO OVERDUB Vel utime");
+            // DBG (note_.velocity);
+            // DBG (offset);
+
+            // DBG((hvo.velocities_unmodified[grid_index] * hvo.hits[grid_index]).template item<float>());
+
             // 2. Place note in groove
             if (note_.velocity >=
                 (hvo.velocities_unmodified[grid_index] * hvo.hits[grid_index]).template item<float>())
             {
+                // DBG ("UPDATING GROOVE");
                 hvo.hits[grid_index] = 1;
                 hvo.offsets_unmodified[grid_index] = offset;
                 hvo.velocities_unmodified[grid_index] = note_.velocity;
                 registeration_times[grid_index] = note_.time.ppq;
             }
         }
-
     }
 
     string getStringDescription(bool needScaled)
@@ -443,6 +520,18 @@ template <int time_steps_> struct MonotonicGroove
         return hvo.getStringDescription(needScaled);
     }
 
+    torch::Tensor getFullVersionTensor(bool needScaled, int VoiceToPlace)
+    {
+        auto singleVoiceTensor= hvo.getConcatenatedVersion(needScaled);
+        auto FullVoiceTensor = torch::zeros({settings::time_steps, settings::num_voices * 3});
+        for (int i=0; i<settings::time_steps; i++)
+        {
+            FullVoiceTensor[i][VoiceToPlace] = singleVoiceTensor[i][0]; // hit
+            FullVoiceTensor[i][VoiceToPlace+settings::num_voices] = singleVoiceTensor[i][1]; //vel
+            FullVoiceTensor[i][VoiceToPlace+2*settings::num_voices] = singleVoiceTensor[i][2]; //offset
+        }
+        return FullVoiceTensor;
+    }
 
 
 

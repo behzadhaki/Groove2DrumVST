@@ -6,8 +6,9 @@
 #include "Includes/Representations.h"
 #include "Includes/LockFreeQueueTemplate.h"
 #include <torch/torch.h>
-#include "Model/ModelAPI.h"
+
 #include "ProcessingThreads/GrooveThread.h"
+#include "ProcessingThreads/modelThread.h"
 
 
 using namespace std;
@@ -27,7 +28,7 @@ public:
     // single-producer/single-consumer queues
     // for inter-Thread Communication
     unique_ptr<LockFreeQueue<Note, settings::gui_io_queue_size>> note_toGui_que; // used to communicate with note logger
-    unique_ptr<StringLockFreeQueue<settings::gui_io_queue_size>> text_toGui_que;
+    unique_ptr<StringLockFreeQueue<settings::gui_io_queue_size>> text_toGui_que; // used for debugging only!
 
     // control parameter queues (shared between threads and editor)
     unique_ptr<LockFreeQueue<array<float, 4>, settings::gui_io_queue_size>> veloff_fromGui_que;
@@ -41,16 +42,22 @@ public:
 private:
 
     juce::MidiBuffer tempBuffer;
-    MonotonicGrooveTransformerV1 modelAPI;
 
     // THreads
     //GrooveThread groove_thread;
-    unique_ptr<LockFreeQueue<Note, settings::processor_io_queue_size>>  note_toProcess_que;
+    unique_ptr<LockFreeQueue<Note, settings::processor_io_queue_size>>
+        note_toProcess_que;
     unique_ptr<MonotonicGrooveQueue<settings::time_steps,
-                                    settings::processor_io_queue_size>>  groove_toProcess_que;
-
+                                    settings::processor_io_queue_size>>
+        groove_toProcess_que;
+    unique_ptr<HVOQueue<settings::time_steps, settings::num_voices,
+                        settings::processor_io_queue_size>>
+        HVO_toProcessforPlayback_que;
 
     // groove thread
     GrooveThread grooveThread;
+
+    // model thread
+    ModelThread modelThread;
 
 };

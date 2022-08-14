@@ -17,7 +17,7 @@ class MonotonicGrooveTransformerV1
 public:
     // constructor
     MonotonicGrooveTransformerV1();
-    MonotonicGrooveTransformerV1(std::string model_path, int time_steps_, int num_voices_);
+    bool loadModel(std::string model_path, int time_steps_, int num_voices_);
 
     // getters
     torch::Tensor get_hits_logits();

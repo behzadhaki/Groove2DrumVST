@@ -21,17 +21,15 @@ GrooveThread::GrooveThread():
     groove_toGui_que = nullptr;
     readyToStop = false;
 
-
-
     monotonic_groove = MonotonicGroove<time_steps>();
 
     gridlines = torch::range(0, 7.9, 0.25);
 
 }
 
-void GrooveThread::start_Thread(
+void GrooveThread::giveAccesstoResources(
     LockFreeQueue<Note, settings::processor_io_queue_size>* note_toProcess_quePntr,
-    MonotonicGrooveQueue<settings::time_steps, processor_io_queue_size>* groove_toProcess_quePntr,
+    MonotonicGrooveQueue<settings::time_steps,processor_io_queue_size>* groove_toProcess_quePntr,
     LockFreeQueue<array<float, 4>, gui_io_queue_size>* veloff_fromGui_quePntr,
     MonotonicGrooveQueue<settings::time_steps, gui_io_queue_size>* groove_toGui_quePntr,
     StringLockFreeQueue<settings::gui_io_queue_size>* text_toGui_que_for_debuggingPntr
@@ -82,14 +80,22 @@ void GrooveThread::run()
 
             while (note_toProcess_que->getNumReady() > 0 and not this->threadShouldExit())
             {
+                // DBG ("NOTE RECEIVED IN GROOVE THREAD");
+
                 // Step 1. get new note
                 note_toProcess_que->ReadFrom(&read_note, 1); // here cnt result is 3
 
                 // step 2. add to groove
                 monotonic_groove.ovrerdubWithNote(read_note);
 
-                // activate recalculation flag
+                // activate sending flag
                 isNewGrooveAvailable = true;
+            }
+
+            // apply compression if new notes overdubbed
+            if (isNewGrooveAvailable)
+            {
+                monotonic_groove.hvo.compressAll();
             }
         }
 
@@ -105,32 +111,20 @@ void GrooveThread::run()
                 veloff_fromGui_que->ReadFrom(&newVelOffsetrange, 1);
 
                 // update local range values
-                vel_range[0] = newVelOffsetrange[0];
-                vel_range[1] = newVelOffsetrange[1];
-                offset_range[0] = newVelOffsetrange[2];
-                offset_range[1] = newVelOffsetrange[3];
-            }
+                monotonic_groove.hvo.updateCompressionRanges(newVelOffsetrange, true);
 
-            if( vel_range[0] != HVO_params::_min_vel or
-                vel_range[1] != HVO_params::_max_vel)
-            {
-                monotonic_groove.hvo.compressVelocities(0, vel_range[0], vel_range[1]);
+                // activate sending flag
+                isNewGrooveAvailable = true;
             }
-            if( offset_range[0] != HVO_params::_min_offset or
-                offset_range[1] != HVO_params::_max_offset)
-            {
-                monotonic_groove.hvo.compressOffsets(
-                    0, offset_range[0], offset_range[1]);
-            }
-
-            // activate recalculation flag
-            isNewGrooveAvailable = true;
 
         }
+
 
         // Send groove to other threads if new one available
         if (isNewGrooveAvailable)
         {
+
+            // DBG(" NEW GROOVE AVAILABLE");
             if (groove_toProcess_que != nullptr)
             {
                 groove_toProcess_que->push(monotonic_groove);
@@ -143,7 +137,6 @@ void GrooveThread::run()
             }
 
         }
-
 
         bExit = threadShouldExit();
         sleep (thread_settings::GrooveThread::waitTimeBtnIters); // avoid burning CPU, if reading is returning immediately
@@ -159,18 +152,6 @@ void GrooveThread::prepareToStop()
 }
 
 
-void GrooveThread::NoteProcessor(Note latest_Note)
-{
-    // auto pitch = latest_Note.note;
-    // auto ppq = latest_Note.time.ppq;
-    // auto vel = latest_Note.velocity;
-}
-
-
-void GrooveThread::Send()
-{
-    // groove_toProcess_que->WriteTo(&unscaled_groove_overdubbed, 1);
-}
 
 
 
