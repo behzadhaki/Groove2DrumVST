@@ -17,7 +17,10 @@ class MonotonicGrooveTransformerV1
 public:
     // constructor
     MonotonicGrooveTransformerV1();
+
+    // loads a model
     bool loadModel(std::string model_path, int time_steps_, int num_voices_);
+
 
     // getters
     torch::Tensor get_hits_logits();
@@ -33,6 +36,10 @@ public:
     // Step 2. Sample hvo after the forward pass
     std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sample(std::string sample_mode = "Threshold");
 
+
+    // store path locally
+    std::string model_path;
+
 private:
 
     torch::jit::script::Module model;           // model to be loaded in constructor
@@ -44,6 +51,8 @@ private:
     torch::Tensor velocities;
     torch::Tensor offsets;
     torch::Tensor per_voice_sampling_thresholds;            // per voice thresholds for sampling
+
+
 
 };
 

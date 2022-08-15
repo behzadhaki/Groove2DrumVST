@@ -23,17 +23,21 @@ static torch::Tensor vector2tensor(vector<float> vec)
 
 
 //default constructor
-MonotonicGrooveTransformerV1::MonotonicGrooveTransformerV1(){}
+MonotonicGrooveTransformerV1::MonotonicGrooveTransformerV1(){
+    model_path = "NO Path Specified Yet!!";
+}
 
 
-bool MonotonicGrooveTransformerV1::loadModel(std::string model_path, int time_steps_, int num_voices_)
+bool MonotonicGrooveTransformerV1::loadModel(std::string model_path_, int time_steps_, int num_voices_)
 {
+    model_path = model_path_;
     time_steps = time_steps_;
     num_voices = num_voices_;
     ifstream myFile;
     myFile.open(model_path);
     // Check for errors
 
+    // check if path works fine
     if (myFile.fail())
     {
         return false;

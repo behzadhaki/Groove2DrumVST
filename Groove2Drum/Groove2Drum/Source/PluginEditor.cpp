@@ -14,13 +14,13 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     addAndMakeVisible (NoteStructLoggerTextEditor);
     NoteStructLoggerTextEditor.setMultiLine (true);
     NoteStructLoggerTextEditor.setBounds (100, 40, 500, 100);
-    NoteStructLoggerTextEditor.giveAccesstoResources(MidiFXProcessorPointer.note_toGui_que.get());
+    NoteStructLoggerTextEditor.startThreadUsingProvidedResources(MidiFXProcessorPointer.note_toGui_que.get());
 
     // Create TextEditor for Text Messages
     addAndMakeVisible (TextMessageLoggerTextEditor);
     TextMessageLoggerTextEditor.setMultiLine (true);
     TextMessageLoggerTextEditor.setBounds (100, 200, 500, 100);
-    TextMessageLoggerTextEditor.giveAccesstoResources(MidiFXProcessorPointer.text_toGui_que.get());
+    TextMessageLoggerTextEditor.startThreadUsingProvidedResources(MidiFXProcessorPointer.text_toGui_que.get());
 
 
     // Set window size

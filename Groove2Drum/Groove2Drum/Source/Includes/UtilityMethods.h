@@ -90,13 +90,12 @@ inline void showMessageinEditor(StringLockFreeQueue<settings::gui_io_queue_size>
             text_message_queue->addText((char*) "clear");
         }
 
-        text_message_queue->addText(header);
+        text_message_queue->addText("<<<<<  " + header + "  >>>>>>");
 
         /*char* c_message = const_cast<char*>(message.c_str());
         text_message_queue->addText(c_message);*/
 
         text_message_queue->addText(message);
-        text_message_queue->addText((char*) "---------------------");
     }
 
 }

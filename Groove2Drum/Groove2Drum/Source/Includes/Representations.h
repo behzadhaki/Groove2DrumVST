@@ -438,11 +438,21 @@ template <int time_steps_, int num_voices_> struct HVO
 
     virtual string getStringDescription(bool needScaled)
     {
-
         auto temp = getConcatenatedVersion(needScaled);
 
         std::ostringstream msg_stream;
-        msg_stream << " HITS, VELOCITIES , OFFSETS " << endl << temp;
+        msg_stream     << " ---------        HITS     ----------" << endl << hits;
+
+        if (needScaled)
+        {
+            msg_stream << " ---- Vel (Compressed to Range) ---- " << endl << velocities_modified;
+            msg_stream << " -- Offsets (Compressed to Range) -- " << endl << offsets_modified;
+        }
+        else
+        {
+            msg_stream << " ---- Vel (Without Compression) ---- " << endl << velocities_unmodified;
+            msg_stream << " -- Offsets (Without Compression) -- " << endl << offsets_unmodified;
+        }
 
         return msg_stream.str();
     }

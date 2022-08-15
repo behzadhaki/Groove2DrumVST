@@ -32,7 +32,7 @@ public:
 
     // control parameter queues (shared between threads and editor)
     unique_ptr<LockFreeQueue<array<float, 4>, settings::gui_io_queue_size>> veloff_fromGui_que;
-    unique_ptr<LockFreeQueue<std::array<float, settings::num_voices>, settings::gui_io_queue_size>>  thresholds_fromGui_que;
+    unique_ptr<LockFreeQueue<std::array<float, settings::num_voices>, settings::gui_io_queue_size>>  perVoiceSamplingThresh_fromGui_que;
 
     // queue for displaying the monotonicgroove in editor
     unique_ptr<MonotonicGrooveQueue<settings::time_steps,

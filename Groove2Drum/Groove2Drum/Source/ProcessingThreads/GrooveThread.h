@@ -21,7 +21,7 @@ public:
     ~GrooveThread() override;
 
     // give access to resources needed to communicate with other threads
-    void giveAccesstoResources(
+    void startThreadUsingProvidedResources(
         LockFreeQueue<Note, settings::processor_io_queue_size>* note_toProcess_quePntr,
         MonotonicGrooveQueue<settings::time_steps,processor_io_queue_size>* groove_toProcess_quePntr,
         LockFreeQueue<array<float, 4>, gui_io_queue_size>* veloff_fromGui_quePntr,
@@ -37,14 +37,12 @@ public:
     // run() is explicitly called
     void run() override;
 
-
-private:
-
     // Used to check if thread is ready to be stopped
     // used to check if a parent thread has externally
     // requested the thread to stop
     bool readyToStop;
 
+private:
 
     // ---- Locally Used for calculations ----------------------------------
     LockFreeQueue<Note, settings::processor_io_queue_size>* note_toProcess_que{};    // queue for receiving the new notes

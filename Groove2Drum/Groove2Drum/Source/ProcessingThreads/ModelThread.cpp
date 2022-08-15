@@ -3,27 +3,13 @@
 //
 
 #include "ModelThread.h"
+#include "../Includes/UtilityMethods.h"
+
 
 ModelThread::ModelThread(): juce::Thread("Model_Thread")
-
 {
-    modelAPI = MonotonicGrooveTransformerV1 ();
-
-    bool isLoaded = modelAPI.loadModel(settings::default_model_path, settings::time_steps,  settings::num_voices);
-    if (!isLoaded)
-    {
-        // DBG("Couldn't Load Model from");
-        // DBG(settings::default_model_path);
-
-    }
-    else
-    {
-        // DBG("MODEL loaded successfully from ");
-        // DBG(settings::default_model_path);
-    }
-
     groove_toProcess_que = nullptr;
-    thresholds_fromGui_que = nullptr;
+    perVoiceSamplingThresh_fromGui_que = nullptr;
     HVO_toProcessforPlayback_que = nullptr;
 
     readyToStop = false;
@@ -39,11 +25,12 @@ ModelThread::~ModelThread()
     }
 }
 
-void ModelThread::giveAccesstoResources(
+
+void ModelThread::startThreadUsingProvidedResources(
     MonotonicGrooveQueue<settings::time_steps,processor_io_queue_size>*
         groove_toProcess_quePntr,
     LockFreeQueue<std::array<float, settings::num_voices>, settings::gui_io_queue_size>*
-        thresholds_fromGui_quePntr,
+        perVoiceSamplingThresh_fromGui_quePntr,
     HVOQueue<settings::time_steps, settings::num_voices,
              settings::processor_io_queue_size>*
         HVO_toProcessforPlayback_quePntr,
@@ -51,14 +38,34 @@ void ModelThread::giveAccesstoResources(
         text_toGui_que_for_debuggingPntr
     )
 {
+    // get access to resources
     groove_toProcess_que = groove_toProcess_quePntr;
-    thresholds_fromGui_que = thresholds_fromGui_quePntr;
+    perVoiceSamplingThresh_fromGui_que = perVoiceSamplingThresh_fromGui_quePntr;
     HVO_toProcessforPlayback_que = HVO_toProcessforPlayback_quePntr;
     text_toGui_que_for_debugging = text_toGui_que_for_debuggingPntr;
 
+    // load model
+    modelAPI = MonotonicGrooveTransformerV1();
+    bool isLoaded = modelAPI.loadModel(
+        settings::default_model_path, settings::time_steps, settings::num_voices);
+
+    // check if model loaded successfully
+    if (isLoaded)
+    {
+        showMessageinEditor(text_toGui_que_for_debugging,
+                            modelAPI.model_path, "Model Loaded From", true);
+    }
+    else
+    {
+        showMessageinEditor(text_toGui_que_for_debugging,
+                            modelAPI.model_path, "Failed to Load Model From", true);
+    }
+
+    // start thread
     startThread();
 
 }
+
 
 void ModelThread::run()
 {
@@ -68,31 +75,37 @@ void ModelThread::run()
     // flag to check if sampling thresholds are changed or new groove is received
     bool shouldResample;
     bool newGrooveAvailable;
-    // generated_hvo
+
+    // generated_hvo to be sent to next thread
     HVO<settings::time_steps, settings::num_voices > generated_hvo;
+
+    // placeholder for reading the latest groove received in queue
     MonotonicGroove<settings::time_steps> scaled_groove;
 
-    array<float, settings::num_voices> threshs_array = {};
+    // local array to keep track of !!NEW!! sampling thresholds
+    // although empty here, remember model is initialized using
+    // default_sampling_thresholds in ../settings.h
+    array<float, settings::num_voices> perVoiceSamplingThresholds = {};
 
     while (!bExit)
     {
+        // reset flags
         shouldResample = false;
         newGrooveAvailable = false;
 
         bExit = threadShouldExit();
 
 
-        if (thresholds_fromGui_que != nullptr)
+        if (perVoiceSamplingThresh_fromGui_que != nullptr)
         {
-            while (thresholds_fromGui_que->getNumReady() > 0
+            while (perVoiceSamplingThresh_fromGui_que->getNumReady() > 0
                    and not this->threadShouldExit()){
-                // DBG("RECEIVED NEW THRESHOLD");
-                threshs_array = thresholds_fromGui_que->pop();
 
-                std::vector<float> thres_vec(std::begin(threshs_array),
-                                             std::end(threshs_array));
+                perVoiceSamplingThresholds = perVoiceSamplingThresh_fromGui_que->pop();
 
-                modelAPI.set_sampling_thresholds(thres_vec);
+                std::vector<float> thresh_vec(std::begin(perVoiceSamplingThresholds),
+                                             std::end(perVoiceSamplingThresholds));
+                modelAPI.set_sampling_thresholds(thresh_vec);
                 shouldResample = true;
             }
         }
@@ -100,11 +113,12 @@ void ModelThread::run()
         if (groove_toProcess_que != nullptr)
         {
             while (groove_toProcess_que->getNumReady() > 0
-                   and not this->threadShouldExit()){
-                // DBG("New Groove REceived");
+                   and not this->threadShouldExit())
+            {
+                // read latest groove
                 scaled_groove = groove_toProcess_que->pop();
-                // DBG("SCALED GROOVE");
-                // DBG(scaled_groove.getStringDescription(true));
+
+                // set flag to re-run model
                 newGrooveAvailable = true;
             }
 
@@ -114,12 +128,18 @@ void ModelThread::run()
                 // FIXME SOME ERROR HAPPENS HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 // FIXME !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 // pass scaled version mapped to closed hats to input
-                modelAPI.forward_pass(scaled_groove.getFullVersionTensor(false, 2)); // todo replace false with true
+                // !!!! dont't forget to use the scaled tensor (with modified vel/offsets)
+                bool useGrooveWithModifiedVelOffset = true;
+                int mapGrooveToVoiceNumber = 2;     // closed hihat
+                modelAPI.forward_pass(scaled_groove.getFullVersionTensor(
+                    useGrooveWithModifiedVelOffset,
+                    mapGrooveToVoiceNumber));
                 shouldResample = true;
             }
 
         }
 
+        // should resample output if, input new groove received
         if (shouldResample)
         {
 
@@ -128,7 +148,10 @@ void ModelThread::run()
                 hits, velocities, offsets);
             HVO_toProcessforPlayback_que->push(generated_hvo);
 
-            text_toGui_que_for_debugging->addText(generated_hvo.getStringDescription(true));
+            showMessageinEditor(text_toGui_que_for_debugging,
+                                generated_hvo.getStringDescription(true),
+                                "Generated HVO",
+                                true);
 
         }
 

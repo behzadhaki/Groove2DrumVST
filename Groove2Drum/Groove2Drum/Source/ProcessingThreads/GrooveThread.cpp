@@ -27,7 +27,7 @@ GrooveThread::GrooveThread():
 
 }
 
-void GrooveThread::giveAccesstoResources(
+void GrooveThread::startThreadUsingProvidedResources(
     LockFreeQueue<Note, settings::processor_io_queue_size>* note_toProcess_quePntr,
     MonotonicGrooveQueue<settings::time_steps,processor_io_queue_size>* groove_toProcess_quePntr,
     LockFreeQueue<array<float, 4>, gui_io_queue_size>* veloff_fromGui_quePntr,
