@@ -3,7 +3,7 @@
 #include <shared_plugin_helpers/shared_plugin_helpers.h>
 //#include <vector>
 #include "settings.h"
-#include "Includes/Representations.h"
+#include "Includes/CustomStructs.h"
 #include "Includes/LockFreeQueueTemplate.h"
 #include <torch/torch.h>
 

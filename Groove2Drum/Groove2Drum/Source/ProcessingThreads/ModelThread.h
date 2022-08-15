@@ -6,7 +6,7 @@
 #define JUCECMAKEREPO_MODELTHREAD_H
 
 #include <shared_plugin_helpers/shared_plugin_helpers.h>
-#include "../Includes/Representations.h"
+#include "../Includes/CustomStructs.h"
 #include "../Includes/LockFreeQueueTemplate.h"
 #include "../settings.h"
 #include "../Model/ModelAPI.h"

@@ -5,10 +5,15 @@
 #pragma once
 
 #include <shared_plugin_helpers/shared_plugin_helpers.h>
-#include "Representations.h"
+#include "CustomStructs.h"
 
 using namespace std;
 
+/***
+ * a Juce::abstractfifo implementation of a Lockfree FIFO
+ * to be used for Strings
+ * @tparam queue_size
+ */
 template<int queue_size> class StringLockFreeQueue
 {
 private:
@@ -61,6 +66,13 @@ public:
 
 };
 
+
+/***
+ * a Juce::abstractfifo implementation of a Lockfree FIFO
+ *  to be used for T (template) datatypes
+ * @tparam T    template datatype
+ * @tparam queue_size
+ */
 template <typename T, int queue_size> class LockFreeQueue
 {
 private:
@@ -174,6 +186,13 @@ public:
     }
 };
 
+
+/***
+ * a Juce::abstractfifo implementation of a Lockfree FIFO
+ * to be used for CustomStructs::MonotonicGroove datatypes
+ * @tparam time_steps_
+ * @tparam queue_size
+ */
 template <int time_steps_, int queue_size> class MonotonicGrooveQueue
 {
 private:
@@ -238,7 +257,13 @@ public:
 };
 
 
-
+/***
+  * a Juce::abstractfifo implementation of a Lockfree FIFO
+  * to be used for CustomStructs::HVO datatypes
+  * @tparam time_steps_
+  * @tparam num_voices_
+  * @tparam queue_size
+  */
 template <int time_steps_, int num_voices_, int queue_size> class HVOQueue
 {
 private:

@@ -4,7 +4,7 @@
 
 #include "../settings.h"
 #include <torch/torch.h>
-#include "Representations.h"
+#include "CustomStructs.h"
 
 // can be used in processor to pass the messages received in a MidiBuffer as is,
 // sequentially in a queue to be shared with other threads
@@ -19,7 +19,6 @@ using namespace std;
  * @param note_que  (LockFreeQueue<Note, que_size>*)
  *
  */
-
 template<int que_size>
 inline void place_BasicNote_in_queue(
     juce::MidiBuffer& midiMessages,
