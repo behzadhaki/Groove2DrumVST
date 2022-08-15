@@ -55,16 +55,15 @@ MidiFXProcessor::MidiFXProcessor(){
 // auto test_tensor = torch::randn({32, 9});
 
 MidiFXProcessor::~MidiFXProcessor(){
-    if (!grooveThread.readyToStop)
+    /*if (!grooveThread.readyToStop)
     {
         grooveThread.prepareToStop();
     }
     if (!modelThread.readyToStop)
     {
         modelThread.prepareToStop();
-    }
+    }*/
 }
-
 
 void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
                                    juce::MidiBuffer& midiMessages)

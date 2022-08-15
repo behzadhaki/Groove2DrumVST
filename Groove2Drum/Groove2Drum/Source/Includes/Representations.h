@@ -135,57 +135,6 @@ struct Note{
 };
 
 
-/**
-     * Structure holding the information regarding a registered note to be placed in
-     * groove_buffer
-     *
-     * \param grid_index (int): grid index closest to the onset
-     * \param actual_onset_time (double): actual ppq of the registered onset
-     * \param  offset (double): deviation from the gridline
-     * \param velocity (double): velocity of note
-     *//*
-
-struct GrooveEvent{
-
-    int grid_index;
-    double actual_onset_time;
-    double offset;
-    double velocity;
-
-    GrooveEvent() = default;
-
-    GrooveEvent(int grid_index_, double actual_onset_time_, double offset_, double velocity_):
-        grid_index(grid_index_), actual_onset_time(actual_onset_time_), offset(offset_), velocity(velocity_)
-    {}
-
-    explicit GrooveEvent(Note note_)
-    {
-        // Converts a note to a groove event
-
-        auto ppq = note_.time.ppq;
-        auto div = round(ppq / HVO_params::_16_note_ppq);
-        offset = (ppq - (div * HVO_params::_16_note_ppq)) / HVO_params::_32_note_ppq * HVO_params::_max_offset;
-        grid_index = fmod(div, HVO_params::_n_16_notes);
-
-        actual_onset_time = ppq;
-        velocity = note_.velocity;
-
-    }
-
-    // converts the data to a string message to be printed/displayed
-    string getStringDescription() const
-    {
-        std::ostringstream msg_stream;
-        msg_stream << "groove_event " << actual_onset_time
-                   << ", grid_index " << grid_index
-                   << ", offset " << offset
-                   << ", velocity " << velocity;
-        return msg_stream.str();
-    }
-
-};
-*/
-
 
 /**
  * Converts a torch tensor to a string
@@ -436,22 +385,42 @@ template <int time_steps_, int num_voices_> struct HVO
         }
     }
 
-    virtual string getStringDescription(bool needScaled)
+    virtual string getStringDescription(bool showHits,
+                                        bool showVels,
+                                        bool showOffsets,
+                                        bool needScaled)
     {
-        auto temp = getConcatenatedVersion(needScaled);
-
         std::ostringstream msg_stream;
-        msg_stream     << " ---------        HITS     ----------" << endl << hits;
+        if (showHits)
+        {
+            msg_stream     << " ---------        HITS     ----------" << endl << hits;
+        }
 
         if (needScaled)
         {
-            msg_stream << " ---- Vel (Compressed to Range) ---- " << endl << velocities_modified;
-            msg_stream << " -- Offsets (Compressed to Range) -- " << endl << offsets_modified;
+            if (showVels)
+            {
+                msg_stream << " ---- Vel (Compressed to Range) ---- " << endl
+                           << velocities_modified;
+            }
+            if (showOffsets)
+            {
+                msg_stream << " -- Offsets (Compressed to Range) -- " << endl
+                           << offsets_modified;
+            }
         }
         else
         {
-            msg_stream << " ---- Vel (Without Compression) ---- " << endl << velocities_unmodified;
-            msg_stream << " -- Offsets (Without Compression) -- " << endl << offsets_unmodified;
+            if (showVels)
+            {
+                msg_stream << " ---- Vel (Without Compression) ---- " << endl
+                           << velocities_unmodified;
+            }
+            if (showOffsets)
+            {
+                msg_stream << " -- Offsets (Without Compression) -- " << endl
+                           << offsets_unmodified;
+            }
         }
 
         return msg_stream.str();
@@ -525,9 +494,12 @@ template <int time_steps_> struct MonotonicGroove
         }
     }
 
-    string getStringDescription(bool needScaled)
+    string getStringDescription(bool showHits,
+                                bool showVels,
+                                bool showOffsets,
+                                bool needScaled)
     {
-        return hvo.getStringDescription(needScaled);
+        return hvo.getStringDescription(showHits, showVels, showOffsets, needScaled);
     }
 
     torch::Tensor getFullVersionTensor(bool needScaled, int VoiceToPlace)

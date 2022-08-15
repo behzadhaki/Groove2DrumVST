@@ -124,9 +124,6 @@ void ModelThread::run()
 
            if (newGrooveAvailable)
             {
-                // FIXME !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                // FIXME SOME ERROR HAPPENS HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                // FIXME !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 // pass scaled version mapped to closed hats to input
                 // !!!! dont't forget to use the scaled tensor (with modified vel/offsets)
                 bool useGrooveWithModifiedVelOffset = true;
@@ -146,12 +143,23 @@ void ModelThread::run()
             auto [hits, velocities, offsets] = modelAPI.sample("Threshold");
             generated_hvo = HVO<settings::time_steps, settings::num_voices>(
                 hits, velocities, offsets);
+
+            // send generation to midiMessageFormatterThread
             HVO_toProcessforPlayback_que->push(generated_hvo);
 
-            showMessageinEditor(text_toGui_que_for_debugging,
-                                generated_hvo.getStringDescription(true),
-                                "Generated HVO",
-                                true);
+            // TODO can comment block --- for debugging only
+            {
+                bool showHits = true;
+                bool showVels = false;
+                bool showOffs = false;
+                bool needScaled = true;
+                showMessageinEditor(text_toGui_que_for_debugging,
+                                    generated_hvo.getStringDescription(
+                                        showHits, showVels, showOffs, needScaled),
+                                    "Generated HVO",
+                                    true);
+            }
+
 
         }
 
