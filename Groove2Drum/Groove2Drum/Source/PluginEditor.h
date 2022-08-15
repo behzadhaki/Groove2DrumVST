@@ -13,7 +13,7 @@ public:
     void resized() override {}
 
 private:
-    NoteStructLoggerTextEditor NoteStructLoggerTextEditor;
+    BasicNoteStructLoggerTextEditor BasicNoteStructLoggerTextEditor;
     TextMessageLoggerTextEditor TextMessageLoggerTextEditor;
     juce::Label SampleRateLabel;
 };

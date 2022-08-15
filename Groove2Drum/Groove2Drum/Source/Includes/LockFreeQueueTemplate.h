@@ -195,8 +195,8 @@ public:
 
         while (data.size() < queue_size)
         {
-            auto empty_note = MonotonicGroove<time_steps_>();
-            data.add(empty_note);
+            auto empty_groove = MonotonicGroove<time_steps_>();
+            data.add(empty_groove);
         }
 
     }
@@ -261,8 +261,8 @@ public:
 
         while (data.size() < queue_size)
         {
-            auto empty_note = HVO<time_steps_, num_voices_>();
-            data.add(empty_note);
+            auto empty_HVO = HVO<time_steps_, num_voices_>();
+            data.add(empty_HVO);
         }
 
     }

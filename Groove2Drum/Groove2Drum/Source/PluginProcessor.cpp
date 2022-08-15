@@ -12,7 +12,7 @@ MidiFXProcessor::MidiFXProcessor(){
     //groove_thread_ready = false;
 
     //editor queues
-    note_toGui_que = make_unique<LockFreeQueue<Note, settings::gui_io_queue_size>>();
+    note_toGui_que = make_unique<LockFreeQueue<BasicNote, settings::gui_io_queue_size>>();
     text_toGui_que = make_unique<StringLockFreeQueue<settings::gui_io_queue_size>>();
 
     // control paramer queues
@@ -24,7 +24,7 @@ MidiFXProcessor::MidiFXProcessor(){
 
     //groove thread params
     note_toProcess_que =
-        make_unique<LockFreeQueue<Note, settings::processor_io_queue_size>>();
+        make_unique<LockFreeQueue<BasicNote, settings::processor_io_queue_size>>();
     groove_toProcess_que =
         make_unique<MonotonicGrooveQueue<settings::time_steps,processor_io_queue_size>>();
 
@@ -73,12 +73,12 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     if (not midiMessages.isEmpty() /*and groove_thread_ready*/)
     {
         // STEP 1
-        // get Playhead info and Add note and onset to note_toGui_que using Note structure
+        // get Playhead info and Add note and onset to note_toGui_que using BasicNote structure
         auto playhead = getPlayHead();
 
-        // send notes to the GrooveThread and also gui logger for notes
-        place_note_in_queue<settings::gui_io_queue_size>(midiMessages, playhead, note_toGui_que.get());
-        place_note_in_queue<settings::processor_io_queue_size>(midiMessages, playhead, note_toProcess_que.get());
+        // send BasicNotes to the GrooveThread and also gui logger for notes
+        place_BasicNote_in_queue<settings::gui_io_queue_size>(midiMessages, playhead, note_toGui_que.get());
+        place_BasicNote_in_queue<settings::processor_io_queue_size>(midiMessages, playhead, note_toProcess_que.get());
     }
 
     midiMessages.swapWith(tempBuffer);

@@ -38,8 +38,7 @@ void LoggerTextEditorTemplate::run()
 }
 
 
-
-NoteStructLoggerTextEditor::NoteStructLoggerTextEditor(): LoggerTextEditorTemplate()
+BasicNoteStructLoggerTextEditor::BasicNoteStructLoggerTextEditor(): LoggerTextEditorTemplate()
 {
 
     TextEditorLabel.setText ("Midi#/Vel/Actual Onset ppq", juce::dontSendNotification);
@@ -48,34 +47,34 @@ NoteStructLoggerTextEditor::NoteStructLoggerTextEditor(): LoggerTextEditorTempla
     TextEditorLabel.setJustificationType (juce::Justification::top);
     addAndMakeVisible (TextEditorLabel);
 
-    this->setCurrentThreadName("NoteStructureLoggerThread");
+    this->setCurrentThreadName("BasicNoteStructureLoggerThread");
 
     numNotesPrintedOnLine = 0;
 }
 
-NoteStructLoggerTextEditor::~NoteStructLoggerTextEditor()
+BasicNoteStructLoggerTextEditor::~BasicNoteStructLoggerTextEditor()
 {
     this->prepareToStop();
 
 }
 
-void NoteStructLoggerTextEditor::startThreadUsingProvidedResources(LockFreeQueue<Note, settings::gui_io_queue_size>* note_quePntr)
+void BasicNoteStructLoggerTextEditor::startThreadUsingProvidedResources(LockFreeQueue<BasicNote, settings::gui_io_queue_size>* note_quePntr)
 {
     note_queP = note_quePntr;
     this->startThread();
 }
 
-void NoteStructLoggerTextEditor::QueueDataProcessor()
+void BasicNoteStructLoggerTextEditor::QueueDataProcessor()
 {
     if (note_queP != nullptr)
     {
         while (note_queP->getNumReady() > 0 and not this->threadShouldExit())
         {
-            Note note;
+            BasicNote note;
             note_queP->ReadFrom(&note, 1); // here cnt result is 3
             juce::MessageManagerLock mmlock;
 
-            if(this->getTotalNumChars()>gui_settings::NoteStructLoggerTextEditor::maxChars)
+            if(this->getTotalNumChars()>gui_settings::BasicNoteStructLoggerTextEditor::maxChars)
             {
                 this->clear();
                 this->numNotesPrintedOnLine = 0;
@@ -87,7 +86,7 @@ void NoteStructLoggerTextEditor::QueueDataProcessor()
             this->numNotesPrintedOnLine += 1;
 
             if(this->numNotesPrintedOnLine > 0 and
-                this->numNotesPrintedOnLine % gui_settings::NoteStructLoggerTextEditor::
+                this->numNotesPrintedOnLine % gui_settings::BasicNoteStructLoggerTextEditor::
                             nNotesPerLine == 0)
                 insertTextAtCaret(juce::newLine);
 

@@ -10,11 +10,11 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     SampleRateLabel.setText("MAKE SURE SAMPLE RATE IS "+juce::String(settings::sample_rate), juce::dontSendNotification);
     SampleRateLabel.setBounds (0, 0, 300, 30);
 
-    // Create TextEditor for Note Struct
-    addAndMakeVisible (NoteStructLoggerTextEditor);
-    NoteStructLoggerTextEditor.setMultiLine (true);
-    NoteStructLoggerTextEditor.setBounds (100, 40, 500, 100);
-    NoteStructLoggerTextEditor.startThreadUsingProvidedResources(MidiFXProcessorPointer.note_toGui_que.get());
+    // Create TextEditor for BasicNote Struct
+    addAndMakeVisible (BasicNoteStructLoggerTextEditor);
+    BasicNoteStructLoggerTextEditor.setMultiLine (true);
+    BasicNoteStructLoggerTextEditor.setBounds (100, 40, 500, 100);
+    BasicNoteStructLoggerTextEditor.startThreadUsingProvidedResources(MidiFXProcessorPointer.note_toGui_que.get());
 
     // Create TextEditor for Text Messages
     addAndMakeVisible (TextMessageLoggerTextEditor);

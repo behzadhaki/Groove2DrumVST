@@ -12,7 +12,7 @@
 using namespace std;
 
 /**
- * converts a note_on message received in the processor into a Note instance
+ * converts a note_on message received in the processor into a BasicNote instance
  * then sends it to receiver thread using the provided note_que
  * @param midiMessages (juce::MidiBuffer&)
  * @param playheadP (juce::AudioPlayHead*)
@@ -21,10 +21,10 @@ using namespace std;
  */
 
 template<int que_size>
-inline void place_note_in_queue(
+inline void place_BasicNote_in_queue(
     juce::MidiBuffer& midiMessages,
     juce::AudioPlayHead* playheadP,
-    LockFreeQueue<Note, que_size>* note_que)
+    LockFreeQueue<BasicNote, que_size>* note_que)
 {
     double frameStartPpq = 0;
     double qpm = 0;
@@ -50,7 +50,7 @@ inline void place_note_in_queue(
                 auto message = m.getMessage();
                 if (message.isNoteOn())
                 {
-                    Note note(message.getNoteNumber(),
+                    BasicNote note(message.getNoteNumber(),
                               message.getFloatVelocity(),
                               frameStartPpq,
                               message.getTimeStamp(),

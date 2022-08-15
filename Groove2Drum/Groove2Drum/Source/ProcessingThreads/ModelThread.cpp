@@ -63,7 +63,6 @@ void ModelThread::startThreadUsingProvidedResources(
 
     // start thread
     startThread();
-
 }
 
 
@@ -165,9 +164,9 @@ void ModelThread::run()
 
         bExit = threadShouldExit();
 
-        sleep (thread_settings::GrooveThread::waitTimeBtnIters); // avoid burning CPU, if reading is returning immediately
+        // avoid burning CPU, if reading is returning immediately
+        sleep (thread_settings::GrooveThread::waitTimeBtnIters);
     }
-
 }
 
 void ModelThread::prepareToStop()

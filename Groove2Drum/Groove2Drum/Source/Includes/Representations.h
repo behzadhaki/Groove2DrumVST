@@ -20,7 +20,7 @@ using namespace settings;
      *
      * \param ppq (double): time in ppq
      *
-     * Used in Note Structure (see for instantiation example)
+     * Used in BasicNote Structure (see for instantiation example)
      */
 struct onset_time{
 
@@ -85,7 +85,7 @@ struct onset_time{
      * \param time (onset_time): structure for onset time of the note (see onset_time)
      *
      */
-struct Note{
+struct BasicNote{
 
     int note =0 ;
     float velocity = 0;
@@ -96,28 +96,28 @@ struct Note{
     bool capturedInPlaying = false;     // useful for checking if note was played while
                                         // playhead was playing
     // default constructor for empty instantiation
-    Note() = default;
+    BasicNote() = default;
 
     // constructor for placing notes received in the processor from the MIDIBuffer
-    Note(int note_number, float velocity_Value, double frameStartPpq, double audioSamplePos, double qpm):
+    BasicNote(int note_number, float velocity_Value, double frameStartPpq, double audioSamplePos, double qpm):
         note(note_number), velocity(velocity_Value), time(frameStartPpq, audioSamplePos, qpm){
     }
 
     // constructor for placing notes generated
-    Note(int voice_index, float velocity_Value, int grid_line, double offset,
+    BasicNote(int voice_index, float velocity_Value, int grid_line, double offset,
          std::vector<int> voice_to_midi_map = nine_voice_kit):
         note(voice_to_midi_map[voice_index]), velocity(velocity_Value), time(grid_line, offset) {}
 
     // < operator to check which note happens earlier (used for sorting)
-    bool operator<( const Note& rhs ) const
+    bool operator<( const BasicNote& rhs ) const
     { return time.ppq < rhs.time.ppq; }
 
-    bool isLouderThan ( const Note& otherNote ) const
+    bool isLouderThan ( const BasicNote& otherNote ) const
     {
         return velocity >= otherNote.velocity;
     }
 
-    bool occursEarlierThan (const Note& otherNote ) const
+    bool occursEarlierThan (const BasicNote& otherNote ) const
     {
         return time.ppq < otherNote.time.ppq;
     }
@@ -177,7 +177,6 @@ template <int time_steps_, int num_voices_> struct HVO
     /// Default Constructor
     HVO()
     {
-
         hits = torch::zeros({time_steps, num_voices});
         velocities_unmodified = torch::zeros({time_steps, num_voices}, torch::kFloat32);
         offsets_unmodified = torch::zeros({time_steps, num_voices}, torch::kFloat32);
@@ -248,7 +247,7 @@ template <int time_steps_, int num_voices_> struct HVO
         offsets_modified = offsets_unmodified * hits;
     }
 
-    vector<Note> getUnmodifiedNotes(std::vector<int> voice_to_midi_map = nine_voice_kit)
+    vector<BasicNote> getUnmodifiedNotes(std::vector<int> voice_to_midi_map = nine_voice_kit)
     {
 
         // get hit locations
@@ -256,7 +255,7 @@ template <int time_steps_, int num_voices_> struct HVO
         auto n_notes = indices.sizes()[0];
 
         // empty vector for notes
-        vector<Note> Notes;
+        vector<BasicNote> Notes;
 
         // for each index create note and add to vector
         for (int i=0; i<n_notes; i++)
@@ -265,7 +264,7 @@ template <int time_steps_, int num_voices_> struct HVO
             int grid_line = indices[i][0].template item<int>();
             auto velocity = velocities_unmodified[indices[i][0]][indices[i][1]].template item<float>();
             auto offset = offsets_unmodified[indices[i][0]][indices[i][1]].template item<double>();
-            Note note_(voice_ix, velocity, grid_line, offset, voice_to_midi_map);
+            BasicNote note_(voice_ix, velocity, grid_line, offset, voice_to_midi_map);
             Notes.push_back(note_);
         }
 
@@ -275,7 +274,7 @@ template <int time_steps_, int num_voices_> struct HVO
         return Notes;
     }
 
-    vector<Note> getModifiedNotes(std::vector<int> voice_to_midi_map = nine_voice_kit)
+    vector<BasicNote> getModifiedNotes(std::vector<int> voice_to_midi_map = nine_voice_kit)
     {
 
         // get hit locations
@@ -283,7 +282,7 @@ template <int time_steps_, int num_voices_> struct HVO
         auto n_notes = indices.sizes()[0];
 
         // empty vector for notes
-        vector<Note> Notes;
+        vector<BasicNote> Notes;
 
         // for each index create note and add to vector
         for (int i=0; i<n_notes; i++)
@@ -292,7 +291,7 @@ template <int time_steps_, int num_voices_> struct HVO
             int grid_line = indices[i][0].template item<int>();
             auto velocity = velocities_modified[indices[i][0]][indices[i][1]].template item<float>();
             auto offset = offsets_modified[indices[i][0]][indices[i][1]].template item<double>();
-            Note note_(voice_ix, velocity, grid_line, offset, voice_to_midi_map);
+            BasicNote note_(voice_ix, velocity, grid_line, offset, voice_to_midi_map);
             Notes.push_back(note_);
         }
 
@@ -463,7 +462,7 @@ template <int time_steps_> struct MonotonicGroove
         registeration_times = torch::zeros({time_steps_, 1}, torch::kFloat32);
     }
 
-    void ovrerdubWithNote(Note note_)
+    void ovrerdubWithNote(BasicNote note_)
     {
         // only use notes that are received when host is playing
         // if (note_.capturedInPlaying) // todo make sure uncommented in final app

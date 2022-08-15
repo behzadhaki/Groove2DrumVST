@@ -27,7 +27,7 @@ public:
 
     // single-producer/single-consumer queues
     // for inter-Thread Communication
-    unique_ptr<LockFreeQueue<Note, settings::gui_io_queue_size>> note_toGui_que; // used to communicate with note logger
+    unique_ptr<LockFreeQueue<BasicNote, settings::gui_io_queue_size>> note_toGui_que; // used to communicate with BasicNote logger
     unique_ptr<StringLockFreeQueue<settings::gui_io_queue_size>> text_toGui_que; // used for debugging only!
 
     // control parameter queues (shared between threads and editor)
@@ -45,7 +45,7 @@ private:
 
     // THreads
     //GrooveThread groove_thread;
-    unique_ptr<LockFreeQueue<Note, settings::processor_io_queue_size>>
+    unique_ptr<LockFreeQueue<BasicNote, settings::processor_io_queue_size>>
         note_toProcess_que;
     unique_ptr<MonotonicGrooveQueue<settings::time_steps,
                                     settings::processor_io_queue_size>>

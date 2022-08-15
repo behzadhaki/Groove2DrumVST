@@ -44,19 +44,19 @@ public:
  * A GUI TextEditor with a separate thread for receiving and displaying
  * Note instances
  */
-class NoteStructLoggerTextEditor: public LoggerTextEditorTemplate
+class BasicNoteStructLoggerTextEditor: public LoggerTextEditorTemplate
 {
 public:
-    NoteStructLoggerTextEditor();
+    BasicNoteStructLoggerTextEditor();
 
-    ~NoteStructLoggerTextEditor() override;
+    ~BasicNoteStructLoggerTextEditor() override;
 
-    void startThreadUsingProvidedResources(LockFreeQueue<Note, settings::gui_io_queue_size>* note_quePntr);
+    void startThreadUsingProvidedResources(LockFreeQueue<BasicNote, settings::gui_io_queue_size>* note_quePntr);
 
     void QueueDataProcessor() override;
 
 private:
-    LockFreeQueue<Note, settings::gui_io_queue_size>* note_queP;
+    LockFreeQueue<BasicNote, settings::gui_io_queue_size>* note_queP;
 
     int numNotesPrintedOnLine;
 

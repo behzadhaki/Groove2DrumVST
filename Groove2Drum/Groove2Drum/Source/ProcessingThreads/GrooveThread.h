@@ -22,7 +22,7 @@ public:
 
     // give access to resources needed to communicate with other threads
     void startThreadUsingProvidedResources(
-        LockFreeQueue<Note, settings::processor_io_queue_size>* note_toProcess_quePntr,
+        LockFreeQueue<BasicNote, settings::processor_io_queue_size>* note_toProcess_quePntr,
         MonotonicGrooveQueue<settings::time_steps,processor_io_queue_size>* groove_toProcess_quePntr,
         LockFreeQueue<array<float, 4>, gui_io_queue_size>* veloff_fromGui_quePntr,
         MonotonicGrooveQueue<settings::time_steps, gui_io_queue_size>* groove_toGui_quePntr,
@@ -45,7 +45,7 @@ public:
 private:
 
     // ---- Locally Used for calculations ----------------------------------
-    LockFreeQueue<Note, settings::processor_io_queue_size>* note_toProcess_que{};    // queue for receiving the new notes
+    LockFreeQueue<BasicNote, settings::processor_io_queue_size>* note_toProcess_que{};    // queue for receiving the new BasicNotes
     MonotonicGrooveQueue<settings::time_steps,
                          processor_io_queue_size>* groove_toProcess_que{}; // the queue for sending the updated groove to the next thread
     //----------------------------------------------------------------------
@@ -80,7 +80,7 @@ private:
     torch::Tensor gridlines;
 
     // int find_nearest_gridline(float ppq);
-    // bool shouldReplace(Note latest_Note);
+    // bool shouldReplace(BasicNote latest_Note);
 
     //----------------------------------------------------------------------
 

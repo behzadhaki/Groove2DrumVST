@@ -28,7 +28,7 @@ GrooveThread::GrooveThread():
 }
 
 void GrooveThread::startThreadUsingProvidedResources(
-    LockFreeQueue<Note, settings::processor_io_queue_size>* note_toProcess_quePntr,
+    LockFreeQueue<BasicNote, settings::processor_io_queue_size>* note_toProcess_quePntr,
     MonotonicGrooveQueue<settings::time_steps,processor_io_queue_size>* groove_toProcess_quePntr,
     LockFreeQueue<array<float, 4>, gui_io_queue_size>* veloff_fromGui_quePntr,
     MonotonicGrooveQueue<settings::time_steps, gui_io_queue_size>* groove_toGui_quePntr,
@@ -73,10 +73,10 @@ void GrooveThread::run()
         // only need to recalc if new info received in queues
         isNewGrooveAvailable = false;
 
-        // see if new notes received from main processblock
+        // see if new BasicNotes received from main processblock
         if (note_toProcess_que != nullptr)
         {
-            Note read_note;
+            BasicNote read_note;
 
             while (note_toProcess_que->getNumReady() > 0 and not this->threadShouldExit())
             {

@@ -48,7 +48,7 @@ constexpr double _min_vel { 1 };  // velocities are defined in range (0, 1)
 // gui settings
 namespace gui_settings{
     //
-    namespace NoteStructLoggerTextEditor{
+    namespace BasicNoteStructLoggerTextEditor{
         constexpr int maxChars { 500 };
         constexpr int nNotesPerLine { 4 };
     }
