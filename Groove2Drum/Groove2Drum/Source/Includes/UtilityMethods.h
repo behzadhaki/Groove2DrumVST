@@ -11,6 +11,7 @@
 
 using namespace std;
 
+
 /**
  * converts a note_on message received in the processor into a BasicNote instance
  * then sends it to receiver thread using the provided note_que
@@ -25,24 +26,26 @@ inline void place_BasicNote_in_queue(
     juce::AudioPlayHead* playheadP,
     LockFreeQueue<BasicNote, que_size>* note_que)
 {
-    double frameStartPpq = 0;
-    double qpm = 0;
-    bool isPlaying = false;
-    bool isLooping = false;
+    double frameStartPpq;
+    double qpm;
+    bool isPlaying;
+    bool isLooping;
+    float captureWithBpm;
 
     if (playheadP)
     {
-        juce::AudioPlayHead::CurrentPositionInfo position;
 
-        if (playheadP->getCurrentPosition (position))
+        auto pinfo = playheadP->getPosition();
+        if (pinfo)
         {
 
             // https://forum.juce.com/t/messagemanagerlock-and-thread-shutdown/353/4
             // read from midi_message_que
-            frameStartPpq = position.ppqPosition;
-            qpm = position.bpm;
-            isPlaying = position.isPlaying;
-            isLooping = position.isLooping;
+            frameStartPpq = *pinfo->getPpqPosition();
+            qpm = *pinfo->getBpm();
+            isPlaying = pinfo->getIsPlaying();
+            isLooping = pinfo->getIsLooping();
+            captureWithBpm = (float) *pinfo->getBpm();
 
             for (auto m: midiMessages)
             {
@@ -56,6 +59,7 @@ inline void place_BasicNote_in_queue(
                               qpm);
                     note.capturedInPlaying = isPlaying;
                     note.capturedInLoop = isLooping;
+                    note.captureWithBpm = captureWithBpm;
                     note_que->WriteTo(&note, 1);
                 }
             }
@@ -63,6 +67,60 @@ inline void place_BasicNote_in_queue(
         }
     }
 }
+
+
+/**
+ * converts a note_on message received in the processor into a BasicNote instance
+ * then sends it to receiver thread using the provided note_que
+ * @param midiMessages (juce::MidiBuffer&)
+ * @param pinfo using playheadP->getPosition() (juce::Optional<juce::AudioPlayHead::PositionInfo>)
+ * @param note_que  (LockFreeQueue<Note, que_size>*)
+ *
+ */
+template<int que_size>
+inline void place_BasicNote_in_queue(
+    juce::MidiBuffer& midiMessages,
+    juce::Optional<juce::AudioPlayHead::PositionInfo > pinfo,
+    LockFreeQueue<BasicNote, que_size>* note_que)
+{
+    double frameStartPpq;
+    double qpm;
+    bool isPlaying;
+    bool isLooping;
+    float captureWithBpm;
+
+
+    if (pinfo)
+    {
+
+        // https://forum.juce.com/t/messagemanagerlock-and-thread-shutdown/353/4
+        // read from midi_message_que
+        frameStartPpq = *pinfo->getPpqPosition();
+        qpm = *pinfo->getBpm();
+        isPlaying = pinfo->getIsPlaying();
+        isLooping = pinfo->getIsLooping();
+        captureWithBpm = (float) *pinfo->getBpm();
+
+        for (auto m: midiMessages)
+        {
+            auto message = m.getMessage();
+            if (message.isNoteOn())
+            {
+                BasicNote note(message.getNoteNumber(),
+                               message.getFloatVelocity(),
+                               frameStartPpq,
+                               message.getTimeStamp(),
+                               qpm);
+                note.capturedInPlaying = isPlaying;
+                note.capturedInLoop = isLooping;
+                note.captureWithBpm = captureWithBpm;
+                note_que->WriteTo(&note, 1);
+            }
+        }
+
+    }
+}
+
 
 
 inline string stream2string(std::ostringstream msg_stream)

@@ -75,10 +75,11 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         // STEP 1
         // get Playhead info and Add note and onset to note_toGui_que using BasicNote structure
         auto playhead = getPlayHead();
+        auto Pinfo = playhead->getPosition();
 
         // send BasicNotes to the GrooveThread and also gui logger for notes
-        place_BasicNote_in_queue<settings::gui_io_queue_size>(midiMessages, playhead, note_toGui_que.get());
-        place_BasicNote_in_queue<settings::processor_io_queue_size>(midiMessages, playhead, note_toProcess_que.get());
+        place_BasicNote_in_queue<settings::gui_io_queue_size>(midiMessages, Pinfo, note_toGui_que.get());
+        place_BasicNote_in_queue<settings::processor_io_queue_size>(midiMessages, Pinfo, note_toProcess_que.get());
     }
 
     midiMessages.swapWith(tempBuffer);

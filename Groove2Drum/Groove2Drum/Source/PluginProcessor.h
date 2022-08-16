@@ -8,7 +8,7 @@
 #include <torch/torch.h>
 
 #include "ProcessingThreads/GrooveThread.h"
-#include "ProcessingThreads/modelThread.h"
+#include "ProcessingThreads/ModelThread.h"
 
 
 using namespace std;

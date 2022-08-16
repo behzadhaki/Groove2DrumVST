@@ -64,8 +64,8 @@ void GrooveThread::run()
     bool isNewGrooveAvailable;
 
     // local variables to keep track of vel_range = (min_vel, max_vel) and offset ranges
-    array<float, 2> vel_range = {HVO_params::_min_vel, HVO_params::_max_vel};
-    array<float, 2> offset_range = {HVO_params::_min_offset, HVO_params::_max_offset};
+    vel_range = {HVO_params::_min_vel, HVO_params::_max_vel};
+    offset_range = {HVO_params::_min_offset, HVO_params::_max_offset};
 
 
     while (!bExit)
@@ -85,11 +85,20 @@ void GrooveThread::run()
                 // Step 1. get new note
                 note_toProcess_que->ReadFrom(&read_note, 1); // here cnt result is 3
 
-                // step 2. add to groove
-                monotonic_groove.ovrerdubWithNote(read_note);
+                // groove should only be updated in playback mode
+                if (read_note.capturedInPlaying)
+                {
+                    // step 2. add to groove
+                    // FIXME ovrerdubWithNote has major issues
+                    // FIXME should actually update the groove in next bar even if quieter
+                    bool grooveUpdated = monotonic_groove.ovrerdubWithNote(read_note);
 
-                // activate sending flag
-                isNewGrooveAvailable = true;
+                    // activate sending flag if at least one note added
+                    if (grooveUpdated)
+                    {
+                        isNewGrooveAvailable = true;
+                    }
+                }
             }
 
             // apply compression if new notes overdubbed
@@ -111,14 +120,16 @@ void GrooveThread::run()
                 veloff_fromGui_que->ReadFrom(&newVelOffsetrange, 1);
 
                 // update local range values
+                vel_range = {newVelOffsetrange[0], newVelOffsetrange[1]};
+                offset_range = {newVelOffsetrange[2], newVelOffsetrange[3]};
+
+                // update groove with the new ranges
                 monotonic_groove.hvo.updateCompressionRanges(newVelOffsetrange, true);
 
                 // activate sending flag
                 isNewGrooveAvailable = true;
             }
-
         }
-
 
         // Send groove to other threads if new one available
         if (isNewGrooveAvailable)

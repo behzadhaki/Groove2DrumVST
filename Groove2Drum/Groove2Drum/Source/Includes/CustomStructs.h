@@ -95,6 +95,8 @@ struct BasicNote{
                                         // HVO::addNote(note_, shouldOverdub)
     bool capturedInPlaying = false;     // useful for checking if note was played while
                                         // playhead was playing
+    float captureWithBpm = -100;
+
     // default constructor for empty instantiation
     BasicNote() = default;
 
@@ -106,7 +108,8 @@ struct BasicNote{
     // constructor for placing notes generated
     BasicNote(int voice_index, float velocity_Value, int grid_line, double offset,
          std::vector<int> voice_to_midi_map = nine_voice_kit):
-        note(voice_to_midi_map[voice_index]), velocity(velocity_Value), time(grid_line, offset) {}
+        note(voice_to_midi_map[(unsigned long)voice_index]),
+        velocity(velocity_Value), time(grid_line, offset) {}
 
     // < operator to check which note happens earlier (used for sorting)
     bool operator<( const BasicNote& rhs ) const
@@ -129,7 +132,10 @@ struct BasicNote{
         msg_stream << "N: " << note
                    << ", vel " << velocity
                    << ", time " << time.ppq
-                   << " || " ;
+                   << ", capturedInPlaying "<< capturedInPlaying
+                   << ", capturedInLoop "<< capturedInLoop
+                   << ", captured at bpm of "<< captureWithBpm
+                   << endl;
         return msg_stream.str();
     }
 };
@@ -462,35 +468,33 @@ template <int time_steps_> struct MonotonicGroove
         registeration_times = torch::zeros({time_steps_, 1}, torch::kFloat32);
     }
 
-    void ovrerdubWithNote(BasicNote note_)
+    bool ovrerdubWithNote(BasicNote note_)
     {
-        // only use notes that are received when host is playing
-        // if (note_.capturedInPlaying) // todo make sure uncommented in final app
+
+        // 1. find the nearest grid line and calculate offset
+        auto ppq = note_.time.ppq;
+        auto div = round(ppq / HVO_params::_16_note_ppq);
+        auto offset = (ppq - (div * HVO_params::_16_note_ppq))
+                      / HVO_params::_32_note_ppq * HVO_params::_max_offset;
+        auto grid_index = fmod(div, HVO_params::_n_16_notes);
+
+        // 2. Place note in groove
+        if (note_.velocity >=
+            (hvo.velocities_unmodified[grid_index] * hvo.hits[grid_index]).template item<float>())
         {
-            // 1. find the nearest grid line and calculate offset
-            auto ppq = note_.time.ppq;
-            auto div = round(ppq / HVO_params::_16_note_ppq);
-            auto offset = (ppq - (div * HVO_params::_16_note_ppq))
-                          / HVO_params::_32_note_ppq * HVO_params::_max_offset;
-            auto grid_index = fmod(div, HVO_params::_n_16_notes);
-
-            // DBG ("NOTE TO OVERDUB Vel utime");
-            // DBG (note_.velocity);
-            // DBG (offset);
-
-            // DBG((hvo.velocities_unmodified[grid_index] * hvo.hits[grid_index]).template item<float>());
-
-            // 2. Place note in groove
-            if (note_.velocity >=
-                (hvo.velocities_unmodified[grid_index] * hvo.hits[grid_index]).template item<float>())
-            {
-                // DBG ("UPDATING GROOVE");
-                hvo.hits[grid_index] = 1;
-                hvo.offsets_unmodified[grid_index] = offset;
-                hvo.velocities_unmodified[grid_index] = note_.velocity;
-                registeration_times[grid_index] = note_.time.ppq;
-            }
+            // DBG ("UPDATING GROOVE");
+            hvo.hits[grid_index] = 1;
+            hvo.offsets_unmodified[grid_index] = offset;
+            hvo.velocities_unmodified[grid_index] = note_.velocity;
+            registeration_times[grid_index] = note_.time.ppq;
+            return true;
         }
+        else
+        {
+            return false;
+        }
+
+
     }
 
     string getStringDescription(bool showHits,
