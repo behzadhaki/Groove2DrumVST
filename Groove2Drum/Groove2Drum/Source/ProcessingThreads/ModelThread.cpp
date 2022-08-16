@@ -10,7 +10,7 @@ ModelThread::ModelThread(): juce::Thread("Model_Thread")
 {
     groove_toProcess_que = nullptr;
     perVoiceSamplingThresh_fromGui_que = nullptr;
-    HVO_toProcessforPlayback_que = nullptr;
+    GeneratedData_toProcessforPlayback_que = nullptr;
 
     readyToStop = false;
 }
@@ -31,9 +31,8 @@ void ModelThread::startThreadUsingProvidedResources(
         groove_toProcess_quePntr,
     LockFreeQueue<std::array<float, settings::num_voices>, settings::gui_io_queue_size>*
         perVoiceSamplingThresh_fromGui_quePntr,
-    HVOQueue<settings::time_steps, settings::num_voices,
-             settings::processor_io_queue_size>*
-        HVO_toProcessforPlayback_quePntr,
+    LockFreeQueue<GeneratedData, settings::processor_io_queue_size>*
+        GeneratedData_toProcessforPlayback_quePntr,
     StringLockFreeQueue<settings::gui_io_queue_size>*
         text_toGui_que_for_debuggingPntr
     )
@@ -41,7 +40,7 @@ void ModelThread::startThreadUsingProvidedResources(
     // get access to resources
     groove_toProcess_que = groove_toProcess_quePntr;
     perVoiceSamplingThresh_fromGui_que = perVoiceSamplingThresh_fromGui_quePntr;
-    HVO_toProcessforPlayback_que = HVO_toProcessforPlayback_quePntr;
+    GeneratedData_toProcessforPlayback_que = GeneratedData_toProcessforPlayback_quePntr;
     text_toGui_que_for_debugging = text_toGui_que_for_debuggingPntr;
 
     // load model
@@ -156,9 +155,6 @@ void ModelThread::run()
             generated_hvo = HVO<settings::time_steps, settings::num_voices>(
                 hits, velocities, offsets);
 
-            // send generation to midiMessageFormatterThread
-            HVO_toProcessforPlayback_que->push(generated_hvo);
-
             // TODO can comment block --- for debugging only
             {
                 bool showHits = true;
@@ -172,6 +168,11 @@ void ModelThread::run()
                                     false);
             }
 
+            // send generation to midiMessageFormatterThread
+            for (float i: generated_hvo.getModifiedGeneratedData().onset_ppqs)
+                DBG(i);
+
+            // GeneratedData_toProcessforPlayback_que->push(generated_hvo.getModifiedGeneratedData());
 
         }
 

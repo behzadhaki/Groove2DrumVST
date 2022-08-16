@@ -13,6 +13,9 @@
 using namespace std;
 using namespace settings;
 
+
+
+
 /**the onset of midi message has two attributes: (1) the ppq of the beginning of the frame
      * (2) the number of AUDIO samples from the beginning of the frame
      * hence we need to use the sample rate and the qpm from the daw to calculate
@@ -141,6 +144,18 @@ struct BasicNote{
 };
 
 
+struct GeneratedData{
+    vector<float> onset_ppqs {};
+    vector<float> onset_velocities {};
+    vector<float> onset_pitches {};
+
+    void addNote(BasicNote note_)
+    {
+        onset_ppqs.push_back(note_.time.ppq);
+        onset_velocities.push_back(note_.velocity);
+        onset_pitches.push_back(note_.note);
+    }
+};
 
 /**
  * Converts a torch tensor to a string
@@ -305,6 +320,32 @@ template <int time_steps_, int num_voices_> struct HVO
         std::sort(Notes.begin(), Notes.end());
 
         return Notes;
+    }
+
+    GeneratedData getUnmodifiedGeneratedData(std::vector<int> voice_to_midi_map = nine_voice_kit)
+    {
+        GeneratedData generatedData;
+
+        auto notes = getUnmodifiedNotes(voice_to_midi_map);
+        for (int ix = 0; ix < notes.size();ix++)
+        {
+            generatedData.addNote(notes[ix]);
+        }
+
+        return generatedData;
+    }
+
+    GeneratedData getModifiedGeneratedData(std::vector<int> voice_to_midi_map = nine_voice_kit)
+    {
+        GeneratedData generatedData;
+
+        auto notes = getModifiedNotes(voice_to_midi_map);
+        for (int ix = 0; ix < notes.size();ix++)
+        {
+            generatedData.addNote(notes[ix]);
+        }
+
+        return generatedData;
     }
 
     void compressVelocities(int voice_idx,
@@ -491,6 +532,8 @@ template <int time_steps_> struct MonotonicGroove
             auto prev_registration_time_at_grid = registeration_times[grid_index].template item<float>();
             if ((ppq - prev_registration_time_at_grid) > HVO_params::_32_note_ppq)
             {   // 2.b. add note if received not in the vicinity of previous note registered at the same position
+                if (note_.velocity != (hvo.velocities_unmodified[grid_index] * hvo.hits[grid_index]).template item<float>() and
+                    fmod((ppq - prev_registration_time_at_grid), (settings::time_steps/4))!=0)
                 shouldAddNote = true;
             }
             else

@@ -18,7 +18,7 @@ LoggerTextEditorTemplate::LoggerTextEditorTemplate():juce::TextEditor(), juce::T
 
 }
 
-void LoggerTextEditorTemplate::prepareToStop() { stopThread(10) ;}
+void LoggerTextEditorTemplate::prepareToStop() { stopThread(1200) ;}
 
 // Override this with the task to be done on received data from queue
 // See examples of the child classes below
@@ -33,7 +33,7 @@ void LoggerTextEditorTemplate::run()
     {
         QueueDataProcessor();
         bExit = threadShouldExit();
-        sleep (1); // avoid burning CPU, if reading is returning immediately
+        sleep (10); // avoid burning CPU, if reading is returning immediately
     }
 }
 
@@ -61,7 +61,7 @@ BasicNoteStructLoggerTextEditor::~BasicNoteStructLoggerTextEditor()
 void BasicNoteStructLoggerTextEditor::startThreadUsingProvidedResources(LockFreeQueue<BasicNote, settings::gui_io_queue_size>* note_quePntr)
 {
     note_queP = note_quePntr;
-    this->startThread();
+    this->startThread(5);
 }
 
 void BasicNoteStructLoggerTextEditor::QueueDataProcessor()
@@ -76,35 +76,43 @@ void BasicNoteStructLoggerTextEditor::QueueDataProcessor()
 
             if(this->getTotalNumChars()>gui_settings::BasicNoteStructLoggerTextEditor::maxChars)
             {
-                this->clear();
-                this->numNotesPrintedOnLine = 0;
+                if (not threadShouldExit())
+                    this->clear();
+                if (not threadShouldExit())
+                    this->numNotesPrintedOnLine = 0;
             }
+            if (not threadShouldExit())
+                insertTextAtCaret(
+                    note.getStringDescription());
 
-            insertTextAtCaret(
-                note.getStringDescription());
-
-            this->numNotesPrintedOnLine += 1;
+            if (not threadShouldExit())
+                this->numNotesPrintedOnLine += 1;
 
             if(this->numNotesPrintedOnLine > 0 and
                 this->numNotesPrintedOnLine % gui_settings::BasicNoteStructLoggerTextEditor::
                             nNotesPerLine == 0)
-                insertTextAtCaret(juce::newLine);
+                if (not threadShouldExit())
+                    insertTextAtCaret(juce::newLine);
 
         }
     }
 
 }
 
-
-
-TextMessageLoggerTextEditor::TextMessageLoggerTextEditor(): LoggerTextEditorTemplate()
+TextMessageLoggerTextEditor::TextMessageLoggerTextEditor():LoggerTextEditorTemplate()
 {
-    TextEditorLabel.setText ("TextMessage", juce::dontSendNotification);
+    text_message_queue = nullptr;
+}
+
+void TextMessageLoggerTextEditor::initialize(string const label)
+{
+
+    TextEditorLabel.setText (label, juce::dontSendNotification);
     TextEditorLabel.attachToComponent (this, juce::Justification::top);
     TextEditorLabel.setColour (juce::Label::textColourId, juce::Colours::white);
     TextEditorLabel.setJustificationType (juce::Justification::top);
     addAndMakeVisible (TextEditorLabel);
-    this->setCurrentThreadName("TextMessageLoggerThread");
+    setCurrentThreadName("TextMessageLoggerThread_"+label);
 }
 
 TextMessageLoggerTextEditor::~TextMessageLoggerTextEditor()
@@ -116,7 +124,7 @@ TextMessageLoggerTextEditor::~TextMessageLoggerTextEditor()
 void TextMessageLoggerTextEditor::startThreadUsingProvidedResources(StringLockFreeQueue<settings::gui_io_queue_size>* text_message_quePntr)
 {
     text_message_queue = text_message_quePntr;
-    startThread();
+    startThread(5);
 }
 
 void TextMessageLoggerTextEditor::QueueDataProcessor()
@@ -124,7 +132,7 @@ void TextMessageLoggerTextEditor::QueueDataProcessor()
     if (text_message_queue != nullptr)
     {
         string msg_received;
-        while (text_message_queue->getNumReady() > 0)
+        while (text_message_queue->getNumReady() > 0 and not threadShouldExit())
         {
             msg_received = text_message_queue->getText();
 
@@ -132,19 +140,22 @@ void TextMessageLoggerTextEditor::QueueDataProcessor()
 
             if(this->getTotalNumChars()>gui_settings::TextMessageLoggerTextEditor::maxChars)
             {
-                this->clear();
+                if (not threadShouldExit())
+                    this->clear();
             }
 
             if (msg_received == "clear" or msg_received == "Clear") {
-                this->clear();
+                if (not threadShouldExit())
+                    this->clear();
             }
             else
             {
-                insertTextAtCaret(msg_received);
-                insertTextAtCaret(juce::newLine);
+                if (not threadShouldExit())
+                    insertTextAtCaret(msg_received);
+                if (not threadShouldExit())
+                    insertTextAtCaret(juce::newLine);
             }
         }
     }
-
 }
 

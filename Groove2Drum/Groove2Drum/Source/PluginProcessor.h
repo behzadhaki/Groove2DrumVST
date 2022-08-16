@@ -10,6 +10,7 @@
 #include "ProcessingThreads/GrooveThread.h"
 #include "ProcessingThreads/ModelThread.h"
 
+#include "gui/CustomGuiTextEditors.h"
 
 using namespace std;
 
@@ -29,6 +30,7 @@ public:
     // for inter-Thread Communication
     unique_ptr<LockFreeQueue<BasicNote, settings::gui_io_queue_size>> note_toGui_que; // used to communicate with BasicNote logger
     unique_ptr<StringLockFreeQueue<settings::gui_io_queue_size>> text_toGui_que; // used for debugging only!
+    unique_ptr<StringLockFreeQueue<settings::gui_io_queue_size>> text_toGui_que_mainprocessBlockOnly; // used for debugging only!
 
     // control parameter queues (shared between threads and editor)
     unique_ptr<LockFreeQueue<array<float, 4>, settings::gui_io_queue_size>> veloff_fromGui_que;
@@ -38,6 +40,11 @@ public:
     unique_ptr<MonotonicGrooveQueue<settings::time_steps,
                                     settings::gui_io_queue_size>> groove_toGui_que;
 
+
+    //GUI OBJECTS
+    shared_ptr<BasicNoteStructLoggerTextEditor> basicNoteStructLoggerTextEditor;
+    shared_ptr<TextMessageLoggerTextEditor> textMessageLoggerTextEditor;
+    shared_ptr<TextMessageLoggerTextEditor> textMessageLoggerTextEditor_mainprocessBlockOnly;
 
 private:
 
@@ -50,14 +57,19 @@ private:
     unique_ptr<MonotonicGrooveQueue<settings::time_steps,
                                     settings::processor_io_queue_size>>
         groove_toProcess_que;
-    unique_ptr<HVOQueue<settings::time_steps, settings::num_voices,
-                        settings::processor_io_queue_size>>
-        HVO_toProcessforPlayback_que;
+    unique_ptr<LockFreeQueue<GeneratedData, settings::processor_io_queue_size>>
+        GeneratedData_toProcessforPlayback_que;
+
+    GeneratedData latestGeneratedData;
 
     // groove thread
     GrooveThread grooveThread;
 
     // model thread
     ModelThread modelThread;
+
+    double maxFrameSizeinPpq;
+
+
 
 };

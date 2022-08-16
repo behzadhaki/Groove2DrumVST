@@ -9,9 +9,15 @@
 #include <iostream>
 #include <string>
 
-#include "../PluginProcessor.h"
 #include "../settings.h"
 
+#include <shared_plugin_helpers/shared_plugin_helpers.h>
+//#include <vector>
+#include "../settings.h"
+#include "../Includes/CustomStructs.h"
+#include "../Includes/LockFreeQueueTemplate.h"
+
+using namespace std;
 /*
   *
   * A template class for A TextEditor that runs a separate thread in which continuosly
@@ -72,7 +78,7 @@ class TextMessageLoggerTextEditor: public LoggerTextEditorTemplate
 public:
     TextMessageLoggerTextEditor();
     ~TextMessageLoggerTextEditor() override;
-
+    void initialize(string const label);
     void startThreadUsingProvidedResources(StringLockFreeQueue<settings::gui_io_queue_size>* text_message_quePntr);
     void QueueDataProcessor() override;
 

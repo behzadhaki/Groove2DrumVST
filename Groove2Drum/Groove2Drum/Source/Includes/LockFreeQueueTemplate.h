@@ -91,8 +91,6 @@ public:
 
     }
 
-
-
     void WriteTo (const T* writeData, int numTowrite)
     {
         int start1, start2, blockSize1, blockSize2;
@@ -183,6 +181,33 @@ public:
         auto res =  *(start_data_ptr);
         lockFreeFifo->finishedRead(1);
         return res;
+    }
+
+    T getLatestOnly()
+    {
+        int start1, start2, blockSize1, blockSize2;
+        T readData;
+
+        lockFreeFifo ->prepareToRead(
+            getNumReady(), start1, blockSize1,
+            start2, blockSize2);
+
+        if (blockSize2 > 0)
+        {
+            auto start_data_ptr = data.getRawDataPointer() + start2;
+            readData = *(start_data_ptr+blockSize2-1);
+            lockFreeFifo -> finishedRead(blockSize1+blockSize2);
+            return readData;
+
+        }
+        if (blockSize1 > 0)
+        {
+            auto start_data_ptr = data.getRawDataPointer() + start1;
+            readData = *(start_data_ptr+blockSize1-1);
+            lockFreeFifo -> finishedRead(blockSize1+blockSize2);
+            return readData;
+        }
+
     }
 };
 

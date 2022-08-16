@@ -5,6 +5,7 @@
 MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPointer)
     : AudioProcessorEditor(&MidiFXProcessorPointer)
 {
+
     // Sample rate text
     SampleRateLabel.setText("MAKE SURE SAMPLE RATE IS "+juce::String(settings::sample_rate)+
                             " & BUFFER SIZE IS AT MOST "+ juce::String(settings::largest_buffer_size)
@@ -14,20 +15,19 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     addAndMakeVisible(SampleRateLabel);
 
     // Create TextEditor for BasicNote Struct
-    addAndMakeVisible (BasicNoteStructLoggerTextEditor);
-    BasicNoteStructLoggerTextEditor.setMultiLine (true);
-    BasicNoteStructLoggerTextEditor.setBounds (100, 40, 500, 100);
-    BasicNoteStructLoggerTextEditor.startThreadUsingProvidedResources(MidiFXProcessorPointer.note_toGui_que.get());
+    basicNoteStructLoggerTextEditor = MidiFXProcessorPointer.basicNoteStructLoggerTextEditor.get();
+    addAndMakeVisible (basicNoteStructLoggerTextEditor);
 
     // Create TextEditor for Text Messages
-    addAndMakeVisible (TextMessageLoggerTextEditor);
-    TextMessageLoggerTextEditor.setMultiLine (true);
-    TextMessageLoggerTextEditor.setBounds (100, 200, 500, 100);
-    TextMessageLoggerTextEditor.startThreadUsingProvidedResources(MidiFXProcessorPointer.text_toGui_que.get());
+    textMessageLoggerTextEditor = MidiFXProcessorPointer.textMessageLoggerTextEditor.get();
+    addAndMakeVisible (MidiFXProcessorPointer.textMessageLoggerTextEditor.get());
 
+    // Create TextEditor for Text Messages
+    textMessageLoggerTextEditor_mainprocessBlockOnly = MidiFXProcessorPointer.textMessageLoggerTextEditor_mainprocessBlockOnly.get();
+    addAndMakeVisible (MidiFXProcessorPointer.textMessageLoggerTextEditor_mainprocessBlockOnly.get());
 
     // Set window size
-    setSize (620, 500);
+    setSize (620, 600);
 }
 
 void MidiFXProcessorEditor::paint(juce::Graphics& g)

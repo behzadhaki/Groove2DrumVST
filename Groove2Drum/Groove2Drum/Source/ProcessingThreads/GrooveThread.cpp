@@ -86,7 +86,7 @@ void GrooveThread::run()
                 note_toProcess_que->ReadFrom(&read_note, 1); // here cnt result is 3
 
                 // groove should only be updated in playback mode
-                if (read_note.capturedInPlaying)
+                //if (read_note.capturedInPlaying) // todo uncomment
                 {
                     // step 2. add to groove
                     bool grooveUpdated = monotonic_groove.overdubWithNote(read_note);
