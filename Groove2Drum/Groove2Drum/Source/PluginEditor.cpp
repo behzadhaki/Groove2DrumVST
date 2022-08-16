@@ -6,9 +6,12 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     : AudioProcessorEditor(&MidiFXProcessorPointer)
 {
     // Sample rate text
+    SampleRateLabel.setText("MAKE SURE SAMPLE RATE IS "+juce::String(settings::sample_rate)+
+                            " & BUFFER SIZE IS AT MOST "+ juce::String(settings::largest_buffer_size)
+                                , juce::dontSendNotification);
+    SampleRateLabel.setColour(SampleRateLabel.backgroundColourId, juce::Colour(220, 100, 60));
+    SampleRateLabel.setBounds (0, 0, 400, 30);
     addAndMakeVisible(SampleRateLabel);
-    SampleRateLabel.setText("MAKE SURE SAMPLE RATE IS "+juce::String(settings::sample_rate), juce::dontSendNotification);
-    SampleRateLabel.setBounds (0, 0, 300, 30);
 
     // Create TextEditor for BasicNote Struct
     addAndMakeVisible (BasicNoteStructLoggerTextEditor);
@@ -25,8 +28,6 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
 
     // Set window size
     setSize (620, 500);
-
-
 }
 
 void MidiFXProcessorEditor::paint(juce::Graphics& g)

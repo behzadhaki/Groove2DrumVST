@@ -23,6 +23,8 @@ namespace settings
 
     // sample rate
     constexpr int sample_rate { 44100 };
+    constexpr int largest_buffer_size {2048};
+
 
     // model_settings
     // char constexpr* default_model_path {(char*)"/Users/behzadhaki/Github/Groove2DrumVST/Groove2Drum/Groove2Drum/Source/model/misunderstood_bush_246-epoch_26_tst.pt"};
@@ -30,6 +32,7 @@ namespace settings
     char constexpr* default_model_path {(char*)"/Library/Groove2Drum/trained_models/model.pt"};
     constexpr int time_steps { 32 };
     constexpr int num_voices { 9 };
+
 
 }
 // hvo settings
