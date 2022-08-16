@@ -468,7 +468,7 @@ template <int time_steps_> struct MonotonicGroove
         registeration_times = torch::zeros({time_steps_, 1}, torch::kFloat32);
     }
 
-    bool ovrerdubWithNote(BasicNote note_)
+    bool overdubWithNote(BasicNote note_)
     {
 
         // 1. find the nearest grid line and calculate offset
@@ -476,11 +476,33 @@ template <int time_steps_> struct MonotonicGroove
         auto div = round(ppq / HVO_params::_16_note_ppq);
         auto offset = (ppq - (div * HVO_params::_16_note_ppq))
                       / HVO_params::_32_note_ppq * HVO_params::_max_offset;
-        auto grid_index = fmod(div, HVO_params::_n_16_notes);
+        auto grid_index = (long long) fmod(div, HVO_params::_n_16_notes);
 
         // 2. Place note in groove
-        if (note_.velocity >=
-            (hvo.velocities_unmodified[grid_index] * hvo.hits[grid_index]).template item<float>())
+        bool shouldAddNote = false;
+
+        if (note_.capturedInLoop)
+        {
+            // 2.a. if in loop mode, always adds the latest note received
+            shouldAddNote = true;
+        }
+        else
+        {
+            auto prev_registration_time_at_grid = registeration_times[grid_index].template item<float>();
+            if ((ppq - prev_registration_time_at_grid) > HVO_params::_32_note_ppq)
+            {   // 2.b. add note if received not in the vicinity of previous note registered at the same position
+                shouldAddNote = true;
+            }
+            else
+            {   // 2c. if note received in the same vicinity, only add if velocity louder
+                if (note_.velocity >= (hvo.velocities_unmodified[grid_index] * hvo.hits[grid_index]).template item<float>())
+                {
+                    shouldAddNote = true;
+                }
+            }
+        }
+
+        if (shouldAddNote)
         {
             // DBG ("UPDATING GROOVE");
             hvo.hits[grid_index] = 1;
@@ -493,8 +515,6 @@ template <int time_steps_> struct MonotonicGroove
         {
             return false;
         }
-
-
     }
 
     string getStringDescription(bool showHits,

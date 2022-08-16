@@ -36,7 +36,6 @@ MidiFXProcessor::MidiFXProcessor(){
     groove_toGui_que = make_unique<MonotonicGrooveQueue<settings::time_steps,
                                                        gui_io_queue_size>>();
 
-
     // give access to resources and run threads
     grooveThread.startThreadUsingProvidedResources(
         note_toProcess_que.get(),
@@ -51,8 +50,6 @@ MidiFXProcessor::MidiFXProcessor(){
         HVO_toProcessforPlayback_que.get(),
         text_toGui_que.get());
 }
-
-// auto test_tensor = torch::randn({32, 9});
 
 MidiFXProcessor::~MidiFXProcessor(){
     /*if (!grooveThread.readyToStop)

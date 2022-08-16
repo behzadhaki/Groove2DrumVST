@@ -89,9 +89,7 @@ void GrooveThread::run()
                 if (read_note.capturedInPlaying)
                 {
                     // step 2. add to groove
-                    // FIXME ovrerdubWithNote has major issues
-                    // FIXME should actually update the groove in next bar even if quieter
-                    bool grooveUpdated = monotonic_groove.ovrerdubWithNote(read_note);
+                    bool grooveUpdated = monotonic_groove.overdubWithNote(read_note);
 
                     // activate sending flag if at least one note added
                     if (grooveUpdated)

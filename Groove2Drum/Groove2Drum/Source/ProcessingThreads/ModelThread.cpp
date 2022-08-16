@@ -119,6 +119,19 @@ void ModelThread::run()
 
                 // set flag to re-run model
                 newGrooveAvailable = true;
+
+                // TODO can comment block --- for debugging only
+                {
+                    bool showHits = false;
+                    bool showVels = false;
+                    bool showOffs = true;
+                    bool needScaled = true;
+                    showMessageinEditor(text_toGui_que_for_debugging,
+                                        scaled_groove.getStringDescription(
+                                            showHits, showVels, showOffs, needScaled),
+                                        "Groove Offsets",
+                                        true);
+                }
             }
 
            if (newGrooveAvailable)
@@ -156,7 +169,7 @@ void ModelThread::run()
                                     generated_hvo.getStringDescription(
                                         showHits, showVels, showOffs, needScaled),
                                     "Generated HVO",
-                                    true);
+                                    false);
             }
 
 
