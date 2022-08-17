@@ -57,10 +57,11 @@ private:
     unique_ptr<MonotonicGrooveQueue<settings::time_steps,
                                     settings::processor_io_queue_size>>
         groove_toProcess_que;
-    unique_ptr<LockFreeQueue<GeneratedData, settings::processor_io_queue_size>>
+
+    unique_ptr<GeneratedDataQueue<settings::time_steps, settings::num_voices, settings::processor_io_queue_size>>
         GeneratedData_toProcessforPlayback_que;
 
-    GeneratedData latestGeneratedData;
+    GeneratedData<settings::time_steps, settings::num_voices> latestGeneratedData;
 
     // groove thread
     GrooveThread grooveThread;

@@ -42,7 +42,7 @@ public:
             groove_toProcess_quePntr,
         LockFreeQueue<std::array<float, settings::num_voices>, settings::gui_io_queue_size>*
             perVoiceSamplingThresh_fromGui_quePntr,
-        LockFreeQueue<GeneratedData, settings::processor_io_queue_size>*
+        GeneratedDataQueue<settings::time_steps, settings::num_voices, settings::processor_io_queue_size>*
             GeneratedData_toProcessforPlayback_quePntr,
         StringLockFreeQueue<settings::gui_io_queue_size>*
             text_toGui_que_for_debuggingPntr = nullptr
@@ -69,7 +69,7 @@ private:
         perVoiceSamplingThresh_fromGui_que;
 
     // queue for sending out the generated pattern (in HVO format) to other threads
-    LockFreeQueue<GeneratedData, settings::processor_io_queue_size>*
+    GeneratedDataQueue<settings::time_steps, settings::num_voices, settings::processor_io_queue_size>*
         GeneratedData_toProcessforPlayback_que;
 
     //---- Debugger -------------------------------------

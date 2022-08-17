@@ -63,7 +63,7 @@ namespace gui_settings{
 namespace thread_settings{
 //
 namespace GrooveThread{
-    constexpr int waitTimeBtnIters {1}; //ms between two consecutive iterations of the thread loop in run()
+    constexpr int waitTimeBtnIters {5}; //ms between two consecutive iterations of the thread loop in run()
 }
 
 namespace TextMessageLoggerTextEditor{

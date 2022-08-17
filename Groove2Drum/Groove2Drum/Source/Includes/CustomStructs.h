@@ -16,6 +16,7 @@ using namespace settings;
 
 
 
+
 /**the onset of midi message has two attributes: (1) the ppq of the beginning of the frame
      * (2) the number of AUDIO samples from the beginning of the frame
      * hence we need to use the sample rate and the qpm from the daw to calculate
@@ -144,16 +145,32 @@ struct BasicNote{
 };
 
 
-struct GeneratedData{
-    vector<float> onset_ppqs {};
-    vector<float> onset_velocities {};
-    vector<float> onset_pitches {};
 
+template <int time_steps_, int num_voices_> struct GeneratedData{
+    vector<float> ppqs;          // default value is
+    int lastFilledIndex;   // specifies how many messages are valid from the beginning
+    vector<juce::MidiMessage> midiMessages;
+
+    GeneratedData()
+    {
+        lastFilledIndex = -1;             // no valid messages yet
+        for (int i = 0; i<(time_steps_*num_voices_); i++)
+        {
+            ppqs.push_back(-1);             // a dummy ppq value
+            midiMessages.push_back(juce::MidiMessage::noteOn((int) 1, (int) 1, (float) 0));   // a dummy note
+        }
+    }
     void addNote(BasicNote note_)
     {
-        onset_ppqs.push_back(note_.time.ppq);
-        onset_velocities.push_back(note_.velocity);
-        onset_pitches.push_back(note_.note);
+        ppqs[lastFilledIndex + 1] = note_.time.ppq;
+        midiMessages[lastFilledIndex + 1].setNoteNumber(note_.note);
+        midiMessages[lastFilledIndex + 1].setVelocity(note_.velocity);
+        lastFilledIndex++;
+    }
+
+    int numberOfGenerations()
+    {
+        return (int) (lastFilledIndex+1);
     }
 };
 
@@ -322,9 +339,9 @@ template <int time_steps_, int num_voices_> struct HVO
         return Notes;
     }
 
-    GeneratedData getUnmodifiedGeneratedData(std::vector<int> voice_to_midi_map = nine_voice_kit)
+    GeneratedData<time_steps_, num_voices_> getUnmodifiedGeneratedData(std::vector<int> voice_to_midi_map = nine_voice_kit)
     {
-        GeneratedData generatedData;
+        GeneratedData<time_steps_, num_voices_> generatedData;
 
         auto notes = getUnmodifiedNotes(voice_to_midi_map);
         for (int ix = 0; ix < notes.size();ix++)
@@ -335,9 +352,9 @@ template <int time_steps_, int num_voices_> struct HVO
         return generatedData;
     }
 
-    GeneratedData getModifiedGeneratedData(std::vector<int> voice_to_midi_map = nine_voice_kit)
+    GeneratedData<time_steps_, num_voices_> getModifiedGeneratedData(std::vector<int> voice_to_midi_map = nine_voice_kit)
     {
-        GeneratedData generatedData;
+        GeneratedData<time_steps_, num_voices_> generatedData;
 
         auto notes = getModifiedNotes(voice_to_midi_map);
         for (int ix = 0; ix < notes.size();ix++)

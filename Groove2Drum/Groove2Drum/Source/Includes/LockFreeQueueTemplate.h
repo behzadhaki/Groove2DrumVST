@@ -155,18 +155,25 @@ public:
     }
 
 
-    void push (const T writeData)
+    void push ( T writeData)
     {
         int start1, start2, blockSize1, blockSize2;
-
+        DBG ("IN PUSH METHOD");
         lockFreeFifo ->prepareToWrite(
             1, start1, blockSize1,
             start2, blockSize2);
 
+        DBG ("PREPARED TO WRITE");
         auto start_data_ptr = data.getRawDataPointer() + start1;
+        DBG ("GOT POINTER");
+
+
         *start_data_ptr =  writeData;
+        DBG ("wrote data");
 
         lockFreeFifo->finishedWrite(1);
+        DBG ("finished write");
+
     }
 
     T pop()
@@ -274,6 +281,40 @@ public:
 
     }
 
+    MonotonicGroove<time_steps_>  getLatestOnly()
+    {
+        DBG("HERE IN MonotonicGroove getLatestOnly()");
+        int start1, start2, blockSize1, blockSize2;
+
+        lockFreeFifo ->prepareToRead(
+            getNumReady(), start1, blockSize1,
+            start2, blockSize2);
+
+        DBG("Got locations");
+
+        if (blockSize2 > 0)
+        {
+            auto start_data_ptr = data.getRawDataPointer() + start2;
+            auto readData = *(start_data_ptr+blockSize2-1);
+            lockFreeFifo -> finishedRead(blockSize1+blockSize2);
+            DBG("read using blockSize2");
+
+            return readData;
+
+        }
+        if (blockSize1 > 0)
+        {
+            auto start_data_ptr = data.getRawDataPointer() + start1;
+            auto readData = *(start_data_ptr+blockSize1-1);
+            lockFreeFifo -> finishedRead(blockSize1+blockSize2);
+            DBG("read using blockSize1");
+            return readData;
+        }
+
+        DBG("nothing read");
+
+    }
+
     int getNumReady()
     {
         return lockFreeFifo -> getNumReady();
@@ -316,6 +357,7 @@ public:
         }
 
     }
+
     void push (const HVO<time_steps_, num_voices_> writeData)
     {
         int start1, start2, blockSize1, blockSize2;
@@ -342,6 +384,127 @@ public:
         auto res =  *(start_data_ptr);
         lockFreeFifo->finishedRead(1);
         return res;
+    }
+
+    HVO<time_steps_, num_voices_>  getLatestOnly()
+    {
+        DBG("HERE IN HVOQUE getLatestOnly()");
+        int start1, start2, blockSize1, blockSize2;
+
+        lockFreeFifo->prepareToRead(
+            getNumReady(), start1, blockSize1, start2, blockSize2);
+
+        DBG("Got locations");
+
+        if (blockSize2 > 0)
+        {
+            auto start_data_ptr = data.getRawDataPointer() + start2;
+            auto readData = *(start_data_ptr + blockSize2 - 1);
+            lockFreeFifo->finishedRead(blockSize1 + blockSize2);
+            DBG("read using blockSize2");
+
+            return readData;
+        }
+        if (blockSize1 > 0)
+        {
+            auto start_data_ptr = data.getRawDataPointer() + start1;
+            auto readData = *(start_data_ptr + blockSize1 - 1);
+            lockFreeFifo->finishedRead(blockSize1 + blockSize2);
+            DBG("read using blockSize1");
+            return readData;
+        }
+    }
+
+    int getNumReady()
+    {
+        return lockFreeFifo -> getNumReady();
+    }
+};
+
+
+
+template <int time_steps_, int num_voices_, int queue_size> class GeneratedDataQueue
+{
+private:
+    //juce::ScopedPointer<juce::AbstractFifo> lockFreeFifo;   depreciated!!
+    std::unique_ptr<juce::AbstractFifo> lockFreeFifo;
+    juce::Array<GeneratedData<time_steps_, num_voices_>> data{};
+
+    int time_steps, num_voices;
+
+public:
+    GeneratedDataQueue(){
+
+        time_steps = time_steps_;
+        num_voices = num_voices_;
+
+        lockFreeFifo = std::unique_ptr<juce::AbstractFifo> (
+            new juce::AbstractFifo(queue_size));
+
+        data.ensureStorageAllocated(queue_size);
+
+        while (data.size() < queue_size)
+        {
+            auto empty_GenerateData= GeneratedData<time_steps_, num_voices_>();
+            data.add(empty_GenerateData);
+        }
+    }
+
+    void push (const GeneratedData<time_steps_, num_voices_> writeData)
+    {
+        int start1, start2, blockSize1, blockSize2;
+
+        lockFreeFifo ->prepareToWrite(
+            1, start1, blockSize1,
+            start2, blockSize2);
+
+        auto start_data_ptr = data.getRawDataPointer() + start1;
+        *start_data_ptr =  writeData;
+
+        lockFreeFifo->finishedWrite(1);
+    }
+
+    GeneratedData<time_steps_, num_voices_> pop()
+    {
+        int start1, start2, blockSize1, blockSize2;
+
+        lockFreeFifo ->prepareToRead(
+            1, start1, blockSize1,
+            start2, blockSize2);
+
+        auto start_data_ptr = data.getRawDataPointer() + start1;
+        auto res =  *(start_data_ptr);
+        lockFreeFifo->finishedRead(1);
+        return res;
+    }
+
+    GeneratedData<time_steps_, num_voices_>  getLatestOnly()
+    {
+        DBG("HERE IN GeneratedDataQueue getLatestOnly()");
+        int start1, start2, blockSize1, blockSize2;
+
+        lockFreeFifo->prepareToRead(
+            getNumReady(), start1, blockSize1, start2, blockSize2);
+
+        DBG("Got locations");
+
+        if (blockSize2 > 0)
+        {
+            auto start_data_ptr = data.getRawDataPointer() + start2;
+            auto readData = *(start_data_ptr + blockSize2 - 1);
+            lockFreeFifo->finishedRead(blockSize1 + blockSize2);
+            DBG("read using blockSize2");
+
+            return readData;
+        }
+        if (blockSize1 > 0)
+        {
+            auto start_data_ptr = data.getRawDataPointer() + start1;
+            auto readData = *(start_data_ptr + blockSize1 - 1);
+            lockFreeFifo->finishedRead(blockSize1 + blockSize2);
+            DBG("read using blockSize1");
+            return readData;
+        }
     }
 
     int getNumReady()

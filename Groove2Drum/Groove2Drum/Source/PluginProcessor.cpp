@@ -9,9 +9,6 @@ using namespace std;
 
 MidiFXProcessor::MidiFXProcessor(){
 
-
-
-
     //editor queues
     note_toGui_que = make_unique<LockFreeQueue<BasicNote, settings::gui_io_queue_size>>();
     text_toGui_que = make_unique<StringLockFreeQueue<settings::gui_io_queue_size>>();
@@ -31,7 +28,7 @@ MidiFXProcessor::MidiFXProcessor(){
         make_unique<MonotonicGrooveQueue<settings::time_steps,processor_io_queue_size>>();
 
     GeneratedData_toProcessforPlayback_que =
-        make_unique<LockFreeQueue<GeneratedData, settings::processor_io_queue_size>>();
+        make_unique<GeneratedDataQueue<settings::time_steps, settings::num_voices, settings::processor_io_queue_size>>();
 
     // queue for displaying the monotonicgroove in editor
     groove_toGui_que = make_unique<MonotonicGrooveQueue<settings::time_steps,
@@ -42,8 +39,8 @@ MidiFXProcessor::MidiFXProcessor(){
         note_toProcess_que.get(),
         groove_toProcess_que.get(),
         veloff_fromGui_que.get(),
-        groove_toGui_que.get(),
-        text_toGui_que.get());
+        groove_toGui_que.get()/*,
+        text_toGui_que.get()*/);
 
     modelThread.startThreadUsingProvidedResources(
         groove_toProcess_que.get(),
@@ -98,20 +95,67 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     auto playhead = getPlayHead();
     auto Pinfo = playhead->getPosition();
 
-    maxFrameSizeinPpq = (settings::largest_buffer_size * (*Pinfo->getBpm())) / (60 * settings::sample_rate);
-
     if (GeneratedData_toProcessforPlayback_que != nullptr)
     {
         if (GeneratedData_toProcessforPlayback_que->getNumReady() > 0)
         {
             latestGeneratedData = GeneratedData_toProcessforPlayback_que->getLatestOnly();
-            DBG("GENERATION REceived2");
-            if (latestGeneratedData.onset_ppqs.size()> 0)
-            {
-                showMessageinEditor(text_toGui_que_mainprocessBlockOnly.get(), std::to_string((int) latestGeneratedData.onset_ppqs.size()), "number of Generated notes", false);
-            }
         }
     }
+
+
+if (Pinfo->getIsPlaying())
+
+    {
+        auto startPpq = *Pinfo->getPpqPosition();
+        auto qpm = *Pinfo->getBpm();
+        auto start_ = fmod(startPpq, settings::time_steps/4); // start_ should be always between 0 and 8
+        // maxFrameSizeinPpq = (buffer.getNumSamples() * (*Pinfo->getBpm())) / (60 * getSampleRate());
+        auto fs = getSampleRate();
+        auto buffSize = buffer.getNumSamples();
+
+        //juce::MidiMessage msg = juce::MidiMessage::noteOn((int)1, (int)36, (float)100.0);
+        if (latestGeneratedData.numberOfGenerations() > 0)
+        {
+            for (int idx = 0; idx < latestGeneratedData.numberOfGenerations(); idx++)
+            {
+                auto ppqs_from_start_ = latestGeneratedData.ppqs[idx] - start_;
+                auto samples_from_start_ = ppqs_from_start_ * (60 * fs) / qpm;
+
+                if (ppqs_from_start_>=0 and samples_from_start_<buffSize)
+                {
+                    // send note on
+                    tempBuffer.addEvent(latestGeneratedData.midiMessages[idx], (int) samples_from_start_);
+
+                    // send note off
+                    tempBuffer.addEvent(juce::MidiMessage::noteOff((int) 1, (int) latestGeneratedData.midiMessages[idx].getNoteNumber(), (float) 0), (int) samples_from_start_);
+                    // tempBuffer.addEvent(latestGeneratedData.midiMessages[idx], (int) samples_from_start_);
+
+                }
+
+            }
+        }
+
+
+        /*if (!latestGeneratedData.onset_ppqs.empty())
+        {
+            auto onsets = latestGeneratedData.onset_ppqs;
+            for (unsigned long idx = 0; idx < onsets.size(); idx++)
+            {
+                if(onsets[idx] >= start_ and onsets[idx] < end_)
+                {
+                    auto pitch_ = (int)latestGeneratedData.onset_pitches[idx];
+                    auto vel_ = (juce::uint8) (latestGeneratedData.onset_velocities[idx] * 127);
+                    onset_time time {latestGeneratedData.onset_ppqs[idx]};
+                    auto time_from_start = time.calculate_num_samples_from_frame_ppq(start_, qpm);          // https://docs.juce.com/master/classMidiMessage.html#a9a942c96a776e80e3c512058b29011a8
+                                                                                                                            // timestamp here is in units of num samples from beginning of buffer
+                    tempBuffer.addEvent(juce::MidiMessage::noteOn (1, pitch_, vel_), time_from_start);
+                    tempBuffer.addEvent(juce::MidiMessage::noteOff(1, pitch_), time_from_start);
+                }
+            }
+        }*/
+    }
+
 
     if (not midiMessages.isEmpty() /*and groove_thread_ready*/)
     {

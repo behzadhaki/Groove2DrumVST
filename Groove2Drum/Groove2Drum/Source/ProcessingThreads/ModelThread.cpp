@@ -31,7 +31,7 @@ void ModelThread::startThreadUsingProvidedResources(
         groove_toProcess_quePntr,
     LockFreeQueue<std::array<float, settings::num_voices>, settings::gui_io_queue_size>*
         perVoiceSamplingThresh_fromGui_quePntr,
-    LockFreeQueue<GeneratedData, settings::processor_io_queue_size>*
+    GeneratedDataQueue<settings::time_steps, settings::num_voices, settings::processor_io_queue_size>*
         GeneratedData_toProcessforPlayback_quePntr,
     StringLockFreeQueue<settings::gui_io_queue_size>*
         text_toGui_que_for_debuggingPntr
@@ -96,10 +96,11 @@ void ModelThread::run()
 
         if (perVoiceSamplingThresh_fromGui_que != nullptr)
         {
-            while (perVoiceSamplingThresh_fromGui_que->getNumReady() > 0
+            if (perVoiceSamplingThresh_fromGui_que->getNumReady() > 0
                    and not this->threadShouldExit()){
 
-                perVoiceSamplingThresholds = perVoiceSamplingThresh_fromGui_que->pop();
+                perVoiceSamplingThresholds = perVoiceSamplingThresh_fromGui_que->getLatestOnly();
+
 
                 std::vector<float> thresh_vec(std::begin(perVoiceSamplingThresholds),
                                              std::end(perVoiceSamplingThresholds));
@@ -110,17 +111,19 @@ void ModelThread::run()
 
         if (groove_toProcess_que != nullptr)
         {
-            while (groove_toProcess_que->getNumReady() > 0
+            if (groove_toProcess_que->getNumReady() > 0
                    and not this->threadShouldExit())
             {
                 // read latest groove
-                scaled_groove = groove_toProcess_que->pop();
+                scaled_groove = groove_toProcess_que->getLatestOnly();
+
+                DBG("HERE NOW");
 
                 // set flag to re-run model
                 newGrooveAvailable = true;
 
                 // TODO can comment block --- for debugging only
-                {
+                /*{
                     bool showHits = false;
                     bool showVels = false;
                     bool showOffs = true;
@@ -130,11 +133,12 @@ void ModelThread::run()
                                             showHits, showVels, showOffs, needScaled),
                                         "Groove Offsets",
                                         true);
-                }
+                }*/
             }
 
            if (newGrooveAvailable)
             {
+                DBG("HERE NOW 2");
                 // pass scaled version mapped to closed hats to input
                 // !!!! dont't forget to use the scaled tensor (with modified vel/offsets)
                 bool useGrooveWithModifiedVelOffset = true;
@@ -142,6 +146,7 @@ void ModelThread::run()
                 modelAPI.forward_pass(scaled_groove.getFullVersionTensor(
                     useGrooveWithModifiedVelOffset,
                     mapGrooveToVoiceNumber));
+                DBG("HERE NOW 3");
                 shouldResample = true;
             }
 
@@ -150,10 +155,13 @@ void ModelThread::run()
         // should resample output if, input new groove received
         if (shouldResample)
         {
+            DBG("HERE NOW 4");
 
             auto [hits, velocities, offsets] = modelAPI.sample("Threshold");
             generated_hvo = HVO<settings::time_steps, settings::num_voices>(
                 hits, velocities, offsets);
+
+            DBG("HERE NOW 5");
 
             // TODO can comment block --- for debugging only
             {
@@ -165,14 +173,28 @@ void ModelThread::run()
                                     generated_hvo.getStringDescription(
                                         showHits, showVels, showOffs, needScaled),
                                     "Generated HVO",
-                                    false);
+                                    true);
             }
 
-            // send generation to midiMessageFormatterThread
-            for (float i: generated_hvo.getModifiedGeneratedData().onset_ppqs)
-                DBG(i);
+            DBG("HERE NOW 6");
 
-            // GeneratedData_toProcessforPlayback_que->push(generated_hvo.getModifiedGeneratedData());
+            // send generation to midiMessageFormatterThread
+            /*for (int i = 0; i < generated_hvo.getModifiedGeneratedData().onset_ppqs.size(); i++)
+                DBG("Generation " << i << " onset ppq = " << generated_hvo.getModifiedGeneratedData().onset_ppqs[i] << " | pitch = " << generated_hvo.getModifiedGeneratedData().onset_pitches[i]  << " | vel = " <<generated_hvo.getModifiedGeneratedData().onset_velocities[i]);
+            */
+
+            if (GeneratedData_toProcessforPlayback_que)
+            {
+                auto temp = generated_hvo.getModifiedGeneratedData();
+                DBG("HERE NOW 8");
+
+                GeneratedData_toProcessforPlayback_que->push(
+                    generated_hvo.getModifiedGeneratedData());
+            }
+            else
+                DBG("GeneratedData_toProcessforPlayback_que is Null!!");
+
+            DBG("HERE NOW 7");
 
         }
 
