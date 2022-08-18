@@ -38,8 +38,10 @@ void LoggerTextEditorTemplate::run()
 }
 
 
-BasicNoteStructLoggerTextEditor::BasicNoteStructLoggerTextEditor(): LoggerTextEditorTemplate()
+BasicNoteStructLoggerTextEditor::BasicNoteStructLoggerTextEditor(
+    LockFreeQueue<BasicNote, settings::gui_io_queue_size>* note_quePntr): LoggerTextEditorTemplate()
 {
+    note_queP = note_quePntr;
 
     TextEditorLabel.setText ("Midi#/Vel/Actual Onset ppq", juce::dontSendNotification);
     TextEditorLabel.attachToComponent (this, juce::Justification::top);
@@ -50,18 +52,15 @@ BasicNoteStructLoggerTextEditor::BasicNoteStructLoggerTextEditor(): LoggerTextEd
     this->setCurrentThreadName("BasicNoteStructureLoggerThread");
 
     numNotesPrintedOnLine = 0;
+
+    this->startThread(5);
+
 }
 
 BasicNoteStructLoggerTextEditor::~BasicNoteStructLoggerTextEditor()
 {
     this->prepareToStop();
 
-}
-
-void BasicNoteStructLoggerTextEditor::startThreadUsingProvidedResources(LockFreeQueue<BasicNote, settings::gui_io_queue_size>* note_quePntr)
-{
-    note_queP = note_quePntr;
-    this->startThread(5);
 }
 
 void BasicNoteStructLoggerTextEditor::QueueDataProcessor()
@@ -99,13 +98,10 @@ void BasicNoteStructLoggerTextEditor::QueueDataProcessor()
 
 }
 
-TextMessageLoggerTextEditor::TextMessageLoggerTextEditor():LoggerTextEditorTemplate()
+TextMessageLoggerTextEditor::TextMessageLoggerTextEditor(
+    string const label, StringLockFreeQueue<settings::gui_io_queue_size>* text_message_quePntr):LoggerTextEditorTemplate()
 {
-    text_message_queue = nullptr;
-}
-
-void TextMessageLoggerTextEditor::initialize(string const label)
-{
+    text_message_queue = text_message_quePntr;
 
     TextEditorLabel.setText (label, juce::dontSendNotification);
     TextEditorLabel.attachToComponent (this, juce::Justification::top);
@@ -113,18 +109,13 @@ void TextMessageLoggerTextEditor::initialize(string const label)
     TextEditorLabel.setJustificationType (juce::Justification::top);
     addAndMakeVisible (TextEditorLabel);
     setCurrentThreadName("TextMessageLoggerThread_"+label);
+    startThread(5);
 }
 
 TextMessageLoggerTextEditor::~TextMessageLoggerTextEditor()
 {
     this->prepareToStop();
 
-}
-
-void TextMessageLoggerTextEditor::startThreadUsingProvidedResources(StringLockFreeQueue<settings::gui_io_queue_size>* text_message_quePntr)
-{
-    text_message_queue = text_message_quePntr;
-    startThread(5);
 }
 
 void TextMessageLoggerTextEditor::QueueDataProcessor()

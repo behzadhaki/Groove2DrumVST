@@ -1,7 +1,7 @@
 #pragma once
 
 #include "PluginProcessor.h"
-#include "gui/CustomGuiTextEditors.h"
+#include "gui/MultiTabComponent.h"
 
 using namespace std;
 
@@ -13,9 +13,6 @@ public:
     void resized() override {}
 
 private:
-    BasicNoteStructLoggerTextEditor* basicNoteStructLoggerTextEditor;
-    TextMessageLoggerTextEditor* textMessageLoggerTextEditor;
-    TextMessageLoggerTextEditor* textMessageLoggerTextEditor_mainprocessBlockOnly;
-    juce::Label SampleRateLabel;
+    unique_ptr<MultiTabComponent> multiTabComponent;
 };
 

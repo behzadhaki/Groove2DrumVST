@@ -49,27 +49,9 @@ MidiFXProcessor::MidiFXProcessor(){
         text_toGui_que.get());
 
 
-    basicNoteStructLoggerTextEditor = make_shared<BasicNoteStructLoggerTextEditor>();
-    textMessageLoggerTextEditor = make_shared<TextMessageLoggerTextEditor>();
-    textMessageLoggerTextEditor_mainprocessBlockOnly = make_shared<TextMessageLoggerTextEditor>();
-
-    // Create TextEditor for BasicNote Struct
-    basicNoteStructLoggerTextEditor->setMultiLine (true);
-    basicNoteStructLoggerTextEditor->setBounds (100, 40, 500, 100);
-    basicNoteStructLoggerTextEditor->startThreadUsingProvidedResources(note_toGui_que.get());
-
-    // Create TextEditor for Text Messages
-    textMessageLoggerTextEditor->initialize("General");
-    textMessageLoggerTextEditor->setMultiLine (true);
-    textMessageLoggerTextEditor->setBounds (100, 200, 500, 100);
-    textMessageLoggerTextEditor->startThreadUsingProvidedResources(text_toGui_que.get());
-
-    // Create TextEditor for Text Messages
-    textMessageLoggerTextEditor_mainprocessBlockOnly->initialize("ProcessBlockOnly");
-    textMessageLoggerTextEditor_mainprocessBlockOnly->setMultiLine (true);
-    textMessageLoggerTextEditor_mainprocessBlockOnly->setBounds (100, 400, 500, 100);
-    textMessageLoggerTextEditor_mainprocessBlockOnly->startThreadUsingProvidedResources(text_toGui_que_mainprocessBlockOnly.get());
-
+    basicNoteStructLoggerTextEditor = make_shared<BasicNoteStructLoggerTextEditor>(note_toGui_que.get());
+    textMessageLoggerTextEditor = make_shared<TextMessageLoggerTextEditor>( "General", text_toGui_que.get());
+    textMessageLoggerTextEditor_mainprocessBlockOnly = make_shared<TextMessageLoggerTextEditor>("ProcessBlockOnly", text_toGui_que_mainprocessBlockOnly.get());
 
 }
 
@@ -110,7 +92,6 @@ if (Pinfo->getIsPlaying())
         auto startPpq = *Pinfo->getPpqPosition();
         auto qpm = *Pinfo->getBpm();
         auto start_ = fmod(startPpq, settings::time_steps/4); // start_ should be always between 0 and 8
-        // maxFrameSizeinPpq = (buffer.getNumSamples() * (*Pinfo->getBpm())) / (60 * getSampleRate());
         auto fs = getSampleRate();
         auto buffSize = buffer.getNumSamples();
 
@@ -126,34 +107,12 @@ if (Pinfo->getIsPlaying())
                 {
                     // send note on
                     tempBuffer.addEvent(latestGeneratedData.midiMessages[idx], (int) samples_from_start_);
-
                     // send note off
                     tempBuffer.addEvent(juce::MidiMessage::noteOff((int) 1, (int) latestGeneratedData.midiMessages[idx].getNoteNumber(), (float) 0), (int) samples_from_start_);
-                    // tempBuffer.addEvent(latestGeneratedData.midiMessages[idx], (int) samples_from_start_);
-
                 }
 
             }
         }
-
-
-        /*if (!latestGeneratedData.onset_ppqs.empty())
-        {
-            auto onsets = latestGeneratedData.onset_ppqs;
-            for (unsigned long idx = 0; idx < onsets.size(); idx++)
-            {
-                if(onsets[idx] >= start_ and onsets[idx] < end_)
-                {
-                    auto pitch_ = (int)latestGeneratedData.onset_pitches[idx];
-                    auto vel_ = (juce::uint8) (latestGeneratedData.onset_velocities[idx] * 127);
-                    onset_time time {latestGeneratedData.onset_ppqs[idx]};
-                    auto time_from_start = time.calculate_num_samples_from_frame_ppq(start_, qpm);          // https://docs.juce.com/master/classMidiMessage.html#a9a942c96a776e80e3c512058b29011a8
-                                                                                                                            // timestamp here is in units of num samples from beginning of buffer
-                    tempBuffer.addEvent(juce::MidiMessage::noteOn (1, pitch_, vel_), time_from_start);
-                    tempBuffer.addEvent(juce::MidiMessage::noteOff(1, pitch_), time_from_start);
-                }
-            }
-        }*/
     }
 
 

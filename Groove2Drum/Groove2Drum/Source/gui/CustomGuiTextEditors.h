@@ -53,11 +53,9 @@ public:
 class BasicNoteStructLoggerTextEditor: public LoggerTextEditorTemplate
 {
 public:
-    BasicNoteStructLoggerTextEditor();
+    BasicNoteStructLoggerTextEditor(LockFreeQueue<BasicNote, settings::gui_io_queue_size>* note_quePntr);
 
     ~BasicNoteStructLoggerTextEditor() override;
-
-    void startThreadUsingProvidedResources(LockFreeQueue<BasicNote, settings::gui_io_queue_size>* note_quePntr);
 
     void QueueDataProcessor() override;
 
@@ -76,10 +74,8 @@ private:
 class TextMessageLoggerTextEditor: public LoggerTextEditorTemplate
 {
 public:
-    TextMessageLoggerTextEditor();
+    TextMessageLoggerTextEditor(string const label, StringLockFreeQueue<settings::gui_io_queue_size>* text_message_quePntr);
     ~TextMessageLoggerTextEditor() override;
-    void initialize(string const label);
-    void startThreadUsingProvidedResources(StringLockFreeQueue<settings::gui_io_queue_size>* text_message_quePntr);
     void QueueDataProcessor() override;
 
 private:
