@@ -14,16 +14,14 @@
 class InteractivePianoRollBlock : public juce::Component
 {
 public:
-    juce::Colour bordercolor;
-    juce::Colour backgroundcolor;
 
-    InteractivePianoRollBlock(bool isClickable_, juce::Colour bordercolor_, juce::Colour backgroundcolor_) {
-        bordercolor = bordercolor_;
+    InteractivePianoRollBlock(bool isClickable_, juce::Colour backgroundcolor_, int grid_index_) {
+        grid_index = grid_index_;
         backgroundcolor = backgroundcolor_;
         isClickable = isClickable_;
         hit = 0;
         velocity = 0;
-        offset = 0;
+        location = 0;
     }
 
     void paint(juce::Graphics& g) override
@@ -31,56 +29,97 @@ public:
         //background colour
         g.fillAll(backgroundcolor);
 
-        // draw border
-        g.setColour(bordercolor);
-        g.drawRoundedRectangle (getLocalBounds().toFloat(), 5.0f, 3.0f);
+        // get component dimensions
+        auto w = (float) getWidth();
+        auto h = (float) getHeight();
+
+        // draw a line on the left side
+        g.setColour(juce::Colours::lightblue);
+        juce::Point<float> p1_edge {0, h};
+        juce::Point<float> p2_edge {0, 0};
+        g.drawLine ({p1_edge, p2_edge}, 1.0f);
 
         if (hit == 1)
         {
-            // draw line
-            g.setColour(juce::Colours::red);
-            auto x_pos = (float)(offset + 0.5) * getWidth();
-            auto y_pos = (float)(1 - velocity) * getHeight();
-            juce::Point<float> p1 {x_pos, (float)getHeight()};
+            // draw a mustart colored line for the note hit
+            g.setColour(juce::Colour::fromFloatRGBA(1.0f,0.7f,0.0f, 1.0f));
+
+            auto x_pos = location * w;
+            auto y_pos = (float)(1 - velocity) * h;
+            juce::Point<float> p1 {x_pos, h};
             juce::Point<float> p2 {x_pos, y_pos};
-            auto thickness = 2.0f;
+            auto thickness = 3.0f;
             g.drawLine ({p1, p2}, thickness);
 
+            g.drawRect(x_pos, y_pos , w * 0.3f, w * 0.3f, thickness );
             // g.drawLine(x_pos, getHeight(),x_pos, y_pos);
         }
 
     }
 
-    void mouseDown(const juce::MouseEvent& ev) override
+    void mouseUp(const juce::MouseEvent& ev) override
+    {
+        if (isClickable)
+        {
+            sendDataToQueue();
+        }
+    }
+
+    void mouseDown(const juce::MouseEvent& ev)
     {
         if (isClickable)
         {
             hit = 1;
-            offset = -0.5 + ev.position.getX() / getWidth();
-            velocity = 1 - ev.position.getY()/ getHeight() ;
+            location = ev.position.getX() / (float) getWidth();
+            location = min(max(0.0f, location), .99f);
+            velocity = 1 - ev.position.getY()/ (float)getHeight() ;
             repaint();
         }
     }
 
-    void mouseDoubleClick(const juce::MouseEvent& ev) override
+    void mouseDrag(const juce::MouseEvent& ev)
+    {
+        if (isClickable)
+        {
+            hit = 1;
+            location = ev.position.getX() / (float) getWidth();
+            location = min(max(0.0f, location), .99f);
+            velocity = 1 - ev.position.getY()/ (float)getHeight() ;
+            repaint();
+        }
+    }
+    void mouseDoubleClick(const juce::MouseEvent& ) override
     {
         if (isClickable)
         {
             hit = 0;
-            offset = 0;
+            location = 0;
             velocity = 0;
             repaint();
+            sendDataToQueue();
         }
     }
 
-    void addEvent(int hit_, float velocity_, float offset_)
+    void addEvent(int hit_, float velocity_, float location_)
     {
         assert (hit == 0 or hit == 1);
 
         hit = hit_;
         velocity = velocity_;
-        offset = offset_;
+        location = location_;
         repaint();
+        sendDataToQueue();
+    }
+
+    void addEventWithPPQ(int hit_, float velocity_, float ppq_, float step_resolution)
+    {
+        location = fmod(ppq_, step_resolution)/step_resolution;
+        addEvent(hit_, velocity_, location);
+    }
+
+    void sendDataToQueue()
+    {
+        // todo to be implemented
     }
 
     int getHit() const
@@ -91,18 +130,30 @@ public:
     {
         return velocity;
     }
-    float getOffset() const
+    float getLocation() const
     {
-        return offset;
+        return location;
+    }
+    float getLocationPPQ(float step_resolution_ppq)
+    {
+        return (grid_index+location)*step_resolution_ppq;
+    }
+    int getGrid_index() const
+    {
+        return grid_index;
     }
 
+    /*void resized() override {
+        auto area = getLocalBounds();
+        this->setBounds(area);
+    }*/
 private:
     bool isClickable;
     int hit;
     float velocity;
-    float offset;
-
-
+    float location;
+    juce::Colour backgroundcolor;
+    int grid_index; // time step corresponding to the block
 
 };
 
@@ -110,14 +161,12 @@ private:
 class ProbabilityLevelWidget: public juce::Component
 {
 public:
-    juce::Colour bordercolor;
     juce::Colour backgroundcolor;
     float line_thickness;
     float hit_prob = 0;
 
-    ProbabilityLevelWidget(juce::Colour bordercolor_, juce:: Colour backgroundcolor_, float line_thickness_=2)
+    ProbabilityLevelWidget(juce:: Colour backgroundcolor_, float line_thickness_=2)
     {
-        bordercolor = bordercolor_;
         backgroundcolor = backgroundcolor_;
         line_thickness = line_thickness_;
     }
@@ -127,17 +176,14 @@ public:
         //background colour
         g.fillAll(backgroundcolor);
 
-        // draw border
-        g.setColour(bordercolor);
-        g.drawRoundedRectangle (getLocalBounds().toFloat(), 5.0f, 3.0f);
 
         if (hit_prob > 0)
         {
             auto h = (float) getHeight();
             auto w = (float) getWidth();
 
-            juce::Point<float> corner1 {w * 0.45f, h};
-            juce::Point<float> corner2 {w * 0.55f, (1.0f-hit_prob)*h};
+            juce::Point<float> corner1 {w * 0.01f, h};
+            juce::Point<float> corner2 {w * 0.99f, (1.0f-hit_prob)*h};
 
             g.setColour(juce::Colours::red);
             g.drawRect({corner1, corner2}, line_thickness);
@@ -152,7 +198,11 @@ public:
         repaint();
     }
 
-
+    /*void resized() override {
+        auto area = getLocalBounds();
+        this->setBounds(area);
+    }
+    */
 };
 
 
@@ -162,18 +212,13 @@ public:
     unique_ptr<InteractivePianoRollBlock> pianoRollBlockWidgetPntr;  // unique_ptr so as to allow for initialization in the constructor
     unique_ptr<ProbabilityLevelWidget> probabilityCurveWidgetPntr;         // component instance within which we'll draw the probability curve
 
-    InteractivePianoRollBlockWithProbability(int size_width, int size_height, bool isClickable_, juce::Colour bordercolor_, juce::Colour backgroundcolor_)
+    InteractivePianoRollBlockWithProbability(int grid_index_, bool isClickable_, juce::Colour backgroundcolor_)
     {
-        pianoRollBlockWidgetPntr = make_unique<InteractivePianoRollBlock>(isClickable_, bordercolor_, backgroundcolor_);
-        pianoRollBlockWidgetPntr->setBounds (0, 0, size_width, size_height*.75f);
-        addAndMakeVisible(pianoRollBlockWidgetPntr.get());
+        pianoRollBlockWidgetPntr = make_unique<InteractivePianoRollBlock>(isClickable_, backgroundcolor_, grid_index_);
+        addChildComponent(pianoRollBlockWidgetPntr.get());
 
-        probabilityCurveWidgetPntr = make_unique<ProbabilityLevelWidget>(bordercolor_, backgroundcolor_);
-        probabilityCurveWidgetPntr->setBounds (0, size_height*.75f, size_width,  size_height*.25f);
-        addAndMakeVisible(probabilityCurveWidgetPntr.get());
-
-        setSize(size_width, size_height);
-
+        probabilityCurveWidgetPntr = make_unique<ProbabilityLevelWidget>( backgroundcolor_);
+        addChildComponent(probabilityCurveWidgetPntr.get());
     }
 
     /*void paint(juce::Graphics& g) override
@@ -181,14 +226,27 @@ public:
         g.fillAll();
     }*/
 
-    void addEvent(int hit_, float velocity_, float offset_, float hit_prob_)
+    void addEvent(int hit_, float velocity_, float location, float hit_prob_)
     {
-        pianoRollBlockWidgetPntr->addEvent(hit_, velocity_, offset_);
+        pianoRollBlockWidgetPntr->addEvent(hit_, velocity_, location);
+        probabilityCurveWidgetPntr->setProbability(hit_prob_);
+        //repaint();
+    }
+    void addEventWithPPQ(int hit_, float velocity_, float ppq_, float hit_prob_, float step_resolution)
+    {
+        pianoRollBlockWidgetPntr->addEventWithPPQ(hit_, velocity_, ppq_, step_resolution);
         probabilityCurveWidgetPntr->setProbability(hit_prob_);
         //repaint();
     }
 
-    void resized() override {}
+    void resized() override
+    {
+        auto area = getLocalBounds();
+        auto prob_to_pianoRoll_Ratio = 0.3f;
+        pianoRollBlockWidgetPntr->setBounds (area.removeFromBottom(int(prob_to_pianoRoll_Ratio*(float)getHeight())));
+        probabilityCurveWidgetPntr->setBounds (area);
+
+    }
 
 
 };

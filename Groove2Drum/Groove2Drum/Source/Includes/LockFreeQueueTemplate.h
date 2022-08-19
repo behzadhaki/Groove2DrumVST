@@ -505,6 +505,8 @@ public:
             DBG("read using blockSize1");
             return readData;
         }
+
+        return GeneratedData<time_steps_, num_voices_>();
     }
 
     int getNumReady()

@@ -69,7 +69,6 @@ private:
     // model thread
     ModelThread modelThread;
 
-    double maxFrameSizeinPpq;
 
 
 

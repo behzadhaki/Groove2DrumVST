@@ -7,7 +7,7 @@
 #include "../PluginProcessor.h"
 #include "CustomGuiTextEditors.h"
 #include "InteractivePianoRollBlock.h"
-
+#include "InteractiveMonotonicGroovePianoRoll.h"
 using namespace std;
 
 // ============================================================================================================
@@ -51,7 +51,14 @@ public:
         g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
     }
 
-    void resized() override {}
+    void resized() override {
+        /*auto area = getLocalBounds();
+
+        auto h = float(getHeight());
+        basicNoteStructLoggerTextEditor->setBounds(area.removeFromTop(int(h * .2)));
+        textMessageLoggerTextEditor->setBounds(area.removeFromTop(int(h * .4)));
+        textMessageLoggerTextEditor_mainprocessBlockOnly->setBounds(area.removeFromTop(int(h * .4)));*/
+    }
 
 private:
     BasicNoteStructLoggerTextEditor* basicNoteStructLoggerTextEditor;
@@ -68,38 +75,41 @@ private:
 class MultiTabComponent: public juce::Component
 {
 public:
-    explicit MultiTabComponent(MidiFXProcessor& MidiFXProcessorPointer, int size_width, int size_height)
+    juce::TooltipWindow tooltipWindow { nullptr, 100 };
+
+    juce::TabbedComponent tabs { juce::TabbedButtonBar::Orientation::TabsAtTop };
+
+    unique_ptr<TextDebugTabWidget> textDebugTabWidget;
+    unique_ptr<InteractivePianoRollBlock> testComponent1;
+    unique_ptr<MonotonicGroovePianoRoll> monotonicGroovePianoRoll;
+    unique_ptr<MonotonicGrooveWidget> monotonicGrooveWidget;
+
+
+    explicit MultiTabComponent(MidiFXProcessor& MidiFXProcessorPointer, int size_width, int size_height, int time_steps_, float step_resolution_ppq, int num_voices_)
     {
         // Instantiate the widgets here
         textDebugTabWidget = make_unique<TextDebugTabWidget>(MidiFXProcessorPointer, size_width, size_height);
-        auto border_c = juce::Colours::blue;
-        int grey_level = (int) 0.9f * 255;
+
+        auto grey_level = juce::uint8(0.9f * 255);
         auto background_c = juce::Colour::fromRGBA(grey_level,grey_level,grey_level,1);
 
-        testComponent1 = make_unique<InteractivePianoRollBlock>(true, border_c, background_c);
-        testComponent2 = make_unique<ProbabilityLevelWidget>(border_c, background_c);
-        testComponent3 = make_unique<InteractivePianoRollBlockWithProbability>(size_width, size_height, true, border_c, background_c);
+        testComponent1 = make_unique<InteractivePianoRollBlock>(true, background_c, 10);
+        monotonicGroovePianoRoll = make_unique<MonotonicGroovePianoRoll>(true, time_steps_, step_resolution_ppq,4, 4, "TEST INTERACTIVE GROOVE");
+        monotonicGrooveWidget = make_unique<MonotonicGrooveWidget>( time_steps_, step_resolution_ppq,4, 4);
 
         const auto tabColour = getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId).darker (0.1f);
 
         // add Tabs
         tabs.addTab ("Debugger", tabColour, textDebugTabWidget.get(), true);
         tabs.addTab ("Debugger 1", tabColour, testComponent1.get(), true);
-        tabs.addTab ("Debugger 2", tabColour, testComponent2.get(), true);
-        tabs.addTab ("Debugger 3", tabColour, testComponent3.get(), true);
+        tabs.addTab ("monotonicGroovePianoRoll", tabColour, monotonicGroovePianoRoll.get(), true);
+        tabs.addTab ("Debugger 3", tabColour, monotonicGrooveWidget.get(), true);
 
 
         tabs.setBounds (0, 0, size_width, size_height);
         addAndMakeVisible (tabs);
 
         setSize(size_width, size_height);
-
-        //
-        testComponent1->addEvent(1, .2f, -.25);
-
-        testComponent2->setProbability(0.5f);
-
-        testComponent3->addEvent(1, .2f, 0.25, 0.5);
 
     }
 
@@ -111,15 +121,6 @@ public:
 
     void resized() override {}
 
-private:
-    juce::TooltipWindow tooltipWindow { nullptr, 100 };
 
-    juce::TabbedComponent tabs { juce::TabbedButtonBar::Orientation::TabsAtTop };
-
-
-    unique_ptr<TextDebugTabWidget> textDebugTabWidget;
-    unique_ptr<InteractivePianoRollBlock> testComponent1;
-    unique_ptr<ProbabilityLevelWidget> testComponent2;
-    unique_ptr<InteractivePianoRollBlockWithProbability> testComponent3;
 };
 
