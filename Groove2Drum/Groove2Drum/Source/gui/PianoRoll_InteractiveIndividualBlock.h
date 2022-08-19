@@ -11,17 +11,17 @@
 // ============================================================================================================
 
 
-class InteractivePianoRollBlock : public juce::Component
+class PianoRoll_InteractiveIndividualBlock : public juce::Component
 {
 public:
-
-    InteractivePianoRollBlock(bool isClickable_, juce::Colour backgroundcolor_, int grid_index_) {
+    PianoRoll_InteractiveIndividualBlock(bool isClickable_, juce::Colour backgroundcolor_, int grid_index_, int voice_num_ = 0) {
         grid_index = grid_index_;
         backgroundcolor = backgroundcolor_;
         isClickable = isClickable_;
         hit = 0;
         velocity = 0;
         location = 0;
+        voice_num = voice_num_;
     }
 
     void paint(juce::Graphics& g) override
@@ -142,7 +142,10 @@ public:
     {
         return grid_index;
     }
-
+    int getVoiceNumber()
+    {
+        return voice_num;
+    }
     /*void resized() override {
         auto area = getLocalBounds();
         this->setBounds(area);
@@ -154,7 +157,7 @@ private:
     float location;
     juce::Colour backgroundcolor;
     int grid_index; // time step corresponding to the block
-
+    int voice_num;
 };
 
 
@@ -206,19 +209,19 @@ public:
 };
 
 
-class InteractivePianoRollBlockWithProbability: public juce::Component
+class PianoRoll_InteractiveIndividualBlockWithProbability : public juce::Component
 {
 public:
-    unique_ptr<InteractivePianoRollBlock> pianoRollBlockWidgetPntr;  // unique_ptr so as to allow for initialization in the constructor
+    unique_ptr<PianoRoll_InteractiveIndividualBlock> pianoRollBlockWidgetPntr;  // unique_ptr so as to allow for initialization in the constructor
     unique_ptr<ProbabilityLevelWidget> probabilityCurveWidgetPntr;         // component instance within which we'll draw the probability curve
 
-    InteractivePianoRollBlockWithProbability(int grid_index_, bool isClickable_, juce::Colour backgroundcolor_)
+    PianoRoll_InteractiveIndividualBlockWithProbability(bool isClickable_, juce::Colour backgroundcolor_, int grid_index_, int voice_num_)
     {
-        pianoRollBlockWidgetPntr = make_unique<InteractivePianoRollBlock>(isClickable_, backgroundcolor_, grid_index_);
-        addChildComponent(pianoRollBlockWidgetPntr.get());
+        pianoRollBlockWidgetPntr = make_unique<PianoRoll_InteractiveIndividualBlock>(isClickable_, backgroundcolor_, grid_index_, voice_num_);
+        addAndMakeVisible(pianoRollBlockWidgetPntr.get());
 
         probabilityCurveWidgetPntr = make_unique<ProbabilityLevelWidget>( backgroundcolor_);
-        addChildComponent(probabilityCurveWidgetPntr.get());
+        addAndMakeVisible(probabilityCurveWidgetPntr.get());
     }
 
     /*void paint(juce::Graphics& g) override
@@ -243,10 +246,7 @@ public:
     {
         auto area = getLocalBounds();
         auto prob_to_pianoRoll_Ratio = 0.3f;
-        pianoRollBlockWidgetPntr->setBounds (area.removeFromBottom(int(prob_to_pianoRoll_Ratio*(float)getHeight())));
+        pianoRollBlockWidgetPntr->setBounds (area.removeFromTop(int(prob_to_pianoRoll_Ratio*(float)getHeight())));
         probabilityCurveWidgetPntr->setBounds (area);
-
     }
-
-
 };

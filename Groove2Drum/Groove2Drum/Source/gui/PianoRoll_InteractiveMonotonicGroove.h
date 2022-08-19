@@ -3,15 +3,15 @@
 //
 #pragma once
 
-#include "InteractivePianoRollBlock.h"
+#include "PianoRoll_InteractiveIndividualBlock.h"
 
 using namespace std;
 
-class MonotonicGroovePianoRoll:public juce::Component
+class PianoRoll_InteractiveMonotonicGroove :public juce::Component
 {
 public:
 
-    vector<shared_ptr<InteractivePianoRollBlock>> interactivePRollBlocks;
+    vector<shared_ptr<PianoRoll_InteractiveIndividualBlock>> interactivePRollBlocks;
     juce::Colour def_c {juce::Colour::fromFloatRGBA(1.0f,1.0f,1.0f,1.0f)};
     juce::Colour beat_c { juce::Colour::fromFloatRGBA(.75f,.75f,.75f,1.0f)};
     juce::Colour bar_c {  juce::Colour::fromFloatRGBA(.4f,.4f,.4f,1.0f) };
@@ -19,7 +19,7 @@ public:
     float step_ppq;
     juce::Label label;
 
-    MonotonicGroovePianoRoll(bool isInteractive,int num_gridlines_, float step_ppq_, int n_steps_per_beat, int n_beats_per_bar, string label_text)
+    PianoRoll_InteractiveMonotonicGroove(bool isInteractive,int num_gridlines_, float step_ppq_, int n_steps_per_beat, int n_beats_per_bar, string label_text)
     {
         num_gridlines = num_gridlines_;
         step_ppq = step_ppq_;
@@ -38,18 +38,15 @@ public:
         {
             if (fmod(i, n_steps_per_beat*n_beats_per_bar) == 0)      // bar position
             {
-                DBG("BAR");
-                interactivePRollBlocks.push_back(make_shared<InteractivePianoRollBlock>(isInteractive, bar_c, i));
+                interactivePRollBlocks.push_back(make_shared<PianoRoll_InteractiveIndividualBlock>(isInteractive, bar_c, i));
             }
             else if(fmod(i, n_steps_per_beat) == 0)                  // beat position
             {
-                DBG("BEAT");
-                interactivePRollBlocks.push_back(make_shared<InteractivePianoRollBlock>(isInteractive, beat_c, i));
+                interactivePRollBlocks.push_back(make_shared<PianoRoll_InteractiveIndividualBlock>(isInteractive, beat_c, i));
             }
-            else
+            else                                                    // every other position
             {
-                DBG("OTHER");
-                interactivePRollBlocks.push_back(make_shared<InteractivePianoRollBlock>(isInteractive, def_c, i));
+                interactivePRollBlocks.push_back(make_shared<PianoRoll_InteractiveIndividualBlock>(isInteractive, def_c, i));
             }
 
             addAndMakeVisible(interactivePRollBlocks[i].get());
@@ -91,16 +88,16 @@ public:
 class MonotonicGrooveWidget:public juce::Component
 {
 public:
-    unique_ptr<MonotonicGroovePianoRoll> unModifiedGrooveGui;
-    unique_ptr<MonotonicGroovePianoRoll> ModifiedGrooveGui;
+    unique_ptr<PianoRoll_InteractiveMonotonicGroove> unModifiedGrooveGui;
+    unique_ptr<PianoRoll_InteractiveMonotonicGroove> ModifiedGrooveGui;
 
     MonotonicGrooveWidget(int num_gridlines_, float step_ppq_duration, int n_steps_per_beat_, int n_beats_per_bar)
     {
         // Create Unmodified Piano ROll
-        unModifiedGrooveGui = make_unique<MonotonicGroovePianoRoll>(true, num_gridlines_, step_ppq_duration, n_steps_per_beat_, n_beats_per_bar, "Unmodified Groove");
+        unModifiedGrooveGui = make_unique<PianoRoll_InteractiveMonotonicGroove>(true, num_gridlines_, step_ppq_duration, n_steps_per_beat_, n_beats_per_bar, "Unmodified Groove");
         addAndMakeVisible(unModifiedGrooveGui.get());
         // Create Unmodified Piano ROll
-        ModifiedGrooveGui = make_unique<MonotonicGroovePianoRoll>(false, num_gridlines_, step_ppq_duration, n_steps_per_beat_, n_beats_per_bar, "Adjusted Groove");
+        ModifiedGrooveGui = make_unique<PianoRoll_InteractiveMonotonicGroove>(false, num_gridlines_, step_ppq_duration, n_steps_per_beat_, n_beats_per_bar, "Adjusted Groove");
         addAndMakeVisible(ModifiedGrooveGui.get());
     }
 

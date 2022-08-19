@@ -6,8 +6,10 @@
 
 #include "../PluginProcessor.h"
 #include "CustomGuiTextEditors.h"
-#include "InteractivePianoRollBlock.h"
-#include "InteractiveMonotonicGroovePianoRoll.h"
+#include "PianoRoll_InteractiveIndividualBlock.h"
+#include "PianoRoll_InteractiveMonotonicGroove.h"
+#include "PianoRoll_GeneratedDrums_SingleVoice.h"
+
 using namespace std;
 
 // ============================================================================================================
@@ -80,10 +82,10 @@ public:
     juce::TabbedComponent tabs { juce::TabbedButtonBar::Orientation::TabsAtTop };
 
     unique_ptr<TextDebugTabWidget> textDebugTabWidget;
-    unique_ptr<InteractivePianoRollBlock> testComponent1;
-    unique_ptr<MonotonicGroovePianoRoll> monotonicGroovePianoRoll;
+    unique_ptr<PianoRoll_InteractiveIndividualBlock> testComponent1;
+    unique_ptr<PianoRoll_InteractiveMonotonicGroove> monotonicGroovePianoRoll;
     unique_ptr<MonotonicGrooveWidget> monotonicGrooveWidget;
-
+    unique_ptr<PianoRoll_GeneratedDrums_AllVoices> DrumsPianoRoll;
 
     explicit MultiTabComponent(MidiFXProcessor& MidiFXProcessorPointer, int size_width, int size_height, int time_steps_, float step_resolution_ppq, int num_voices_)
     {
@@ -93,17 +95,19 @@ public:
         auto grey_level = juce::uint8(0.9f * 255);
         auto background_c = juce::Colour::fromRGBA(grey_level,grey_level,grey_level,1);
 
-        testComponent1 = make_unique<InteractivePianoRollBlock>(true, background_c, 10);
-        monotonicGroovePianoRoll = make_unique<MonotonicGroovePianoRoll>(true, time_steps_, step_resolution_ppq,4, 4, "TEST INTERACTIVE GROOVE");
+        testComponent1 = make_unique<PianoRoll_InteractiveIndividualBlock>(true, background_c, 10);
+        monotonicGroovePianoRoll = make_unique<PianoRoll_InteractiveMonotonicGroove>(true, time_steps_, step_resolution_ppq,4, 4, "TEST INTERACTIVE GROOVE");
         monotonicGrooveWidget = make_unique<MonotonicGrooveWidget>( time_steps_, step_resolution_ppq,4, 4);
+        DrumsPianoRoll = make_unique<PianoRoll_GeneratedDrums_AllVoices>(time_steps_, step_resolution_ppq, 4, 4, nine_voice_kit_labels, nine_voice_kit);
 
         const auto tabColour = getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId).darker (0.1f);
 
         // add Tabs
         tabs.addTab ("Debugger", tabColour, textDebugTabWidget.get(), true);
         tabs.addTab ("Debugger 1", tabColour, testComponent1.get(), true);
-        tabs.addTab ("monotonicGroovePianoRoll", tabColour, monotonicGroovePianoRoll.get(), true);
-        tabs.addTab ("Debugger 3", tabColour, monotonicGrooveWidget.get(), true);
+        tabs.addTab ("Single monotonicGroovePianoRoll", tabColour, monotonicGroovePianoRoll.get(), true);
+        tabs.addTab ("Full Monotonic", tabColour, monotonicGrooveWidget.get(), true);
+        tabs.addTab ("Full Drums", tabColour, DrumsPianoRoll.get(), true);
 
 
         tabs.setBounds (0, 0, size_width, size_height);
