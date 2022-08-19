@@ -150,16 +150,24 @@ template <int time_steps_, int num_voices_> struct GeneratedData{
     vector<float> ppqs;          // default value is
     int lastFilledIndex;   // specifies how many messages are valid from the beginning
     vector<juce::MidiMessage> midiMessages;
+    torch::Tensor probabilities;
 
     GeneratedData()
     {
+
         lastFilledIndex = -1;             // no valid messages yet
+
+        // initialize messages and ppqs
         for (int i = 0; i<(time_steps_*num_voices_); i++)
         {
             ppqs.push_back(-1);             // a dummy ppq value
             midiMessages.push_back(juce::MidiMessage::noteOn((int) 1, (int) 1, (float) 0));   // a dummy note
         }
+
+        // initialize probabilities
+        probabilities = torch::zeros({time_steps_, num_voices});
     }
+
     void addNote(BasicNote note_)
     {
         ppqs[lastFilledIndex + 1] = note_.time.ppq;

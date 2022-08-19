@@ -6,6 +6,7 @@
 
 #include "../PluginProcessor.h"
 #include "CustomGuiTextEditors.h"
+#include "InteractivePianoRollBlock.h"
 
 using namespace std;
 
@@ -59,7 +60,6 @@ private:
     juce::Label SampleRateLabel;
 };
 
-
 // ============================================================================================================
 // ==========                       All Tabs are collected and placed here                        =============
 // ==========                   See tutorial Juce/Examples/GUI/AccessibilityDemo                  =============
@@ -72,19 +72,35 @@ public:
     {
         // Instantiate the widgets here
         textDebugTabWidget = make_unique<TextDebugTabWidget>(MidiFXProcessorPointer, size_width, size_height);
+        auto border_c = juce::Colours::blue;
+        int grey_level = (int) 0.9f * 255;
+        auto background_c = juce::Colour::fromRGBA(grey_level,grey_level,grey_level,1);
+
+        testComponent1 = make_unique<InteractivePianoRollBlock>(true, border_c, background_c);
+        testComponent2 = make_unique<ProbabilityLevelWidget>(border_c, background_c);
+        testComponent3 = make_unique<InteractivePianoRollBlockWithProbability>(size_width, size_height, true, border_c, background_c);
 
         const auto tabColour = getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId).darker (0.1f);
 
         // add Tabs
-        tabs.addTab ("Debugger", tabColour, textDebugTabWidget.get(), false);
-        tabs.addTab ("Debugger 1", tabColour, textDebugTabWidget.get(), false);
-        tabs.addTab ("Debugger 2", tabColour, textDebugTabWidget.get(), false);
+        tabs.addTab ("Debugger", tabColour, textDebugTabWidget.get(), true);
+        tabs.addTab ("Debugger 1", tabColour, testComponent1.get(), true);
+        tabs.addTab ("Debugger 2", tabColour, testComponent2.get(), true);
+        tabs.addTab ("Debugger 3", tabColour, testComponent3.get(), true);
 
 
         tabs.setBounds (0, 0, size_width, size_height);
         addAndMakeVisible (tabs);
 
         setSize(size_width, size_height);
+
+        //
+        testComponent1->addEvent(1, .2f, -.25);
+
+        testComponent2->setProbability(0.5f);
+
+        testComponent3->addEvent(1, .2f, 0.25, 0.5);
+
     }
 
     void paint(juce::Graphics&  g) override
@@ -100,7 +116,10 @@ private:
 
     juce::TabbedComponent tabs { juce::TabbedButtonBar::Orientation::TabsAtTop };
 
-    unique_ptr<TextDebugTabWidget> textDebugTabWidget;
 
+    unique_ptr<TextDebugTabWidget> textDebugTabWidget;
+    unique_ptr<InteractivePianoRollBlock> testComponent1;
+    unique_ptr<ProbabilityLevelWidget> testComponent2;
+    unique_ptr<InteractivePianoRollBlockWithProbability> testComponent3;
 };
 
