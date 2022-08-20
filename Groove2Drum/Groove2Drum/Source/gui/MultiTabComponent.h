@@ -24,25 +24,23 @@ public:
         // Sample rate text
         SampleRateLabel.setText("THIS TAB IS FOR DEBUGGING USING TEXTEDITORS", juce::dontSendNotification);
         SampleRateLabel.setColour(SampleRateLabel.backgroundColourId, juce::Colour(220, 100, 60));
-        SampleRateLabel.setBounds (0, 0, 400, 30);
+        // SampleRateLabel.setBounds (0, 0, 400, 30);
 
         // Create TextEditor for BasicNote Struct
         basicNoteStructLoggerTextEditor = MidiFXProcessorPointer.basicNoteStructLoggerTextEditor.get();
-        basicNoteStructLoggerTextEditor->setMultiLine (true);
-        basicNoteStructLoggerTextEditor->setBounds (100, 40, 500, 100);
         addAndMakeVisible (basicNoteStructLoggerTextEditor);
+        // basicNoteStructLoggerTextEditor->setBounds (100, 40, 500, 100);
+
 
         // Create TextEditor for Text Messages
         textMessageLoggerTextEditor = MidiFXProcessorPointer.textMessageLoggerTextEditor.get();
-        textMessageLoggerTextEditor->setMultiLine (true);
-        textMessageLoggerTextEditor->setBounds (100, 200, 500, 100);
         addAndMakeVisible (MidiFXProcessorPointer.textMessageLoggerTextEditor.get());
+        // textMessageLoggerTextEditor->setBounds (100, 200, 500, 100);
 
         // Create TextEditor for Text Messages
         textMessageLoggerTextEditor_mainprocessBlockOnly = MidiFXProcessorPointer.textMessageLoggerTextEditor_mainprocessBlockOnly.get();
-        textMessageLoggerTextEditor_mainprocessBlockOnly->setMultiLine (true);
-        textMessageLoggerTextEditor_mainprocessBlockOnly->setBounds (100, 400, 500, 100);
         addAndMakeVisible (MidiFXProcessorPointer.textMessageLoggerTextEditor_mainprocessBlockOnly.get());
+        // textMessageLoggerTextEditor_mainprocessBlockOnly->setBounds (100, 400, 500, 100);
 
         //setSize(size_width, size_height);
 
@@ -80,11 +78,12 @@ private:
 class MultiTabComponent: public juce::Component
 {
 public:
+
     juce::TooltipWindow tooltipWindow { nullptr, 100 };
 
     juce::TabbedComponent tabs { juce::TabbedButtonBar::Orientation::TabsAtTop };
 
-    unique_ptr<TextDebugTabWidget> textDebugTabWidget;
+    // unique_ptr<TextDebugTabWidget> textDebugTabWidget;
     unique_ptr<PianoRoll_InteractiveMonotonicGroove> monotonicGroovePianoRoll;
     unique_ptr<MonotonicGrooveWidget> monotonicGrooveWidget;
     unique_ptr<PianoRoll_GeneratedDrums_AllVoices> DrumsPianoRoll;
@@ -92,7 +91,7 @@ public:
     explicit MultiTabComponent(MidiFXProcessor& MidiFXProcessorPointer/*, int size_width, int size_height*/, int time_steps_, float step_resolution_ppq, int num_voices_)
     {
         // Instantiate the widgets here
-        textDebugTabWidget = make_unique<TextDebugTabWidget>(MidiFXProcessorPointer/*, size_width, size_height*/);
+        // textDebugTabWidget = make_unique<TextDebugTabWidget>(MidiFXProcessorPointer/*, size_width, size_height*/);
 
         auto grey_level = juce::uint8(0.9f * 255);
         auto background_c = juce::Colour::fromRGBA(grey_level,grey_level,grey_level,1);
@@ -123,7 +122,7 @@ public:
 
     void resized() override {
         auto area = getLocalBounds();
-        textDebugTabWidget->setBounds(area);
+        // textDebugTabWidget->setBounds(area);
         monotonicGroovePianoRoll->setBounds(area);
         monotonicGrooveWidget->setBounds(area);
         DrumsPianoRoll->setBounds(area);

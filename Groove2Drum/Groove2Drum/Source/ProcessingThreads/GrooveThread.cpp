@@ -148,7 +148,8 @@ void GrooveThread::run()
         }
 
         bExit = threadShouldExit();
-        sleep (thread_settings::GrooveThread::waitTimeBtnIters); // avoid burning CPU, if reading is returning immediately
+        // sleep (thread_settings::GrooveThread::waitTimeBtnIters); // avoid burning CPU, if reading is returning immediately
+        // sleep(1);
     }
 
 }

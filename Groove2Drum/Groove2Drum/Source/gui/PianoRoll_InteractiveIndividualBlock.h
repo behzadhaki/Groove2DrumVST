@@ -33,10 +33,10 @@ public:
         auto h = (float) getHeight();
 
         // draw a line on the left side
-        g.setColour(juce::Colours::lightblue);
+        g.setColour(juce::Colours::black);
         juce::Point<float> p1_edge {0, h};
         juce::Point<float> p2_edge {0, 0};
-        g.drawLine ({p1_edge, p2_edge}, 1.0f);
+        g.drawLine ({p1_edge, p2_edge}, 2.0f);
 
         if (hit == 1)
         {
@@ -184,11 +184,16 @@ public:
             auto h = (float) getHeight();
             auto w = (float) getWidth();
 
-            juce::Point<float> corner1 {w * 0.01f, h};
-            juce::Point<float> corner2 {w * 0.99f, (1.0f-hit_prob)*h};
+            juce::Point<float> corner1 {w * .45f, h};
+            juce::Point<float> corner2 {w * 0.55f, (1.0f-hit_prob)*h};
 
             g.setColour(juce::Colours::red);
-            g.drawRect({corner1, corner2}, line_thickness);
+
+
+            juce::Rectangle<float> area (corner1, corner2);
+            g.setColour (juce::Colours::darkkhaki);
+            g.fillRect (area);
+
 
         }
 
@@ -219,7 +224,8 @@ public:
         pianoRollBlockWidgetPntr = make_unique<PianoRoll_InteractiveIndividualBlock>(isClickable_, backgroundcolor_, grid_index_, voice_num_);
         addAndMakeVisible(pianoRollBlockWidgetPntr.get());
 
-        probabilityCurveWidgetPntr = make_unique<ProbabilityLevelWidget>( backgroundcolor_);
+
+        probabilityCurveWidgetPntr = make_unique<ProbabilityLevelWidget>(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId) /*backgroundcolor_*/);
         addAndMakeVisible(probabilityCurveWidgetPntr.get());
     }
 
