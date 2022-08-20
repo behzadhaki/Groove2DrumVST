@@ -14,6 +14,7 @@ public:
     float y_min; float y_max; float y_default;
     float x_ParameterValue; float y_ParameterValue; // actual values of x or y parameters
 
+
     XYPlane(float x_min_, float x_max_, float x_default_, float y_min_, float y_max_, float y_default_):
         x_min(x_min_), x_max(x_max_), x_default(x_default_),
         y_min(y_min_), y_max(y_max_), y_default(y_default_),

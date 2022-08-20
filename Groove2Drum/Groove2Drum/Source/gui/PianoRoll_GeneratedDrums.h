@@ -9,13 +9,55 @@
 
 using namespace std;
 
+class XYPlaneWithProbabilityWidgetListeners: public XYPlane
+{
+public:
+    vector<ProbabilityLevelWidget*> ListenerWidgets;
+
+    XYPlaneWithProbabilityWidgetListeners(float x_min_, float x_max_, float x_default_, float y_min_, float y_max_, float y_default_):
+        XYPlane(x_min_, x_max_, x_default_, y_min_, y_max_, y_default_)
+    {
+    }
+
+    void addWidget(ProbabilityLevelWidget* widget)
+    {
+        ListenerWidgets.push_back(widget);
+    }
+
+    void mouseDown(const juce::MouseEvent& ev) override
+    {
+        XYPlane::mouseDown(ev);
+        BroadCastThresholds();
+    }
+
+    void mouseDoubleClick(const juce::MouseEvent& ev) override
+    {
+        XYPlane::mouseDoubleClick(ev);
+        BroadCastThresholds();
+    }
+
+    void mouseDrag(const juce::MouseEvent& ev) override
+    {
+        XYPlane::mouseDrag(ev);
+        BroadCastThresholds();
+    }
+
+    void BroadCastThresholds()
+    {
+        auto thresh = XYPlane::getYValue();
+        for (int i=0; i<ListenerWidgets.size(); i++)
+        {
+            ListenerWidgets[i]->setSamplingThreshold(thresh);
+        }
+    }
+};
 
 class PianoRoll_GeneratedDrums_SingleVoice :public juce::Component
 {
 public:
 
     vector<shared_ptr<PianoRoll_InteractiveIndividualBlockWithProbability>> interactivePRollBlocks;
-    shared_ptr<XYPlane> MaxCount_Prob_XYPlane; // x axis will be Max count (0 to time_steps), y axis is threshold 0 to 1
+    shared_ptr<XYPlaneWithProbabilityWidgetListeners> MaxCount_Prob_XYPlane; // x axis will be Max count (0 to time_steps), y axis is threshold 0 to 1
     juce::Label label;
 
 
@@ -38,6 +80,10 @@ public:
         label.setJustificationType (juce::Justification::centredRight);
         addAndMakeVisible(label);
 
+        // xy slider broadcaster
+        MaxCount_Prob_XYPlane = make_shared<XYPlaneWithProbabilityWidgetListeners>(0, num_gridlines_, num_gridlines_/2, 0, 1, 0.5);
+        addAndMakeVisible(MaxCount_Prob_XYPlane.get());
+
         // Draw up piano roll
         /*auto w_per_block = (int) size_width/num_gridlines;*/
 
@@ -55,13 +101,9 @@ public:
             {
                 interactivePRollBlocks.push_back(make_shared<PianoRoll_InteractiveIndividualBlockWithProbability>(false, def_c, i, voice_number_));
             }
-
+            MaxCount_Prob_XYPlane->addWidget(interactivePRollBlocks[i]->probabilityCurveWidgetPntr.get());
             addAndMakeVisible(interactivePRollBlocks[i].get());
-
         }
-
-        MaxCount_Prob_XYPlane = make_shared<XYPlane>(0, num_gridlines_, num_gridlines_/2, 0, 1, 0.5);
-        addAndMakeVisible(MaxCount_Prob_XYPlane.get());
     }
 
     // location must be between 0 or 1
@@ -104,10 +146,7 @@ public:
         {
             interactivePRollBlocks[i]->setBounds (area.removeFromLeft(grid_width));
         }
-
     }
-
-
 };
 
 
@@ -132,8 +171,6 @@ public:
             PianoRoll.push_back(make_unique<PianoRoll_GeneratedDrums_SingleVoice>(num_gridlines_, step_ppq_duration, n_steps_per_beat_, n_beats_per_bar_, label_txt, voice_i));
             addAndMakeVisible(PianoRoll[voice_i].get());
         }
-        // Create Unmodified Piano ROll
-
     }
 
     void resized() override {

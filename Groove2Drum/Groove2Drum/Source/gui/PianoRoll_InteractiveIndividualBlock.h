@@ -166,6 +166,7 @@ public:
     juce::Colour backgroundcolor;
     float line_thickness;
     float hit_prob = 0;
+    float sampling_threshold = 0;
 
     ProbabilityLevelWidget(juce:: Colour backgroundcolor_, float line_thickness_=2)
     {
@@ -179,24 +180,23 @@ public:
         g.fillAll(backgroundcolor);
 
 
+        auto h = (float) getHeight();
+        auto w = (float) getWidth();
+
+        g.setColour(juce::Colours::white);
+        auto y_= (1 - sampling_threshold) * h;
+        g.drawLine(-1.0f, y_, h*2.0f, y_);
+
         if (hit_prob > 0)
         {
-            auto h = (float) getHeight();
-            auto w = (float) getWidth();
-
             juce::Point<float> corner1 {w * .45f, h};
             juce::Point<float> corner2 {w * 0.55f, (1.0f-hit_prob)*h};
-
             g.setColour(juce::Colours::red);
-
 
             juce::Rectangle<float> area (corner1, corner2);
             g.setColour (juce::Colours::darkkhaki);
             g.fillRect (area);
-
-
         }
-
     }
 
     void setProbability(float hit_prob_)
@@ -205,11 +205,11 @@ public:
         repaint();
     }
 
-    /*void resized() override {
-        auto area = getLocalBounds();
-        this->setBounds(area);
+    void setSamplingThreshold(float thresh)
+    {
+        sampling_threshold = thresh;
+        repaint();
     }
-    */
 };
 
 
