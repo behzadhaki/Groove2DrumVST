@@ -224,29 +224,23 @@ public:
         addAndMakeVisible(probabilityCurveWidgetPntr.get());
     }
 
-    /*void paint(juce::Graphics& g) override
-    {
-        g.fillAll();
-    }*/
-
     void addEvent(int hit_, float velocity_, float location, float hit_prob_)
     {
         pianoRollBlockWidgetPntr->addEvent(hit_, velocity_, location);
         probabilityCurveWidgetPntr->setProbability(hit_prob_);
-        //repaint();
     }
+
     void addEventWithPPQ(int hit_, float velocity_, float ppq_, float hit_prob_, float step_resolution)
     {
         pianoRollBlockWidgetPntr->addEventWithPPQ(hit_, velocity_, ppq_, step_resolution);
         probabilityCurveWidgetPntr->setProbability(hit_prob_);
-        //repaint();
     }
 
     void resized() override
     {
         auto area = getLocalBounds();
         auto prob_to_pianoRoll_Ratio = 0.3f;
-        pianoRollBlockWidgetPntr->setBounds (area.removeFromTop(int(prob_to_pianoRoll_Ratio*(float)getHeight())));
+        pianoRollBlockWidgetPntr->setBounds (area.removeFromTop(int((1-prob_to_pianoRoll_Ratio)*(float)getHeight())));
         probabilityCurveWidgetPntr->setBounds (area);
     }
 };

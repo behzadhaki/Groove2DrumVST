@@ -8,7 +8,7 @@
 #include "CustomGuiTextEditors.h"
 #include "PianoRoll_InteractiveIndividualBlock.h"
 #include "PianoRoll_InteractiveMonotonicGroove.h"
-#include "PianoRoll_GeneratedDrums_SingleVoice.h"
+#include "PianoRoll_GeneratedDrums.h"
 
 using namespace std;
 

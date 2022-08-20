@@ -10,7 +10,7 @@
 using namespace std;
 
 
-class PianoRoll_GeneratedDrums_SingleVoice:public juce::Component
+class PianoRoll_GeneratedDrums_SingleVoice :public juce::Component
 {
 public:
 
@@ -94,17 +94,20 @@ class PianoRoll_GeneratedDrums_AllVoices:public juce::Component
 public:
     vector<unique_ptr<PianoRoll_GeneratedDrums_SingleVoice>> PianoRoll;
     int num_voices;
-    PianoRoll_GeneratedDrums_AllVoices(int num_gridlines_, float step_ppq_duration, int n_steps_per_beat_, int n_beats_per_bar_, vector<string> DrumVoiceNames_, vector<int> DrumVoiceMidiNumbers_)
+    float step_ppq_duration;
+
+    PianoRoll_GeneratedDrums_AllVoices(int num_gridlines_, float step_ppq_duration_, int n_steps_per_beat_, int n_beats_per_bar_, vector<string> DrumVoiceNames_, vector<int> DrumVoiceMidiNumbers_)
     {
         assert (DrumVoiceNames_.size()==DrumVoiceMidiNumbers_.size());
 
         num_voices = int(DrumVoiceMidiNumbers_.size());
+        step_ppq_duration = step_ppq_duration_;
 
         for (int voice_i=0; voice_i<num_voices; voice_i++)
         {
             auto label_txt = DrumVoiceNames_[voice_i] + "\n[Midi "+to_string(DrumVoiceMidiNumbers_[voice_i])+"]";
 
-            PianoRoll.push_back(make_unique<PianoRoll_GeneratedDrums_SingleVoice>(num_gridlines_, step_ppq_duration, n_beats_per_bar_, n_beats_per_bar_, label_txt, voice_i));
+            PianoRoll.push_back(make_unique<PianoRoll_GeneratedDrums_SingleVoice>(num_gridlines_, step_ppq_duration, n_steps_per_beat_, n_beats_per_bar_, label_txt, voice_i));
             addAndMakeVisible(PianoRoll[voice_i].get());
         }
         // Create Unmodified Piano ROll
@@ -122,6 +125,17 @@ public:
             PianoRoll[voice_i]->setBounds(area.removeFromBottom(PRollheight));
             area.removeFromBottom(GapHeight);
         }
+    }
+
+    void addEventToStep(int voice_number, int grid_index, float location, int hit_, float velocity_, float probability_)
+    {
+        PianoRoll[voice_number]->interactivePRollBlocks[grid_index]->addEvent(hit_, velocity_, location, probability_);
+    }
+
+    void addEventWithPPQ(int voice_number, float ppq_, int hit_, float velocity_, float probability_)
+    {
+        auto idx = (unsigned long) (floor(ppq_/step_ppq_duration));
+        PianoRoll[voice_number]->interactivePRollBlocks[idx]->addEventWithPPQ(hit_, velocity_, ppq_, probability_, step_ppq_duration);
     }
 
 };
