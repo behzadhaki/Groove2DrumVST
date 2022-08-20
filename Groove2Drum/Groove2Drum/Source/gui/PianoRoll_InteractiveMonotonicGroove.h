@@ -18,6 +18,7 @@ public:
     int num_gridlines;
     float step_ppq;
     juce::Label label;
+    unique_ptr<XYPlane> xySlider;
 
     PianoRoll_InteractiveMonotonicGroove(bool isInteractive,int num_gridlines_, float step_ppq_, int n_steps_per_beat, int n_beats_per_bar, string label_text)
     {
@@ -53,6 +54,7 @@ public:
 
 
         }
+
 
     }
 

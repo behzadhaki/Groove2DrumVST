@@ -15,12 +15,16 @@ class PianoRoll_GeneratedDrums_SingleVoice :public juce::Component
 public:
 
     vector<shared_ptr<PianoRoll_InteractiveIndividualBlockWithProbability>> interactivePRollBlocks;
+    shared_ptr<XYPlane> MaxCount_Prob_XYPlane; // x axis will be Max count (0 to time_steps), y axis is threshold 0 to 1
+    juce::Label label;
+
+
     juce::Colour def_c {juce::Colour::fromFloatRGBA(1.0f,1.0f,1.0f,1.0f)};
     juce::Colour beat_c { juce::Colour::fromFloatRGBA(.75f,.75f,.75f,1.0f)};
     juce::Colour bar_c {  juce::Colour::fromFloatRGBA(.4f,.4f,.4f,1.0f) };
+
     int num_gridlines;
     float step_ppq;
-    juce::Label label;
 
     PianoRoll_GeneratedDrums_SingleVoice(int num_gridlines_, float step_ppq_, int n_steps_per_beat, int n_beats_per_bar, string label_text, int voice_number_=0)
     {
@@ -54,9 +58,10 @@ public:
 
             addAndMakeVisible(interactivePRollBlocks[i].get());
 
-
         }
 
+        MaxCount_Prob_XYPlane = make_shared<XYPlane>(0, num_gridlines_, num_gridlines_/2, 0, 1, 0.5);
+        addAndMakeVisible(MaxCount_Prob_XYPlane.get());
     }
 
     // location must be between 0 or 1
@@ -72,17 +77,34 @@ public:
 
     void resized() override {
         auto area = getLocalBounds();
-        auto w = (float) getWidth();
+        auto w = (float) area.getWidth();
+        auto h = (float) area.getHeight();
+
+        // layout slider on lower right corner
+        auto prob_to_pianoRoll_Ratio =  0.5f;
+        area.removeFromLeft(int(w-h*prob_to_pianoRoll_Ratio));
+        MaxCount_Prob_XYPlane->setBounds (area.removeFromBottom(int(h*prob_to_pianoRoll_Ratio)));
+
+        // layout the rest
+        area = getLocalBounds();
+        w = (float) area.getWidth();
+        h = (float) area.getHeight();
+        area.removeFromRight(int(h*prob_to_pianoRoll_Ratio));
+
+        w = (float) area.getWidth();
+        h = (float) area.getHeight();
         auto label_ratio_of_width = 0.1f;
         auto label_width = (int) (label_ratio_of_width * w);
         label.setBounds(area.removeFromLeft(label_width));
 
-        auto grid_width = int((1.0f-label_ratio_of_width) * (0.95f*w) / (float) num_gridlines);
+        //MaxCount_Prob_XYPlane->setBounds(area.removeFromRight(h));
+
+        auto grid_width = area.getWidth() / num_gridlines;
         for (int i = 0; i<num_gridlines; i++)
         {
-            DBG("HERER");
             interactivePRollBlocks[i]->setBounds (area.removeFromLeft(grid_width));
         }
+
     }
 
 

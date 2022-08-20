@@ -6,14 +6,19 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     : AudioProcessorEditor(&MidiFXProcessorPointer)
 {
 
+    //setResizeLimits (1278, 700, 1918, 1050);
+
+    // const float ratio = 1.83f;
+    // getConstrainer ()->setFixedAspectRatio (ratio);
+
+
+
     // Create TextEditor for Text Messages
     // todo move the definition to processor!! to keep state
-    multiTabComponent = make_unique<MultiTabComponent>(MidiFXProcessorPointer, 900, 400, settings::time_steps, HVO_params::_16_note_ppq,settings::num_voices);
+    multiTabComponent = make_unique<MultiTabComponent>(MidiFXProcessorPointer/*, 800, 400*/, settings::time_steps, HVO_params::_16_note_ppq,settings::num_voices);
     addAndMakeVisible (multiTabComponent.get());
 
     // todo remove following tests
-
-    multiTabComponent->testComponent1->addEvent(1, .2f, 0.75);
 
     multiTabComponent->monotonicGroovePianoRoll->addEventWithPPQ(4.125f, 1, .9f);
     multiTabComponent->monotonicGroovePianoRoll->addEventToStep(1, .9f, 1, .2f);
@@ -26,7 +31,9 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     multiTabComponent->DrumsPianoRoll->addEventWithPPQ(7, 7.96f, 1, .2f, .9f);
 
     // Set window size
-    setSize (900, 600);
+
+    setResizable (true, true);
+    setSize (800, 400);
 
 
 }
@@ -35,8 +42,12 @@ void MidiFXProcessorEditor::resized()
 {
 
     auto area = getLocalBounds();
+    setBounds(area);
 
-    multiTabComponent->setBounds (area.removeFromTop(500));
+    auto h = area.getHeight();
+
+    multiTabComponent->setBounds (area.removeFromTop(int(h*.9f)));
+
 
 }
 

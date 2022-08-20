@@ -3,13 +3,12 @@
 //
 #pragma once
 
-#include <shared_plugin_helpers/shared_plugin_helpers.h>
+#include "CustomUIWidgets.h"
 
 // ============================================================================================================
 // ==========                       The smallest component in each piano roll                     =============
 // ========== https://forum.juce.com/t/how-to-draw-a-vertical-and-horizontal-line-of-the-mouse-position/31115/2
 // ============================================================================================================
-
 
 class PianoRoll_InteractiveIndividualBlock : public juce::Component
 {
@@ -239,7 +238,7 @@ public:
     void resized() override
     {
         auto area = getLocalBounds();
-        auto prob_to_pianoRoll_Ratio = 0.3f;
+        auto prob_to_pianoRoll_Ratio = 0.5f;
         pianoRollBlockWidgetPntr->setBounds (area.removeFromTop(int((1-prob_to_pianoRoll_Ratio)*(float)getHeight())));
         probabilityCurveWidgetPntr->setBounds (area);
     }

@@ -11,7 +11,7 @@
 
 // Voice Mappings corresponding to Kick, Snare, CH, OH, LoT, MidT, HiT, Crash, Ride
 #define nine_voice_kit std::vector<int>({36, 38, 42, 46, 43, 47, 50, 49, 51})
-#define nine_voice_kit_labels std::vector<std::string>({"Kick", "Snare", "Closed H", "Open Hat", "Low Tom", "Mid Tom", "Hi Tom", "Crash", "Ride"})
+#define nine_voice_kit_labels std::vector<std::string>({"Kick", "Snare", "Closed Hat", "Open Hat", "Low Tom", "Mid Tom", "Hi Tom", "Crash", "Ride"})
 #define monotonic_trigger std::vector<int> ({20, 21, 22})
 
 // define your own namespace to hold constants
@@ -35,6 +35,7 @@ namespace settings
 
 
 }
+
 // hvo settings
 namespace HVO_params
 {

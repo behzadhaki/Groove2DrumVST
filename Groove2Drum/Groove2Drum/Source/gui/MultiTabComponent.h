@@ -19,7 +19,7 @@ using namespace std;
 class TextDebugTabWidget: public juce::Component
 {
 public:
-    explicit TextDebugTabWidget(MidiFXProcessor& MidiFXProcessorPointer, int size_width, int size_height)
+    explicit TextDebugTabWidget(MidiFXProcessor& MidiFXProcessorPointer/*, int size_width, int size_height*/)
     {
         // Sample rate text
         SampleRateLabel.setText("THIS TAB IS FOR DEBUGGING USING TEXTEDITORS", juce::dontSendNotification);
@@ -44,7 +44,7 @@ public:
         textMessageLoggerTextEditor_mainprocessBlockOnly->setBounds (100, 400, 500, 100);
         addAndMakeVisible (MidiFXProcessorPointer.textMessageLoggerTextEditor_mainprocessBlockOnly.get());
 
-        setSize(size_width, size_height);
+        //setSize(size_width, size_height);
 
     }
 
@@ -54,6 +54,9 @@ public:
     }
 
     void resized() override {
+
+        auto area = getLocalBounds();
+        setBounds(area);
         /*auto area = getLocalBounds();
 
         auto h = float(getHeight());
@@ -82,20 +85,18 @@ public:
     juce::TabbedComponent tabs { juce::TabbedButtonBar::Orientation::TabsAtTop };
 
     unique_ptr<TextDebugTabWidget> textDebugTabWidget;
-    unique_ptr<PianoRoll_InteractiveIndividualBlock> testComponent1;
     unique_ptr<PianoRoll_InteractiveMonotonicGroove> monotonicGroovePianoRoll;
     unique_ptr<MonotonicGrooveWidget> monotonicGrooveWidget;
     unique_ptr<PianoRoll_GeneratedDrums_AllVoices> DrumsPianoRoll;
 
-    explicit MultiTabComponent(MidiFXProcessor& MidiFXProcessorPointer, int size_width, int size_height, int time_steps_, float step_resolution_ppq, int num_voices_)
+    explicit MultiTabComponent(MidiFXProcessor& MidiFXProcessorPointer/*, int size_width, int size_height*/, int time_steps_, float step_resolution_ppq, int num_voices_)
     {
         // Instantiate the widgets here
-        textDebugTabWidget = make_unique<TextDebugTabWidget>(MidiFXProcessorPointer, size_width, size_height);
+        textDebugTabWidget = make_unique<TextDebugTabWidget>(MidiFXProcessorPointer/*, size_width, size_height*/);
 
         auto grey_level = juce::uint8(0.9f * 255);
         auto background_c = juce::Colour::fromRGBA(grey_level,grey_level,grey_level,1);
 
-        testComponent1 = make_unique<PianoRoll_InteractiveIndividualBlock>(true, background_c, 10);
         monotonicGroovePianoRoll = make_unique<PianoRoll_InteractiveMonotonicGroove>(true, time_steps_, step_resolution_ppq,4, 4, "TEST INTERACTIVE GROOVE");
         monotonicGrooveWidget = make_unique<MonotonicGrooveWidget>( time_steps_, step_resolution_ppq,4, 4);
         DrumsPianoRoll = make_unique<PianoRoll_GeneratedDrums_AllVoices>(time_steps_, step_resolution_ppq, 4, 4, nine_voice_kit_labels, nine_voice_kit);
@@ -103,17 +104,14 @@ public:
         const auto tabColour = getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId).darker (0.1f);
 
         // add Tabs
-        tabs.addTab ("Debugger", tabColour, textDebugTabWidget.get(), true);
-        tabs.addTab ("Debugger 1", tabColour, testComponent1.get(), true);
+        tabs.addTab ("Full Drums", tabColour, DrumsPianoRoll.get(), true);
+        //tabs.addTab ("Debugger", tabColour, textDebugTabWidget.get(), true);
         tabs.addTab ("Single monotonicGroovePianoRoll", tabColour, monotonicGroovePianoRoll.get(), true);
         tabs.addTab ("Full Monotonic", tabColour, monotonicGrooveWidget.get(), true);
-        tabs.addTab ("Full Drums", tabColour, DrumsPianoRoll.get(), true);
 
 
-        tabs.setBounds (0, 0, size_width, size_height);
         addAndMakeVisible (tabs);
 
-        setSize(size_width, size_height);
 
     }
 
@@ -123,7 +121,19 @@ public:
             juce::ResizableWindow::backgroundColourId));
     }
 
-    void resized() override {}
+    void resized() override {
+        auto area = getLocalBounds();
+        textDebugTabWidget->setBounds(area);
+        monotonicGroovePianoRoll->setBounds(area);
+        monotonicGrooveWidget->setBounds(area);
+        DrumsPianoRoll->setBounds(area);
+
+        tabs.setBounds (area);
+
+
+        //setSize(size_width, size_height);
+
+    }
 
 
 };
