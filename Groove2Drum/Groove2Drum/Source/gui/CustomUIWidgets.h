@@ -29,8 +29,8 @@ public:
         auto w = float(getWidth());
         auto h = float(getHeight());
 
-        auto x_ = (x_ParameterValue - x_min) * w / (x_max - x_min);
-        auto y_ = (1 - (y_ParameterValue - y_min) / (y_max - y_min)) * h;
+        auto x_ = max(min((x_ParameterValue - x_min) * w / (x_max - x_min), w), 0.0f);
+        auto y_ = max(min((1 - (y_ParameterValue - y_min) / (y_max - y_min)) * h, h), 0.0f);
 
         g.drawLine(0.0f, y_, x_, y_);
         g.drawLine(x_, h, x_, y_);

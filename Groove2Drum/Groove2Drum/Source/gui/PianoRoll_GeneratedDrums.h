@@ -123,15 +123,15 @@ public:
         auto h = (float) area.getHeight();
 
         // layout slider on lower right corner
-        auto prob_to_pianoRoll_Ratio =  0.5f;
-        area.removeFromLeft(int(w-h*prob_to_pianoRoll_Ratio));
-        MaxCount_Prob_XYPlane->setBounds (area.removeFromBottom(int(h*prob_to_pianoRoll_Ratio)));
+        auto prob_to_pianoRoll_Ratio =  0.4f;
+        /*area.removeFromLeft(int(w-h*prob_to_pianoRoll_Ratio));
+        MaxCount_Prob_XYPlane->setBounds (area.removeFromBottom(int(h*prob_to_pianoRoll_Ratio)));*/
 
         // layout the rest
         area = getLocalBounds();
         w = (float) area.getWidth();
         h = (float) area.getHeight();
-        area.removeFromRight(int(h*prob_to_pianoRoll_Ratio));
+        //area.removeFromRight(int(h*prob_to_pianoRoll_Ratio));
 
         w = (float) area.getWidth();
         h = (float) area.getHeight();
@@ -141,11 +141,13 @@ public:
 
         //MaxCount_Prob_XYPlane->setBounds(area.removeFromRight(h));
 
-        auto grid_width = area.getWidth() / num_gridlines;
+        auto grid_width = area.getWidth() / (num_gridlines+4);
         for (int i = 0; i<num_gridlines; i++)
         {
             interactivePRollBlocks[i]->setBounds (area.removeFromLeft(grid_width));
         }
+
+        MaxCount_Prob_XYPlane->setBounds (area.removeFromBottom(int(h*prob_to_pianoRoll_Ratio)));
     }
 };
 
@@ -174,7 +176,7 @@ public:
     }
 
     void resized() override {
-        auto total_gaps = int((float) getHeight() * 0.1f);
+        auto total_gaps = 0;//int((float) getHeight() * 0.1f);
         auto area = getLocalBounds();
         int PRollheight;
         PRollheight = (int((float) area.getHeight() )- total_gaps) / num_voices;
@@ -182,7 +184,7 @@ public:
         for (int voice_i=0; voice_i<num_voices; voice_i++)
         {
             PianoRoll[voice_i]->setBounds(area.removeFromBottom(PRollheight));
-            area.removeFromBottom(GapHeight);
+            // area.removeFromBottom(GapHeight);
         }
     }
 

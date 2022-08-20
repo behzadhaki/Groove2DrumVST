@@ -225,7 +225,7 @@ public:
         addAndMakeVisible(pianoRollBlockWidgetPntr.get());
 
 
-        probabilityCurveWidgetPntr = make_unique<ProbabilityLevelWidget>(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId) /*backgroundcolor_*/);
+        probabilityCurveWidgetPntr = make_unique<ProbabilityLevelWidget>(juce::Colours::black /*backgroundcolor_*/);
         addAndMakeVisible(probabilityCurveWidgetPntr.get());
     }
 
@@ -244,7 +244,7 @@ public:
     void resized() override
     {
         auto area = getLocalBounds();
-        auto prob_to_pianoRoll_Ratio = 0.5f;
+        auto prob_to_pianoRoll_Ratio = 0.4f;
         pianoRollBlockWidgetPntr->setBounds (area.removeFromTop(int((1-prob_to_pianoRoll_Ratio)*(float)getHeight())));
         probabilityCurveWidgetPntr->setBounds (area);
     }

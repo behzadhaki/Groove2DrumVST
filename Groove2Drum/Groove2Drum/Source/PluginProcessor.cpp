@@ -35,19 +35,18 @@ MidiFXProcessor::MidiFXProcessor(){
                                                        gui_io_queue_size>>();
 
     // give access to resources and run threads
-    grooveThread.startThreadUsingProvidedResources(
-        note_toProcess_que.get(),
-        groove_toProcess_que.get(),
-        veloff_fromGui_que.get(),
-        groove_toGui_que.get()/*,
-        text_toGui_que.get()*/);
-
     modelThread.startThreadUsingProvidedResources(
         groove_toProcess_que.get(),
         perVoiceSamplingThresh_fromGui_que.get(),
         GeneratedData_toProcessforPlayback_que.get(),
         text_toGui_que.get());
 
+    grooveThread.startThreadUsingProvidedResources(
+        note_toProcess_que.get(),
+        groove_toProcess_que.get(),
+        veloff_fromGui_que.get(),
+        groove_toGui_que.get()/*,
+        text_toGui_que.get()*/);
 
    /* basicNoteStructLoggerTextEditor = make_shared<BasicNoteStructLoggerTextEditor>(note_toGui_que.get());
     textMessageLoggerTextEditor = make_shared<TextMessageLoggerTextEditor>( "General", text_toGui_que.get());
