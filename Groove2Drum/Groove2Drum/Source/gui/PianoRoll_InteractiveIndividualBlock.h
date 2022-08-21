@@ -188,6 +188,7 @@ public:
     float line_thickness;
     float hit_prob = 0;
     float sampling_threshold = 0;
+    bool willGetPlayed = false;         // for drum pianoroll --> if true, will be a playable note
 
     ProbabilityLevelWidget(juce:: Colour backgroundcolor_, float line_thickness_=2)
     {
@@ -221,22 +222,34 @@ public:
         g.setColour (juce::Colours::darkkhaki);
         myPath.startNewSubPath (0.0f, h);
 
-        if (hit_prob < 0)
+        if (hit_prob == 0)
         {
             myPath.lineTo(juce::Point<float> (w, h));
+            g.strokePath (myPath, juce::PathStrokeType (2.0f));
+
         }
         else
         {
-            if (hit_prob >= sampling_threshold)
-                g.setColour (juce::Colours::lightgreen);
+            auto fillType = juce::FillType();
+            fillType.setColour(juce::Colours::darkkhaki);
+
+            if (willGetPlayed)
+            {
+                g.setColour(juce::Colours::lightgreen);
+                fillType.setColour(juce::Colours::lightgreen);
+            }
 
             myPath.quadraticTo(control_rect.getBottomLeft(), juce::Point<float> ((float)proportionOfWidth(from_edge), half_P));
             myPath.quadraticTo(control_rect.getTopLeft(), juce::Point<float> ((float)proportionOfWidth(0.5f), p));
             myPath.quadraticTo(control_rect.getTopRight(), juce::Point<float> ((float)proportionOfWidth(1.0f - from_edge), half_P));
             myPath.quadraticTo(control_rect.getBottomRight(), juce::Point<float> (w, h));
+            myPath.closeSubPath();
 
+            g.setFillType(fillType);
+            g.fillPath(myPath);
         }
-        g.strokePath (myPath, juce::PathStrokeType (2.0f));
+
+
 
     }
 
@@ -249,6 +262,15 @@ public:
     void setSamplingThreshold(float thresh)
     {
         sampling_threshold = thresh;
+        repaint();
+    }
+
+    void setWillPlay(bool isSelected)
+    {
+        willGetPlayed = isSelected;
+        if (willGetPlayed)
+            DBG("willGetPlayed True");
+
         repaint();
     }
 };
@@ -280,6 +302,7 @@ public:
     {
         pianoRollBlockWidgetPntr->addEventWithPPQ(hit_, velocity_, ppq_, step_resolution);
         probabilityCurveWidgetPntr->setProbability(hit_prob_);
+        repaint();
     }
 
     void resized() override

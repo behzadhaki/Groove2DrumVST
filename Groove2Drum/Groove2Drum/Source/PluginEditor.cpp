@@ -28,7 +28,19 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
 
     multiTabComponent->DrumsPianoRoll->addEventWithPPQ(0, 4.125f, 1, .9f, .25f);
 
-    multiTabComponent->DrumsPianoRoll->addEventWithPPQ(7, 7.96f, 1, .2f, .9f);
+    multiTabComponent->DrumsPianoRoll->addEventWithPPQ(7, 0.0f, 1, .2f, .9f);
+    multiTabComponent->DrumsPianoRoll->addEventWithPPQ(7, 0.256f, 1, .2f, .1f);
+    multiTabComponent->DrumsPianoRoll->addEventWithPPQ(7, .5f, 1, .2f, .5f);
+    multiTabComponent->DrumsPianoRoll->addEventWithPPQ(7, .75f, 1, .2f, .2f);
+    multiTabComponent->DrumsPianoRoll->addEventWithPPQ(7, 1.0f, 1, .2f, .7f);
+    multiTabComponent->DrumsPianoRoll->addEventWithPPQ(7, 2.96f, 1, .2f, .74f);
+
+    multiTabComponent->DrumsPianoRoll->addEventWithPPQ(7, 4.96f, 1, .2f, .77f);
+    multiTabComponent->DrumsPianoRoll->addEventWithPPQ(7, 5.96f, 1, .2f, .1f);
+    multiTabComponent->DrumsPianoRoll->addEventWithPPQ(7, 6.96f, 1, .2f, .05f);
+    multiTabComponent->DrumsPianoRoll->addEventWithPPQ(7, 7.96f, 1, .2f, .02f);
+    multiTabComponent->DrumsPianoRoll->addEventWithPPQ(7, 7.25f, 1, .2f, .04f);
+
 
     // Set window size
 

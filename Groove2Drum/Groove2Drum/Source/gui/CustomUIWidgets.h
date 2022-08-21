@@ -24,6 +24,7 @@ public:
     void paint(juce::Graphics& g) override
     {
         g.fillAll(juce::Colours::black);
+        g.fillAll(juce::Colours::black);
         g.setColour(juce::Colours::white);
 
         auto w = float(getWidth());
@@ -56,6 +57,7 @@ public:
     {
         x_ParameterValue = x_ParameterValue_;
         y_ParameterValue = y_ParameterValue_;
+
         repaint();
     }
 
@@ -63,7 +65,7 @@ public:
     {
         // implement the process for sharing data with other listeners
         // parameter should be updated
-        DBG("Implement Transfer to update to X " << x_ParameterValue << " ,Y "<<y_ParameterValue);
+        // DBG("Implement Transfer to update to X " << x_ParameterValue << " ,Y "<<y_ParameterValue);
     }
     void mouseUp(const juce::MouseEvent& ev) override
     {
@@ -98,12 +100,12 @@ public:
         return y_ParameterValue;
     }
 
-
-
     void updateDefaultValues(float default_x_, float default_y_)
     {
         x_default = default_x_;
         y_default = default_y_;
+        shareParameter();
+        repaint();
     }
 
 private:
