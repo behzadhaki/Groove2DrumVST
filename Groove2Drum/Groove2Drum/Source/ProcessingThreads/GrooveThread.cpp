@@ -14,9 +14,9 @@ using namespace torch::indexing;
 GrooveThread::GrooveThread():
     juce::Thread("Groove_Thread")
 {
-    note_toProcess_que = nullptr;
+    note_fromProcessBlockToGrooveThread_que = nullptr;
     veloff_fromGui_que = nullptr;
-    groove_toProcess_que = nullptr;
+    groove_fromGrooveThreadtoModelThread_que = nullptr;
     text_toGui_que_for_debugging = nullptr;
     groove_toGui_que = nullptr;
     readyToStop = false;
@@ -28,8 +28,8 @@ GrooveThread::GrooveThread():
 }
 
 void GrooveThread::startThreadUsingProvidedResources(
-    LockFreeQueue<BasicNote, settings::processor_io_queue_size>* note_toProcess_quePntr,
-    MonotonicGrooveQueue<settings::time_steps,processor_io_queue_size>* groove_toProcess_quePntr,
+    LockFreeQueue<BasicNote, settings::processor_io_queue_size>* note_fromProcessBlockToGrooveThread_quePntr,
+    MonotonicGrooveQueue<settings::time_steps,processor_io_queue_size>* groove_fromGrooveThreadtoModelThread_quePntr,
     LockFreeQueue<array<float, 4>, gui_io_queue_size>* veloff_fromGui_quePntr,
     MonotonicGrooveQueue<settings::time_steps, gui_io_queue_size>* groove_toGui_quePntr,
     StringLockFreeQueue<settings::gui_io_queue_size>* text_toGui_que_for_debuggingPntr
@@ -37,9 +37,9 @@ void GrooveThread::startThreadUsingProvidedResources(
 {
     // get the pointer to queues and control parameters instantiated
     // in the main processor thread
-    note_toProcess_que = note_toProcess_quePntr;
+    note_fromProcessBlockToGrooveThread_que = note_fromProcessBlockToGrooveThread_quePntr;
     veloff_fromGui_que = veloff_fromGui_quePntr;
-    groove_toProcess_que = groove_toProcess_quePntr;
+    groove_fromGrooveThreadtoModelThread_que = groove_fromGrooveThreadtoModelThread_quePntr;
     groove_toGui_que = groove_toGui_quePntr;
     text_toGui_que_for_debugging = text_toGui_que_for_debuggingPntr;
 
@@ -74,16 +74,16 @@ void GrooveThread::run()
         isNewGrooveAvailable = false;
 
         // see if new BasicNotes received from main processblock
-        if (note_toProcess_que != nullptr)
+        if (note_fromProcessBlockToGrooveThread_que != nullptr)
         {
             BasicNote read_note;
 
-            while (note_toProcess_que->getNumReady() > 0 and not this->threadShouldExit())
+            while (note_fromProcessBlockToGrooveThread_que->getNumReady() > 0 and not this->threadShouldExit())
             {
                 // DBG ("NOTE RECEIVED IN GROOVE THREAD");
 
                 // Step 1. get new note
-                note_toProcess_que->ReadFrom(&read_note, 1); // here cnt result is 3
+                note_fromProcessBlockToGrooveThread_que->ReadFrom(&read_note, 1); // here cnt result is 3
 
                 // groove should only be updated in playback mode
                 //if (read_note.capturedInPlaying) // todo uncomment
@@ -134,9 +134,9 @@ void GrooveThread::run()
         {
 
             // DBG(" NEW GROOVE AVAILABLE");
-            if (groove_toProcess_que != nullptr)
+            if (groove_fromGrooveThreadtoModelThread_que != nullptr)
             {
-                groove_toProcess_que->push(monotonic_groove);
+                groove_fromGrooveThreadtoModelThread_que->push(monotonic_groove);
             }
 
             // send groove to be displayed on the interface

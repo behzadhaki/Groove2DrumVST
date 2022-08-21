@@ -26,7 +26,7 @@ public:
 
 
     /*** give access to resources needed to communicate with other threads
-     * @param groove_toProcess_quePntr
+     * @param groove_fromGrooveThreadtoModelThread_quePntr
      *              (MonotonicGrooveQueue<settings::time_steps,processor_io_queue_size>)
      * @param perVoiceSamplingThresh_fromGui_quePntr
      *              (LockFreeQueue<std::array<float, settings::num_voices>,
@@ -39,11 +39,11 @@ public:
      */
     void startThreadUsingProvidedResources(
         MonotonicGrooveQueue<settings::time_steps,processor_io_queue_size>*
-            groove_toProcess_quePntr,
+            groove_fromGrooveThreadtoModelThread_quePntr,
         LockFreeQueue<std::array<float, settings::num_voices>, settings::gui_io_queue_size>*
             perVoiceSamplingThresh_fromGui_quePntr,
         GeneratedDataQueue<settings::time_steps, settings::num_voices, settings::processor_io_queue_size>*
-            GeneratedData_toProcessforPlayback_quePntr,
+            GeneratedData_fromModelThreadtoProcessBlock_quePntr,
         StringLockFreeQueue<settings::gui_io_queue_size>*
             text_toGui_que_for_debuggingPntr = nullptr
         );
@@ -62,7 +62,7 @@ private:
 
     // the queue for receiving notes from the GrooveThread
     MonotonicGrooveQueue<settings::time_steps,
-                         processor_io_queue_size>* groove_toProcess_que{};
+                         processor_io_queue_size>* groove_fromGrooveThreadtoModelThread_que{};
 
     // queue for receiving the ranges used to map/scale/compress velocity/offset values
     LockFreeQueue<std::array<float, settings::num_voices>, settings::gui_io_queue_size>*
@@ -70,7 +70,7 @@ private:
 
     // queue for sending out the generated pattern (in HVO format) to other threads
     GeneratedDataQueue<settings::time_steps, settings::num_voices, settings::processor_io_queue_size>*
-        GeneratedData_toProcessforPlayback_que;
+        GeneratedData_fromModelThreadtoProcessBlock_que;
 
     //---- Debugger -------------------------------------
     StringLockFreeQueue<settings::gui_io_queue_size>*

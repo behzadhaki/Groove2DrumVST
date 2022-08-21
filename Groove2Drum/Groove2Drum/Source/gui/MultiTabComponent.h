@@ -15,11 +15,11 @@ using namespace std;
 // ============================================================================================================
 // ==========            The Tab used for debugging using CustomGuiTextEditor Instances           =============
 // ============================================================================================================
-
+/*
 class TextDebugTabWidget: public juce::Component
 {
 public:
-    explicit TextDebugTabWidget(MidiFXProcessor& MidiFXProcessorPointer/*, int size_width, int size_height*/)
+    explicit TextDebugTabWidget(MidiFXProcessor& MidiFXProcessorPointer*//*, int size_width, int size_height*//*)
     {
         // Sample rate text
         SampleRateLabel.setText("THIS TAB IS FOR DEBUGGING USING TEXTEDITORS", juce::dontSendNotification);
@@ -55,12 +55,12 @@ public:
 
         auto area = getLocalBounds();
         setBounds(area);
-        /*auto area = getLocalBounds();
+        *//*auto area = getLocalBounds();
 
         auto h = float(getHeight());
         basicNoteStructLoggerTextEditor->setBounds(area.removeFromTop(int(h * .2)));
         textMessageLoggerTextEditor->setBounds(area.removeFromTop(int(h * .4)));
-        textMessageLoggerTextEditor_mainprocessBlockOnly->setBounds(area.removeFromTop(int(h * .4)));*/
+        textMessageLoggerTextEditor_mainprocessBlockOnly->setBounds(area.removeFromTop(int(h * .4)));*//*
     }
 
 private:
@@ -68,7 +68,7 @@ private:
     TextMessageLoggerTextEditor* textMessageLoggerTextEditor;
     TextMessageLoggerTextEditor* textMessageLoggerTextEditor_mainprocessBlockOnly;
     juce::Label SampleRateLabel;
-};
+};*/
 
 // ============================================================================================================
 // ==========                       All Tabs are collected and placed here                        =============

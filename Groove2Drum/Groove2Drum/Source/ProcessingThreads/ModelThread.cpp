@@ -8,9 +8,9 @@
 
 ModelThread::ModelThread(): juce::Thread("Model_Thread")
 {
-    groove_toProcess_que = nullptr;
+    groove_fromGrooveThreadtoModelThread_que = nullptr;
     perVoiceSamplingThresh_fromGui_que = nullptr;
-    GeneratedData_toProcessforPlayback_que = nullptr;
+    GeneratedData_fromModelThreadtoProcessBlock_que = nullptr;
 
     readyToStop = false;
 }
@@ -28,19 +28,19 @@ ModelThread::~ModelThread()
 
 void ModelThread::startThreadUsingProvidedResources(
     MonotonicGrooveQueue<settings::time_steps,processor_io_queue_size>*
-        groove_toProcess_quePntr,
+        groove_fromGrooveThreadtoModelThread_quePntr,
     LockFreeQueue<std::array<float, settings::num_voices>, settings::gui_io_queue_size>*
         perVoiceSamplingThresh_fromGui_quePntr,
     GeneratedDataQueue<settings::time_steps, settings::num_voices, settings::processor_io_queue_size>*
-        GeneratedData_toProcessforPlayback_quePntr,
+        GeneratedData_fromModelThreadtoProcessBlock_quePntr,
     StringLockFreeQueue<settings::gui_io_queue_size>*
         text_toGui_que_for_debuggingPntr
     )
 {
     // get access to resources
-    groove_toProcess_que = groove_toProcess_quePntr;
+    groove_fromGrooveThreadtoModelThread_que = groove_fromGrooveThreadtoModelThread_quePntr;
     perVoiceSamplingThresh_fromGui_que = perVoiceSamplingThresh_fromGui_quePntr;
-    GeneratedData_toProcessforPlayback_que = GeneratedData_toProcessforPlayback_quePntr;
+    GeneratedData_fromModelThreadtoProcessBlock_que = GeneratedData_fromModelThreadtoProcessBlock_quePntr;
     text_toGui_que_for_debugging = text_toGui_que_for_debuggingPntr;
 
     // load model
@@ -109,13 +109,13 @@ void ModelThread::run()
             }
         }
 
-        if (groove_toProcess_que != nullptr)
+        if (groove_fromGrooveThreadtoModelThread_que != nullptr)
         {
-            if (groove_toProcess_que->getNumReady() > 0
+            if (groove_fromGrooveThreadtoModelThread_que->getNumReady() > 0
                    and not this->threadShouldExit())
             {
                 // read latest groove
-                scaled_groove = groove_toProcess_que->getLatestOnly();
+                scaled_groove = groove_fromGrooveThreadtoModelThread_que->getLatestOnly();
 
                 DBG("HERE NOW");
 
@@ -183,16 +183,16 @@ void ModelThread::run()
                 DBG("Generation " << i << " onset ppq = " << generated_hvo.getModifiedGeneratedData().onset_ppqs[i] << " | pitch = " << generated_hvo.getModifiedGeneratedData().onset_pitches[i]  << " | vel = " <<generated_hvo.getModifiedGeneratedData().onset_velocities[i]);
             */
 
-            if (GeneratedData_toProcessforPlayback_que)
+            if (GeneratedData_fromModelThreadtoProcessBlock_que)
             {
                 auto temp = generated_hvo.getModifiedGeneratedData();
                 DBG("HERE NOW 8");
 
-                GeneratedData_toProcessforPlayback_que->push(
+                GeneratedData_fromModelThreadtoProcessBlock_que->push(
                     generated_hvo.getModifiedGeneratedData());
             }
             else
-                DBG("GeneratedData_toProcessforPlayback_que is Null!!");
+                DBG("GeneratedData_fromModelThreadtoProcessBlock_que is Null!!");
 
             DBG("HERE NOW 7");
 

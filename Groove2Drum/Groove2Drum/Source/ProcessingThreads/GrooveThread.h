@@ -22,8 +22,8 @@ public:
 
     // give access to resources needed to communicate with other threads
     void startThreadUsingProvidedResources(
-        LockFreeQueue<BasicNote, settings::processor_io_queue_size>* note_toProcess_quePntr,
-        MonotonicGrooveQueue<settings::time_steps,processor_io_queue_size>* groove_toProcess_quePntr,
+        LockFreeQueue<BasicNote, settings::processor_io_queue_size>* note_fromProcessBlockToGrooveThread_quePntr,
+        MonotonicGrooveQueue<settings::time_steps,processor_io_queue_size>* groove_fromGrooveThreadtoModelThread_quePntr,
         LockFreeQueue<array<float, 4>, gui_io_queue_size>* veloff_fromGui_quePntr,
         MonotonicGrooveQueue<settings::time_steps, gui_io_queue_size>* groove_toGui_quePntr,
         StringLockFreeQueue<settings::gui_io_queue_size>* text_toGui_que_for_debuggingPntr = nullptr
@@ -45,9 +45,9 @@ public:
 private:
 
     // ---- Locally Used for calculations ----------------------------------
-    LockFreeQueue<BasicNote, settings::processor_io_queue_size>* note_toProcess_que{};    // queue for receiving the new BasicNotes
+    LockFreeQueue<BasicNote, settings::processor_io_queue_size>* note_fromProcessBlockToGrooveThread_que{};    // queue for receiving the new BasicNotes
     MonotonicGrooveQueue<settings::time_steps,
-                         processor_io_queue_size>* groove_toProcess_que{}; // the queue for sending the updated groove to the next thread
+                         processor_io_queue_size>* groove_fromGrooveThreadtoModelThread_que{}; // the queue for sending the updated groove to the next thread
     //----------------------------------------------------------------------
 
     //---- Control Parameters from GUI -------------------------------------
