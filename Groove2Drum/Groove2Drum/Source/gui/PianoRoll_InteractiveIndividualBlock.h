@@ -10,6 +10,27 @@
 // ========== https://forum.juce.com/t/how-to-draw-a-vertical-and-horizontal-line-of-the-mouse-position/31115/2
 // ============================================================================================================
 
+
+// it should be inline because we don't have a separate cpp file
+// otherwise, linking errors
+// https://forum.juce.com/t/drawing-curve-with-3-points-or-help-with-quadratic-calculations/22330
+inline array<float, 4> getPathParams(float x1, float y1, float x2, float y2, bool concaveup)
+{
+    float amplitude = 100;
+
+    float mult;
+    if (concaveup)
+        mult = 1.0f;
+    else
+        mult = -1.0f;
+
+    float a = atan2f(mult * (y2-y1), x2-x1) + juce::float_Pi/2.0;
+    float midx = (x2-x1)/2 + cos(a)*amplitude;
+    //float midy = (y2-y1)/2 + y1 - sin(a)*amplitude;
+    float midy = (y2-y1)/2 + sin(a)*amplitude;
+    return {midx, midy, x2, y2};
+}
+
 class PianoRoll_InteractiveIndividualBlock : public juce::Component
 {
 public:
@@ -189,9 +210,27 @@ public:
 
         if (hit_prob > 0)
         {
+
+
+            juce::Path myPath;
+
+            auto p = (1.0f - hit_prob)*h;
+            auto half_P = (1.0f - hit_prob/2.0)*h;
+            g.setColour(juce::Colours::red);
+            myPath.startNewSubPath (0.0f, h);
+            myPath.lineTo(w/4.0f, half_P);
+            myPath.lineTo(w/2.0f, p);
+            myPath.lineTo(w*3/4.0f, half_P);
+            myPath.lineTo(w, h);
+
+
+            //curve_params = getPathParams(w/4.0f, hit_prob/2.0f, w/2.0f, hit_prob*h, false);
+            //myPath.quadraticTo(curve_params[0], curve_params[1], curve_params[2], curve_params[3]);
+            g.strokePath (myPath, juce::PathStrokeType (2.0f));
+
+
             juce::Point<float> corner1 {w * .45f, h};
             juce::Point<float> corner2 {w * 0.55f, (1.0f-hit_prob)*h};
-            g.setColour(juce::Colours::red);
 
             juce::Rectangle<float> area (corner1, corner2);
             g.setColour (juce::Colours::darkkhaki);
