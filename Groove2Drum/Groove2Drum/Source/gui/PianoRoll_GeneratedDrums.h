@@ -77,7 +77,6 @@ public:
         }
     }
 
-
     void BroadCastAllInfo()
     {
         vector<float> probabilities {};
@@ -86,11 +85,9 @@ public:
         int current_widget_idx = 0;
         for (auto & ListenerWidget : ListenerWidgets)
         {
-            DBG("CHECKING LISTENER");
             ListenerWidget->probabilityCurveWidgetPntr->setWillPlay(false);      // set to False first, check below if selected
             auto hit_prob_ = ListenerWidget->probabilityCurveWidgetPntr->hit_prob;
             if (hit_prob_ > 0)
-                DBG("should be hit if condition met next, hit_prob" << hit_prob_ << " y slider at " <<getYValue());
 
             if (getYValue() <= hit_prob_)
             {
@@ -104,13 +101,10 @@ public:
 
         for (auto i: indices)
         {
-            DBG("Sending True for setWillPlay");
             ListenerWidgets[probs_for_widgets_idx[i]]->probabilityCurveWidgetPntr->setWillPlay(true);
         }
 
         BroadCastThresholds();
-
-        DBG("BROADCASTED");
     }
 
     void ForceMoveToActualValues(float x_ParameterValue_, float y_ParameterValue_)
@@ -125,11 +119,8 @@ public:
         XYPlane::updateDefaultValues(default_x_, default_y_);
         ForceMoveToActualValues(default_x_, default_y_);
         BroadCastAllInfo();
-
     }
-
 };
-
 
 
 class PianoRoll_GeneratedDrums_SingleVoice :public juce::Component
@@ -283,6 +274,4 @@ public:
         PianoRoll[voice_number]->addEventWithPPQ(hit_, velocity_, ppq_, probability_);
 
     }
-
-
 };

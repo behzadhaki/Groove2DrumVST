@@ -108,6 +108,7 @@ public:
             repaint();
         }
     }
+
     void mouseDoubleClick(const juce::MouseEvent& ) override
     {
         if (isClickable)
@@ -201,7 +202,6 @@ public:
         //background colour
         g.fillAll(backgroundcolor);
 
-
         auto h = (float) getHeight();
         auto w = (float) getWidth();
 
@@ -209,10 +209,7 @@ public:
         auto y_= (1 - sampling_threshold) * h;
         g.drawLine(-1.0f, y_, h*2.0f, y_);
 
-        juce::Path myPath;
-
-
-
+        juce::Path myPath1;
         float from_edge = 0.4f;
         float control_rect_ratio = (1.0f - from_edge) * 0.5f; // ratio wise
         auto p = (float) proportionOfHeight(1.0f - hit_prob); // location of peak (ie probability)
@@ -220,16 +217,17 @@ public:
 
         auto half_P = (float) proportionOfHeight(1.0f - hit_prob/2.0f);
         g.setColour (juce::Colours::darkkhaki);
-        myPath.startNewSubPath (0.0f, h);
+        myPath1.startNewSubPath (0.0f, h);
 
-        if (hit_prob == 0)
-        {
-            myPath.lineTo(juce::Point<float> (w, h));
-            g.strokePath (myPath, juce::PathStrokeType (2.0f));
+        myPath1.lineTo(juce::Point<float> (w, h));
+        g.strokePath (myPath1, juce::PathStrokeType (2.0f));
 
-        }
-        else
+
+        if (hit_prob > 0)
         {
+            juce::Path myPath;
+            myPath.startNewSubPath (0.0f, h);
+
             auto fillType = juce::FillType();
             fillType.setColour(juce::Colours::darkkhaki);
 
@@ -248,9 +246,6 @@ public:
             g.setFillType(fillType);
             g.fillPath(myPath);
         }
-
-
-
     }
 
     void setProbability(float hit_prob_)
@@ -268,9 +263,6 @@ public:
     void setWillPlay(bool isSelected)
     {
         willGetPlayed = isSelected;
-        if (willGetPlayed)
-            DBG("willGetPlayed True");
-
         repaint();
     }
 };
