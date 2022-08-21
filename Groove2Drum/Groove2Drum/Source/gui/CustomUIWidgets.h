@@ -42,8 +42,8 @@ public:
         auto w = float(getWidth());
         auto h = float(getHeight());
 
-        float x_coor = xyCoordinate.getX();
-        float y_coor = xyCoordinate.getY();
+        float x_coor = max(min(xyCoordinate.getX(), w), 0.0f);
+        float y_coor = max(min(xyCoordinate.getY(), h), 0.0f);
 
         x_ParameterValue = x_min + x_coor / w * (x_max - x_min);
         y_ParameterValue = y_min + (1 - y_coor / h) * (y_max - y_min);

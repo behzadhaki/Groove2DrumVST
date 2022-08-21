@@ -45,11 +45,13 @@ public:
     void BroadCastThresholds()
     {
         auto thresh = XYPlane::getYValue();
+        DBG(thresh);
         for (int i=0; i<ListenerWidgets.size(); i++)
         {
             ListenerWidgets[i]->setSamplingThreshold(thresh);
         }
     }
+
 };
 
 class PianoRoll_GeneratedDrums_SingleVoice :public juce::Component
@@ -101,7 +103,10 @@ public:
             {
                 interactivePRollBlocks.push_back(make_shared<PianoRoll_InteractiveIndividualBlockWithProbability>(false, def_c, i, voice_number_));
             }
-            MaxCount_Prob_XYPlane->addWidget(interactivePRollBlocks[i]->probabilityCurveWidgetPntr.get());
+            auto prob_widget_listener = interactivePRollBlocks[i]->probabilityCurveWidgetPntr.get(); // allow slider to update line in the probability widgets
+            prob_widget_listener->setSamplingThreshold(MaxCount_Prob_XYPlane->getYValue());         // synchronize thresh line with the defaul in Slider
+            MaxCount_Prob_XYPlane->addWidget(prob_widget_listener);
+
             addAndMakeVisible(interactivePRollBlocks[i].get());
         }
     }
@@ -128,11 +133,6 @@ public:
         MaxCount_Prob_XYPlane->setBounds (area.removeFromBottom(int(h*prob_to_pianoRoll_Ratio)));*/
 
         // layout the rest
-        area = getLocalBounds();
-        w = (float) area.getWidth();
-        h = (float) area.getHeight();
-        //area.removeFromRight(int(h*prob_to_pianoRoll_Ratio));
-
         w = (float) area.getWidth();
         h = (float) area.getHeight();
         auto label_ratio_of_width = 0.1f;

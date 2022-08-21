@@ -245,7 +245,9 @@ public:
     {
         auto area = getLocalBounds();
         auto prob_to_pianoRoll_Ratio = 0.4f;
-        pianoRollBlockWidgetPntr->setBounds (area.removeFromTop(int((1-prob_to_pianoRoll_Ratio)*(float)getHeight())));
-        probabilityCurveWidgetPntr->setBounds (area);
+        auto w = (float) area.getWidth();
+        auto h = (float) area.getHeight();
+        pianoRollBlockWidgetPntr->setBounds (area.removeFromTop(int((1-prob_to_pianoRoll_Ratio)*h)));
+        probabilityCurveWidgetPntr->setBounds (area.removeFromBottom(int(h*prob_to_pianoRoll_Ratio)));
     }
 };
