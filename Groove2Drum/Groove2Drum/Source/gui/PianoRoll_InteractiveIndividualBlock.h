@@ -208,34 +208,36 @@ public:
         auto y_= (1 - sampling_threshold) * h;
         g.drawLine(-1.0f, y_, h*2.0f, y_);
 
-        if (hit_prob > 0)
+        juce::Path myPath;
+
+
+
+        float from_edge = 0.4f;
+        float control_rect_ratio = (1.0f - from_edge) * 0.5f; // ratio wise
+        auto p = (float) proportionOfHeight(1.0f - hit_prob); // location of peak (ie probability)
+        auto control_rect = juce::Rectangle<float> (juce::Point<float> ((float) proportionOfWidth(from_edge), h), juce::Point<float> ((float)proportionOfWidth(1.0f - from_edge), p));
+
+        auto half_P = (float) proportionOfHeight(1.0f - hit_prob/2.0f);
+        g.setColour (juce::Colours::darkkhaki);
+        myPath.startNewSubPath (0.0f, h);
+
+        if (hit_prob < 0)
         {
-
-
-            juce::Path myPath;
-
-            auto p = (1.0f - hit_prob)*h;
-            auto half_P = (1.0f - hit_prob/2.0)*h;
-            g.setColour(juce::Colours::red);
-            myPath.startNewSubPath (0.0f, h);
-            myPath.lineTo(w/4.0f, half_P);
-            myPath.lineTo(w/2.0f, p);
-            myPath.lineTo(w*3/4.0f, half_P);
-            myPath.lineTo(w, h);
-
-
-            //curve_params = getPathParams(w/4.0f, hit_prob/2.0f, w/2.0f, hit_prob*h, false);
-            //myPath.quadraticTo(curve_params[0], curve_params[1], curve_params[2], curve_params[3]);
-            g.strokePath (myPath, juce::PathStrokeType (2.0f));
-
-
-            juce::Point<float> corner1 {w * .45f, h};
-            juce::Point<float> corner2 {w * 0.55f, (1.0f-hit_prob)*h};
-
-            juce::Rectangle<float> area (corner1, corner2);
-            g.setColour (juce::Colours::darkkhaki);
-            g.fillRect (area);
+            myPath.lineTo(juce::Point<float> (w, h));
         }
+        else
+        {
+            if (hit_prob >= sampling_threshold)
+                g.setColour (juce::Colours::lightgreen);
+
+            myPath.quadraticTo(control_rect.getBottomLeft(), juce::Point<float> ((float)proportionOfWidth(from_edge), half_P));
+            myPath.quadraticTo(control_rect.getTopLeft(), juce::Point<float> ((float)proportionOfWidth(0.5f), p));
+            myPath.quadraticTo(control_rect.getTopRight(), juce::Point<float> ((float)proportionOfWidth(1.0f - from_edge), half_P));
+            myPath.quadraticTo(control_rect.getBottomRight(), juce::Point<float> (w, h));
+
+        }
+        g.strokePath (myPath, juce::PathStrokeType (2.0f));
+
     }
 
     void setProbability(float hit_prob_)
