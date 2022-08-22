@@ -40,7 +40,6 @@ namespace IntraProcessorFifos
 }
 
 
-
 /**
  *  Lock-free Queues  for communicating data back and forth between
  *  the Processor threads and the GUI widgets
@@ -86,7 +85,7 @@ namespace GuiIOFifos
     // used for receiving the latest perVoiceSamplingThresholds and maximum notes allowed from Generated Drums XYSliders
     struct ModelThreadToDrumPianoRollWidgetQues
     {
-        GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size> new_generated_data {};        // todo To integrate in code
+        HVPpqQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size> new_generated_data {};        // todo To integrate in code
     };
 
     struct DrumPianoRollWidgetToModelThreadQues
