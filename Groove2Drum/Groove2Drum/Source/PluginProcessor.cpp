@@ -10,21 +10,21 @@ using namespace std;
 MidiFXProcessor::MidiFXProcessor(){
 
 
-    processorGuiFIFOS = make_unique<GuiIOFIFOS>();
+    processorGuiFIFOS = make_unique<GuiIOFifos>();
 
-    withinMidiFXProcessorFIFOs = make_unique<WithinMidiFXProcessorFIFOs>();
+    withinMidiFXProcessorFIFOs = make_unique<WithinMidiFXProcessorFifos>();
 
     // give access to resources and run threads
     modelThread.startThreadUsingProvidedResources(
-        withinMidiFXProcessorFIFOs->groove_fromGrooveThreadtoModelThread_que.get(),
+        withinMidiFXProcessorFIFOs->groove_fromGrooveThreadToModelThread_que.get(),
         processorGuiFIFOS->perVoiceSamplingThresh_fromGui_que.get(),
-        withinMidiFXProcessorFIFOs->GeneratedData_fromModelThreadtoProcessBlock_que.get()/*,
+        withinMidiFXProcessorFIFOs->GeneratedData_fromModelThreadToProcessBlock_que.get()/*,
         processorGuiFIFOS->text_toGui_que.get()*/);
 
     grooveThread.startThreadUsingProvidedResources(
         withinMidiFXProcessorFIFOs->note_fromProcessBlockToGrooveThread_que.get(),
-        withinMidiFXProcessorFIFOs->groove_fromGrooveThreadtoModelThread_que.get(),
-        processorGuiFIFOS->veloff_fromGui_que.get(),
+        withinMidiFXProcessorFIFOs->groove_fromGrooveThreadToModelThread_que.get(),
+        processorGuiFIFOS->velocityOffset_fromGui_que.get(),
         processorGuiFIFOS->groove_toGui_que.get()/*,
         processorGuiFIFOS->text_toGui_que.get()*/);
 
@@ -56,11 +56,13 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     auto playhead = getPlayHead();
     auto Pinfo = playhead->getPosition();
 
-    if (withinMidiFXProcessorFIFOs->GeneratedData_fromModelThreadtoProcessBlock_que != nullptr)
+    if (withinMidiFXProcessorFIFOs->GeneratedData_fromModelThreadToProcessBlock_que
+        != nullptr)
     {
-        if (withinMidiFXProcessorFIFOs->GeneratedData_fromModelThreadtoProcessBlock_que->getNumReady() > 0)
+        if (withinMidiFXProcessorFIFOs->GeneratedData_fromModelThreadToProcessBlock_que
+                ->getNumReady() > 0)
         {
-            latestGeneratedData = withinMidiFXProcessorFIFOs->GeneratedData_fromModelThreadtoProcessBlock_que->getLatestOnly();
+            latestGeneratedData = withinMidiFXProcessorFIFOs->GeneratedData_fromModelThreadToProcessBlock_que->getLatestOnly();
         }
     }
 

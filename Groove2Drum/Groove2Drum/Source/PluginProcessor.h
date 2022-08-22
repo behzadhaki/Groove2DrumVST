@@ -12,6 +12,7 @@
 
 using namespace std;
 
+
 class MidiFXProcessor : public PluginHelpers::ProcessorBase
 {
 public:
@@ -25,14 +26,14 @@ public:
     juce::AudioProcessorEditor* createEditor() override;
 
     // QUEUES for Communicating Back and Forth with GUI
-    unique_ptr<GuiIOFIFOS> processorGuiFIFOS;
+    unique_ptr<GuiIOFifos> processorGuiFIFOS;
 
 private:
 
     juce::MidiBuffer tempBuffer;
 
     // FIFOs for communicating data between major processor threads (NOT GUI)
-    unique_ptr<WithinMidiFXProcessorFIFOs> withinMidiFXProcessorFIFOs;
+    unique_ptr<WithinMidiFXProcessorFifos> withinMidiFXProcessorFIFOs;
 
     // holds the latest generations to loop over
     GeneratedData<settings::time_steps, settings::num_voices> latestGeneratedData;
@@ -42,8 +43,5 @@ private:
 
     // model thread
     ModelThread modelThread;
-
-
-
 
 };
