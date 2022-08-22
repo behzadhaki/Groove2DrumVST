@@ -147,7 +147,6 @@ template <int time_steps_, int num_voices_> struct GeneratedData{
     vector<float> ppqs;          // default value is
     int lastFilledIndex;   // specifies how many messages are valid from the beginning
     vector<juce::MidiMessage> midiMessages;
-    torch::Tensor probabilities;
 
     GeneratedData()
     {
@@ -161,8 +160,6 @@ template <int time_steps_, int num_voices_> struct GeneratedData{
             midiMessages.push_back(juce::MidiMessage::noteOn((int) 1, (int) 1, (float) 0));   // a dummy note
         }
 
-        // initialize probabilities
-        probabilities = torch::zeros({time_steps_, num_voices_});
     }
 
     void addNote(BasicNote note_)
@@ -254,8 +251,6 @@ template <int time_steps_, int num_voices_> struct HVO
             compressAll();
         }
     }
-
-
 
     void reset()
     {
@@ -603,4 +598,56 @@ template <int time_steps_> struct MonotonicGroove
         }
         return FullVoiceTensor;
     }
+};
+
+
+
+template <int time_steps_, int num_voices_> struct HVPpq
+{
+    int time_steps = time_steps_;
+    int num_voices = num_voices_;
+
+
+    torch::Tensor hits;
+    torch::Tensor hit_probabilities;
+    torch::Tensor velocities;
+    torch::Tensor ppqs;
+
+    // Default Constructor
+    HVPpq()
+    {
+        hits = torch::zeros({time_steps, num_voices});
+        hit_probabilities = torch::zeros({time_steps, num_voices}, torch::kFloat32);
+        velocities = torch::zeros({time_steps, num_voices}, torch::kFloat32);
+        ppqs = torch::zeros({time_steps, num_voices}, torch::kFloat32);
+    }
+
+    /**
+     *
+     * @param hits_
+     * @param velocities_
+     * @param offsets_
+     */
+    HVPpq(torch::Tensor hits_, torch::Tensor hit_probabilities_, torch::Tensor velocities_, torch::Tensor offsets_):
+        hits(hits_), time_steps(time_steps_), num_voices(num_voices_),
+        velocities(velocities_),
+        hit_probabilities(hit_probabilities_) {
+
+        ppqs = torch::zeros({time_steps, num_voices}, torch::kFloat32);
+
+        for (int time_ix = 0; time_ix < time_steps; time_ix++)
+        {
+            for (int voice_ix = 0; voice_ix < num_voices; voice_ix++)
+            {
+                if(hits[time_ix][voice_ix].template item<int>() > 0)
+                {
+                    onset_time time(time_ix, offsets_[time_ix][voice_ix].template item<double>());
+                    ppqs[time_ix][voice_ix] = time.ppq;
+                }
+            }
+        }
+    }
+
+
+
 };

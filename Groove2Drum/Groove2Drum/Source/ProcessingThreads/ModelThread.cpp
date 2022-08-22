@@ -139,7 +139,6 @@ void ModelThread::run()
                 auto groove_tensor = scaled_groove.getFullVersionTensor(useGrooveWithModifiedVelOffset,
                                                                         mapGrooveToVoiceNumber,
                                                                         HVO_params::num_voices);
-                DBG("Groove Size fed to model " << groove_tensor.sizes()[0] << ", " << groove_tensor.sizes()[1] );
                 modelAPI.forward_pass(groove_tensor);
                 shouldResample = true;
             }
@@ -149,42 +148,31 @@ void ModelThread::run()
         // should resample output if, input new groove received
         if (shouldResample)
         {
-
             auto [hits, velocities, offsets] = modelAPI.sample("Threshold");
             generated_hvo = HVO<HVO_params::time_steps, HVO_params::num_voices>(
                 hits, velocities, offsets);
+            auto pianoRollData = HVPpq<HVO_params::time_steps, HVO_params::num_voices>(
+                hits, modelAPI.get_hits_probabilities(), velocities, offsets);
 
-            // TODO can comment block --- for debugging only
-            {
-                /*bool showHits = true;
-                bool showVels = false;
-                bool showOffs = false;
-                bool needScaled = true;
-                showMessageinEditor(text_toGui_que_for_debugging,
-                                    generated_hvo.getStringDescription(
-                                        showHits, showVels, showOffs, needScaled),
-                                    "Generated HVO",
-                                    true);*/
-            }
-
-            // send generation to midiMessageFormatterThread
-            /*for (int i = 0; i < generated_hvo.getModifiedGeneratedData().onset_ppqs.size(); i++)
-                DBG("Generation " << i << " onset ppq = " << generated_hvo.getModifiedGeneratedData().onset_ppqs[i] << " | pitch = " << generated_hvo.getModifiedGeneratedData().onset_pitches[i]  << " | vel = " <<generated_hvo.getModifiedGeneratedData().onset_velocities[i]);
-            */
 
             if (ModelThreadToProcessBlockQues != nullptr)
             {
                 auto temp = generated_hvo.getModifiedGeneratedData();
+                ModelThreadToProcessBlockQues->new_generations.push(temp);
+            }
 
-                ModelThreadToProcessBlockQues->new_generations.push(
-                    generated_hvo.getModifiedGeneratedData());
+            if (ModelThreadToDrumPianoRollWidgetQues != nullptr)
+            {
+                ModelThreadToDrumPianoRollWidgetQues->new_generated_data.push(
+                    pianoRollData);
+
             }
         }
 
         bExit = threadShouldExit();
 
         // avoid burning CPU, if reading is returning immediately
-        sleep (thread_settings::ModelThread::waitTimeBtnIters);
+        // sleep (thread_settings::ModelThread::waitTimeBtnIters);
     }
 }
 

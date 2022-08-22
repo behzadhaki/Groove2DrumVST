@@ -514,3 +514,96 @@ public:
         return lockFreeFifo -> getNumReady();
     }
 };
+
+
+
+template <int time_steps_, int num_voices_, int queue_size> class HVPpqQueue
+{
+private:
+    //juce::ScopedPointer<juce::AbstractFifo> lockFreeFifo;   depreciated!!
+    std::unique_ptr<juce::AbstractFifo> lockFreeFifo;
+    juce::Array<HVPpq<time_steps_, num_voices_>> data{};
+
+    int time_steps, num_voices;
+
+public:
+    HVPpqQueue(){
+
+        time_steps = time_steps_;
+        num_voices = num_voices_;
+
+        lockFreeFifo = std::unique_ptr<juce::AbstractFifo> (
+            new juce::AbstractFifo(queue_size));
+
+        data.ensureStorageAllocated(queue_size);
+
+        while (data.size() < queue_size)
+        {
+            auto empty_HVPpq = HVPpq<time_steps_, num_voices_>();
+            data.add(empty_HVPpq);
+        }
+
+    }
+
+    void push (const HVPpq<time_steps_, num_voices_> writeData)
+    {
+        int start1, start2, blockSize1, blockSize2;
+
+        lockFreeFifo ->prepareToWrite(
+            1, start1, blockSize1,
+            start2, blockSize2);
+
+        auto start_data_ptr = data.getRawDataPointer() + start1;
+        *start_data_ptr =  writeData;
+
+        lockFreeFifo->finishedWrite(1);
+    }
+
+    HVPpq<time_steps_, num_voices_> pop()
+    {
+        int start1, start2, blockSize1, blockSize2;
+
+        lockFreeFifo ->prepareToRead(
+            1, start1, blockSize1,
+            start2, blockSize2);
+
+        auto start_data_ptr = data.getRawDataPointer() + start1;
+        auto res =  *(start_data_ptr);
+        lockFreeFifo->finishedRead(1);
+        return res;
+    }
+
+    HVPpq<time_steps_, num_voices_>  getLatestOnly()
+    {
+        DBG("HERE IN HVOQUE getLatestOnly()");
+        int start1, start2, blockSize1, blockSize2;
+
+        lockFreeFifo->prepareToRead(
+            getNumReady(), start1, blockSize1, start2, blockSize2);
+
+        DBG("Got locations");
+
+        if (blockSize2 > 0)
+        {
+            auto start_data_ptr = data.getRawDataPointer() + start2;
+            auto readData = *(start_data_ptr + blockSize2 - 1);
+            lockFreeFifo->finishedRead(blockSize1 + blockSize2);
+            DBG("read using blockSize2");
+
+            return readData;
+        }
+        if (blockSize1 > 0)
+        {
+            auto start_data_ptr = data.getRawDataPointer() + start1;
+            auto readData = *(start_data_ptr + blockSize1 - 1);
+            lockFreeFifo->finishedRead(blockSize1 + blockSize2);
+            DBG("read using blockSize1");
+            return readData;
+        }
+    }
+
+    int getNumReady()
+    {
+        return lockFreeFifo -> getNumReady();
+    }
+};
