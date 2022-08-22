@@ -9,29 +9,27 @@ using namespace std;
 
 MidiFXProcessor::MidiFXProcessor(){
 
-
-    processorGuiFIFOS = make_unique<GuiIOFifos>();
-
-    withinMidiFXProcessorFIFOs = make_unique<WithinMidiFXProcessorFifos>();
+    // GuiIOFifos
+    GrooveThread2GGroovePianoRollWidgetQues = make_unique<GuiIOFifos::GrooveThread2GGroovePianoRollWidgetQues>();
+    GroovePianoRollWidget2GrooveThreadQues = make_unique<GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues>();
+    ModelThreadToDrumPianoRollWidgetQues = make_unique<GuiIOFifos::ModelThreadToDrumPianoRollWidgetQues>();
+    DrumPianoRollWidgetToModelThreadQues = make_unique<GuiIOFifos::DrumPianoRollWidgetToModelThreadQues>();
+    // IntraProcessorFifos
+    ProcessBlockToGrooveThreadQues = make_unique<IntraProcessorFifos::ProcessBlockToGrooveThreadQues>();
+    GrooveThreadToModelThreadQues = make_unique<IntraProcessorFifos::GrooveThreadToModelThreadQues>();
+    ModelThreadToProcessBlockQues = make_unique<IntraProcessorFifos::ModelThreadToProcessBlockQues>();
 
     // give access to resources and run threads
-    modelThread.startThreadUsingProvidedResources(
-        withinMidiFXProcessorFIFOs->groove_fromGrooveThreadToModelThread_que.get(),
-        processorGuiFIFOS->perVoiceSamplingThresh_fromGui_que.get(),
-        withinMidiFXProcessorFIFOs->GeneratedData_fromModelThreadToProcessBlock_que.get()/*,
-        processorGuiFIFOS->text_toGui_que.get()*/);
+    modelThread.startThreadUsingProvidedResources(GrooveThreadToModelThreadQues.get(),
+                                                  ModelThreadToProcessBlockQues.get(),
+                                                  ModelThreadToDrumPianoRollWidgetQues.get(),
+                                                  DrumPianoRollWidgetToModelThreadQues.get());
 
-    grooveThread.startThreadUsingProvidedResources(
-        withinMidiFXProcessorFIFOs->note_fromProcessBlockToGrooveThread_que.get(),
-        withinMidiFXProcessorFIFOs->groove_fromGrooveThreadToModelThread_que.get(),
-        processorGuiFIFOS->velocityOffset_fromGui_que.get(),
-        processorGuiFIFOS->groove_toGui_que.get()/*,
-        processorGuiFIFOS->text_toGui_que.get()*/);
+    grooveThread.startThreadUsingProvidedResources(ProcessBlockToGrooveThreadQues.get(),
+                                                   GrooveThreadToModelThreadQues.get(),
+                                                   GrooveThread2GGroovePianoRollWidgetQues.get(),
+                                                   GroovePianoRollWidget2GrooveThreadQues.get());
 
-   /* basicNoteStructLoggerTextEditor = make_shared<BasicNoteStructLoggerTextEditor>(note_toGui_que.get());
-    textMessageLoggerTextEditor = make_shared<TextMessageLoggerTextEditor>( "General", text_toGui_que.get());
-    textMessageLoggerTextEditor_mainprocessBlockOnly = make_shared<TextMessageLoggerTextEditor>("ProcessBlockOnly", text_toGui_que_mainprocessBlockOnly.get());
-*/
 }
 
 MidiFXProcessor::~MidiFXProcessor(){
@@ -61,13 +59,11 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
     // STEP 2
     // check if new pattern is generated and available for playback
-    if (withinMidiFXProcessorFIFOs->GeneratedData_fromModelThreadToProcessBlock_que
-        != nullptr)
+    if (ModelThreadToProcessBlockQues != nullptr)
     {
-        if (withinMidiFXProcessorFIFOs->GeneratedData_fromModelThreadToProcessBlock_que
-                ->getNumReady() > 0)
+        if (ModelThreadToProcessBlockQues->new_generations.getNumReady() > 0)
         {
-            latestGeneratedData = withinMidiFXProcessorFIFOs->GeneratedData_fromModelThreadToProcessBlock_que->getLatestOnly();
+            latestGeneratedData = ModelThreadToProcessBlockQues->new_generations.getLatestOnly();
         }
     }
 
@@ -102,8 +98,8 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     if (not midiMessages.isEmpty() /*and groove_thread_ready*/)
     {
         // send BasicNotes to the GrooveThread and also gui logger for notes
-        place_BasicNote_in_queue<GeneralSettings::gui_io_queue_size>(midiMessages, Pinfo, processorGuiFIFOS->note_toGui_que.get(), fs);
-        place_BasicNote_in_queue<GeneralSettings::processor_io_queue_size>(midiMessages, Pinfo, withinMidiFXProcessorFIFOs->note_fromProcessBlockToGrooveThread_que.get(), fs);
+        place_BasicNote_in_queue<GeneralSettings::processor_io_queue_size>(midiMessages, Pinfo, ProcessBlockToGrooveThreadQues.get(), fs);
+        // place_BasicNote_in_queue<GeneralSettings::gui_io_queue_size>(midiMessages, Pinfo, ProcessBlockToGrooveThreadQue, fs);
     }
 
     midiMessages.swapWith(tempBuffer);

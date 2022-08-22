@@ -8,9 +8,10 @@
 
 ModelThread::ModelThread(): juce::Thread("Model_Thread")
 {
-    groove_fromGrooveThreadtoModelThread_que = nullptr;
-    perVoiceSamplingThresh_fromGui_que = nullptr;
-    GeneratedData_fromModelThreadtoProcessBlock_que = nullptr;
+    GrooveThreadToModelThreadQues = nullptr;
+    ModelThreadToProcessBlockQues = nullptr;
+    ModelThreadToDrumPianoRollWidgetQues = nullptr;
+    DrumPianoRollWidgetToModelThreadQues = nullptr;
 
     readyToStop = false;
 }
@@ -23,25 +24,19 @@ ModelThread::~ModelThread()
     {
         prepareToStop();
     }
+
 }
 
 
-void ModelThread::startThreadUsingProvidedResources(
-    MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>*
-        groove_fromGrooveThreadtoModelThread_quePntr,
-    LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>*
-        perVoiceSamplingThresh_fromGui_quePntr,
-    GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>*
-        GeneratedData_fromModelThreadtoProcessBlock_quePntr,
-    StringLockFreeQueue<GeneralSettings::gui_io_queue_size>*
-        text_toGui_que_for_debuggingPntr
-    )
+void ModelThread::startThreadUsingProvidedResources(IntraProcessorFifos::GrooveThreadToModelThreadQues* GrooveThreadToModelThreadQuesPntr,
+                                                    IntraProcessorFifos::ModelThreadToProcessBlockQues* ModelThreadToProcessBlockQuesPntr,
+                                                    GuiIOFifos::ModelThreadToDrumPianoRollWidgetQues* ModelThreadToDrumPianoRollWidgetQuesPntr,
+                                                    GuiIOFifos::DrumPianoRollWidgetToModelThreadQues* DrumPianoRollWidgetToModelThreadQuesPntr)
 {
-    // get access to resources
-    groove_fromGrooveThreadtoModelThread_que = groove_fromGrooveThreadtoModelThread_quePntr;
-    perVoiceSamplingThresh_fromGui_que = perVoiceSamplingThresh_fromGui_quePntr;
-    GeneratedData_fromModelThreadtoProcessBlock_que = GeneratedData_fromModelThreadtoProcessBlock_quePntr;
-    text_toGui_que_for_debugging = text_toGui_que_for_debuggingPntr;
+    GrooveThreadToModelThreadQues = GrooveThreadToModelThreadQuesPntr;
+    ModelThreadToProcessBlockQues = ModelThreadToProcessBlockQuesPntr;
+    ModelThreadToDrumPianoRollWidgetQues = ModelThreadToDrumPianoRollWidgetQuesPntr;
+    DrumPianoRollWidgetToModelThreadQues = DrumPianoRollWidgetToModelThreadQuesPntr;
 
     // load model
     modelAPI = MonotonicGrooveTransformerV1();
@@ -51,16 +46,18 @@ void ModelThread::startThreadUsingProvidedResources(
     // check if model loaded successfully
     if (isLoaded)
     {
-        showMessageinEditor(text_toGui_que_for_debugging,
-                            modelAPI.model_path, "Model Loaded From", true);
+        DBG ("Model Loaded From " + modelAPI.model_path);
+        /*showMessageinEditor(text_toGui_que_for_debugging,
+                            modelAPI.model_path, "Model Loaded From", true);*/
     }
     else
     {
-        showMessageinEditor(text_toGui_que_for_debugging,
-                            modelAPI.model_path, "Failed to Load Model From", true);
+        DBG ("Failed to Load Model From " + modelAPI.model_path);
+        /*showMessageinEditor(text_toGui_que_for_debugging,
+                            modelAPI.model_path, "", true);*/
     }
 
-    // start thread
+
     startThread();
 }
 
@@ -91,28 +88,29 @@ void ModelThread::run()
         shouldResample = false;
         newGrooveAvailable = false;
 
-        if (perVoiceSamplingThresh_fromGui_que != nullptr)
+        if (DrumPianoRollWidgetToModelThreadQues != nullptr)
         {
-            if (perVoiceSamplingThresh_fromGui_que->getNumReady() > 0
-                   and not this->threadShouldExit()){
+            if (DrumPianoRollWidgetToModelThreadQues->new_sampling_thresholds.getNumReady() > 0
+                and not this->threadShouldExit()){
 
-                perVoiceSamplingThresholds = perVoiceSamplingThresh_fromGui_que->getLatestOnly();
+                perVoiceSamplingThresholds = DrumPianoRollWidgetToModelThreadQues->new_sampling_thresholds.getLatestOnly();
 
 
                 std::vector<float> thresh_vec(std::begin(perVoiceSamplingThresholds),
-                                             std::end(perVoiceSamplingThresholds));
+                                              std::end(perVoiceSamplingThresholds));
                 modelAPI.set_sampling_thresholds(thresh_vec);
                 shouldResample = true;
             }
         }
 
-        if (groove_fromGrooveThreadtoModelThread_que != nullptr)
+        
+        if (GrooveThreadToModelThreadQues != nullptr)
         {
-            if (groove_fromGrooveThreadtoModelThread_que->getNumReady() > 0
+            if (GrooveThreadToModelThreadQues->new_grooves.getNumReady() > 0
                    and not this->threadShouldExit())
             {
                 // read latest groove
-                scaled_groove = groove_fromGrooveThreadtoModelThread_que->getLatestOnly();
+                scaled_groove = GrooveThreadToModelThreadQues->new_grooves.getLatestOnly();
 
                 // set flag to re-run model
                 newGrooveAvailable = true;
@@ -136,11 +134,13 @@ void ModelThread::run()
                 // pass scaled version mapped to closed hats to input
                 // !!!! dont't forget to use the scaled tensor (with modified vel/offsets)
                 bool useGrooveWithModifiedVelOffset = true;
-                int mapGrooveToVoiceNumber = 2;     // closed hihat
-                modelAPI.forward_pass(scaled_groove.getFullVersionTensor(
-                    useGrooveWithModifiedVelOffset,
-                    mapGrooveToVoiceNumber,
-                    HVO_params::num_voices));
+                int mapGrooveToVoiceNumber = 2;     // put groove in the closed hihat voice
+
+                auto groove_tensor = scaled_groove.getFullVersionTensor(useGrooveWithModifiedVelOffset,
+                                                                        mapGrooveToVoiceNumber,
+                                                                        HVO_params::num_voices);
+                DBG("Groove Size fed to model " << groove_tensor.sizes()[0] << ", " << groove_tensor.sizes()[1] );
+                modelAPI.forward_pass(groove_tensor);
                 shouldResample = true;
             }
 
@@ -156,7 +156,7 @@ void ModelThread::run()
 
             // TODO can comment block --- for debugging only
             {
-                bool showHits = true;
+                /*bool showHits = true;
                 bool showVels = false;
                 bool showOffs = false;
                 bool needScaled = true;
@@ -164,7 +164,7 @@ void ModelThread::run()
                                     generated_hvo.getStringDescription(
                                         showHits, showVels, showOffs, needScaled),
                                     "Generated HVO",
-                                    true);
+                                    true);*/
             }
 
             // send generation to midiMessageFormatterThread
@@ -172,11 +172,11 @@ void ModelThread::run()
                 DBG("Generation " << i << " onset ppq = " << generated_hvo.getModifiedGeneratedData().onset_ppqs[i] << " | pitch = " << generated_hvo.getModifiedGeneratedData().onset_pitches[i]  << " | vel = " <<generated_hvo.getModifiedGeneratedData().onset_velocities[i]);
             */
 
-            if (GeneratedData_fromModelThreadtoProcessBlock_que)
+            if (ModelThreadToProcessBlockQues != nullptr)
             {
                 auto temp = generated_hvo.getModifiedGeneratedData();
 
-                GeneratedData_fromModelThreadtoProcessBlock_que->push(
+                ModelThreadToProcessBlockQues->new_generations.push(
                     generated_hvo.getModifiedGeneratedData());
             }
         }

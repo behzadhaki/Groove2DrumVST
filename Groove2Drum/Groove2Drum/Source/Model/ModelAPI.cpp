@@ -30,6 +30,7 @@ MonotonicGrooveTransformerV1::MonotonicGrooveTransformerV1(){
 
 bool MonotonicGrooveTransformerV1::loadModel(std::string model_path_, int time_steps_, int num_voices_)
 {
+
     model_path = model_path_;
     time_steps = time_steps_;
     num_voices = num_voices_;

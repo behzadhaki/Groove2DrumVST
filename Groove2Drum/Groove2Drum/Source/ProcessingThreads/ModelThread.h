@@ -7,7 +7,7 @@
 
 #include <shared_plugin_helpers/shared_plugin_helpers.h>
 #include "../Includes/CustomStructs.h"
-#include "../Includes/LockFreeQueueTemplate.h"
+#include "../InterThreadFifos.h"
 #include "../settings.h"
 #include "../Model/ModelAPI.h"
 
@@ -24,29 +24,13 @@ public:
     // run this in destructor destructing object
     void prepareToStop();
 
-
-    /*** give access to resources needed to communicate with other threads
-     * @param groove_fromGrooveThreadtoModelThread_quePntr
-     *              (MonotonicGrooveQueue<HVO_params::time_steps,processor_io_queue_size>)
-     * @param perVoiceSamplingThresh_fromGui_quePntr
-     *              (LockFreeQueue<std::array<float, HVO_params::num_voices>,
-     *              GeneralSettings::gui_io_queue_size>)
-     * @param HVO_toProcessforPlayback_quePntr
-     *              (HVOQueue<HVO_params::time_steps, HVO_params::num_voices,
-     *              GeneralSettings::processor_io_queue_size>)
-     * @param text_toGui_que_for_debuggingPntr
-     *              (StringLockFreeQueue<GeneralSettings::gui_io_queue_size>)
-     */
     void startThreadUsingProvidedResources(
-        MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>*
-            groove_fromGrooveThreadtoModelThread_quePntr,
-        LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>*
-            perVoiceSamplingThresh_fromGui_quePntr,
-        GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>*
-            GeneratedData_fromModelThreadtoProcessBlock_quePntr,
-        StringLockFreeQueue<GeneralSettings::gui_io_queue_size>*
-            text_toGui_que_for_debuggingPntr = nullptr
-        );
+        IntraProcessorFifos::GrooveThreadToModelThreadQues* GrooveThreadToModelThreadQuesPntr,
+        IntraProcessorFifos::ModelThreadToProcessBlockQues* ModelThreadToProcessBlockQuesPntr,
+        GuiIOFifos::ModelThreadToDrumPianoRollWidgetQues* ModelThreadToDrumPianoRollWidgetQuesPntr,
+        GuiIOFifos::DrumPianoRollWidgetToModelThreadQues* DrumPianoRollWidgetToModelThreadQuesPntr);
+
+
 
     // don't call this from the parent thread
     // instead, use startThread from which
@@ -60,23 +44,13 @@ public:
 
 private:
 
-    // the queue for receiving notes from the GrooveThread
-    MonotonicGrooveQueue<HVO_params::time_steps,
-                         GeneralSettings::processor_io_queue_size>* groove_fromGrooveThreadtoModelThread_que{};
+    // Intra Processor Queues
+    IntraProcessorFifos::GrooveThreadToModelThreadQues* GrooveThreadToModelThreadQues;
+    IntraProcessorFifos::ModelThreadToProcessBlockQues* ModelThreadToProcessBlockQues;
 
-    // queue for receiving the ranges used to map/scale/compress velocity/offset values
-    LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>*
-        perVoiceSamplingThresh_fromGui_que;
-
-    // queue for sending out the generated pattern (in HVO format) to other threads
-    GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>*
-        GeneratedData_fromModelThreadtoProcessBlock_que;
-
-    //---- Debugger -------------------------------------
-    StringLockFreeQueue<GeneralSettings::gui_io_queue_size>*
-        text_toGui_que_for_debugging{};
-    //----------------------------------------------------------------------
-
+    // Inter GUI Processor Queues
+    GuiIOFifos::ModelThreadToDrumPianoRollWidgetQues* ModelThreadToDrumPianoRollWidgetQues;
+    GuiIOFifos::DrumPianoRollWidgetToModelThreadQues* DrumPianoRollWidgetToModelThreadQues;
 
     // Model API for running the *.pt model
     MonotonicGrooveTransformerV1 modelAPI;

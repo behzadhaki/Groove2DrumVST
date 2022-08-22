@@ -84,7 +84,7 @@ template<int que_size>
 inline void place_BasicNote_in_queue(
     juce::MidiBuffer& midiMessages,
     juce::Optional<juce::AudioPlayHead::PositionInfo > pinfo,
-    LockFreeQueue<BasicNote, que_size>* note_que,
+    IntraProcessorFifos::ProcessBlockToGrooveThreadQues* ProcessBlockToGrooveThreadQues,
     double sample_rate)
 {
     double frameStartPpq;
@@ -120,13 +120,12 @@ inline void place_BasicNote_in_queue(
                 note.capturedInPlaying = isPlaying;
                 note.capturedInLoop = isLooping;
                 note.captureWithBpm = captureWithBpm;
-                note_que->WriteTo(&note, 1);
+                ProcessBlockToGrooveThreadQues->new_notes.WriteTo(&note, 1);
             }
         }
 
     }
 }
-
 
 
 inline string stream2string(std::ostringstream msg_stream)

@@ -7,7 +7,7 @@
 
 #include <shared_plugin_helpers/shared_plugin_helpers.h>
 #include "../Includes/CustomStructs.h"
-#include "../Includes/LockFreeQueueTemplate.h"
+#include "../InterThreadFifos.h"
 #include "../settings.h"
 
 class GrooveThread:public juce::Thread
@@ -21,13 +21,10 @@ public:
     ~GrooveThread() override;
 
     // give access to resources needed to communicate with other threads
-    void startThreadUsingProvidedResources(
-        LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>* note_fromProcessBlockToGrooveThread_quePntr,
-        MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>* groove_fromGrooveThreadtoModelThread_quePntr,
-        LockFreeQueue<array<float, 4>, GeneralSettings::gui_io_queue_size>* veloff_fromGui_quePntr,
-        MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>* groove_toGui_quePntr,
-        StringLockFreeQueue<GeneralSettings::gui_io_queue_size>* text_toGui_que_for_debuggingPntr = nullptr
-    );
+    void startThreadUsingProvidedResources(IntraProcessorFifos::ProcessBlockToGrooveThreadQues* ProcessBlockToGrooveThreadQuesPntr,
+                                           IntraProcessorFifos::GrooveThreadToModelThreadQues* GrooveThreadToModelThreadQuesPntr,
+                                           GuiIOFifos::GrooveThread2GGroovePianoRollWidgetQues* GrooveThread2GGroovePianoRollWidgetQuesPntr,
+                                           GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQuesPntr);
 
     // run this in destructor destructing object
     void prepareToStop();
@@ -44,20 +41,19 @@ public:
 
 private:
 
-    // ---- Locally Used for calculations ----------------------------------
-    LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>* note_fromProcessBlockToGrooveThread_que{};    // queue for receiving the new BasicNotes
-    MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>*
-        groove_fromGrooveThreadtoModelThread_que{}; // the queue for sending the updated groove to the next thread
-    //----------------------------------------------------------------------
+    IntraProcessorFifos::ProcessBlockToGrooveThreadQues* ProcessBlockToGrooveThreadQues;
+    IntraProcessorFifos::GrooveThreadToModelThreadQues* GrooveThreadToModelThreadQues;
+    GuiIOFifos::GrooveThread2GGroovePianoRollWidgetQues* GrooveThread2GGroovePianoRollWidgetQues;
+    GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQues;
 
     //---- Control Parameters from GUI -------------------------------------
-    LockFreeQueue<array<float, 4>, GeneralSettings::gui_io_queue_size>* veloff_fromGui_que{};
+    // LockFreeQueue<array<float, 4>, GeneralSettings::gui_io_queue_size>* veloff_fromGui_que{};
     array<float, 2> vel_range;
     array<float, 2> offset_range;
 
     // ---- sends data to gui -----------------------------------------------
     // the queue for sending the updated groove to the next thread
-    MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>* groove_toGui_que{};
+    // MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>* groove_toGui_que{};
 
 
     // ;
@@ -76,16 +72,10 @@ private:
     // notes in the groove_overdubbed tensor
     // torch::Tensor onset_ppqs_in_groove;
 
-    // 32 grid line location (in ppq)
-    torch::Tensor gridlines;
 
     // int find_nearest_gridline(float ppq);
     // bool shouldReplace(BasicNote latest_Note);
 
-    //----------------------------------------------------------------------
-
-    //---- Debugger -------------------------------------
-    StringLockFreeQueue<GeneralSettings::gui_io_queue_size>* text_toGui_que_for_debugging{};
     //----------------------------------------------------------------------
 
 };

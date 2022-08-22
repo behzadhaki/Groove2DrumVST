@@ -14,35 +14,29 @@ using namespace torch::indexing;
 GrooveThread::GrooveThread():
     juce::Thread("Groove_Thread")
 {
-    note_fromProcessBlockToGrooveThread_que = nullptr;
-    veloff_fromGui_que = nullptr;
-    groove_fromGrooveThreadtoModelThread_que = nullptr;
-    text_toGui_que_for_debugging = nullptr;
-    groove_toGui_que = nullptr;
+
+    ProcessBlockToGrooveThreadQues = nullptr;
+    GrooveThreadToModelThreadQues = nullptr;
+    GrooveThread2GGroovePianoRollWidgetQues = nullptr;
+    GroovePianoRollWidget2GrooveThreadQues = nullptr;
+
     readyToStop = false;
 
     monotonic_groove = MonotonicGroove<HVO_params::time_steps>();
-
-    gridlines = torch::range(0, 7.9, 0.25);
-
+    
 }
 
-void GrooveThread::startThreadUsingProvidedResources(
-    LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>* note_fromProcessBlockToGrooveThread_quePntr,
-    MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>* groove_fromGrooveThreadtoModelThread_quePntr,
-    LockFreeQueue<array<float, 4>, GeneralSettings::gui_io_queue_size>* veloff_fromGui_quePntr,
-    MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>* groove_toGui_quePntr,
-    StringLockFreeQueue<GeneralSettings::gui_io_queue_size>* text_toGui_que_for_debuggingPntr
-)
+void GrooveThread::startThreadUsingProvidedResources(IntraProcessorFifos::ProcessBlockToGrooveThreadQues* ProcessBlockToGrooveThreadQuesPntr,
+                                                     IntraProcessorFifos::GrooveThreadToModelThreadQues* GrooveThreadToModelThreadQuesPntr,
+                                                     GuiIOFifos::GrooveThread2GGroovePianoRollWidgetQues* GrooveThread2GGroovePianoRollWidgetQuesPntr,
+                                                     GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQuesPntr)
 {
     // get the pointer to queues and control parameters instantiated
     // in the main processor thread
-    note_fromProcessBlockToGrooveThread_que = note_fromProcessBlockToGrooveThread_quePntr;
-    veloff_fromGui_que = veloff_fromGui_quePntr;
-    groove_fromGrooveThreadtoModelThread_que = groove_fromGrooveThreadtoModelThread_quePntr;
-    groove_toGui_que = groove_toGui_quePntr;
-    text_toGui_que_for_debugging = text_toGui_que_for_debuggingPntr;
-
+    ProcessBlockToGrooveThreadQues = ProcessBlockToGrooveThreadQuesPntr;
+    GrooveThreadToModelThreadQues = GrooveThreadToModelThreadQuesPntr;
+    GrooveThread2GGroovePianoRollWidgetQues = GrooveThread2GGroovePianoRollWidgetQuesPntr;
+    GroovePianoRollWidget2GrooveThreadQues = GroovePianoRollWidget2GrooveThreadQuesPntr;
     startThread();
 
 }
@@ -53,6 +47,7 @@ GrooveThread::~GrooveThread()
     {
         prepareToStop();
     }
+
 }
 
 void GrooveThread::run()
@@ -73,17 +68,18 @@ void GrooveThread::run()
         // only need to recalc if new info received in queues
         isNewGrooveAvailable = false;
 
+        
         // see if new BasicNotes received from main processblock
-        if (note_fromProcessBlockToGrooveThread_que != nullptr)
+        if (ProcessBlockToGrooveThreadQues != nullptr)
         {
             BasicNote read_note;
 
-            while (note_fromProcessBlockToGrooveThread_que->getNumReady() > 0 and not this->threadShouldExit())
+            while (ProcessBlockToGrooveThreadQues->new_notes.getNumReady() > 0 and not this->threadShouldExit())
             {
                 // DBG ("NOTE RECEIVED IN GROOVE THREAD");
 
                 // Step 1. get new note
-                note_fromProcessBlockToGrooveThread_que->ReadFrom(&read_note, 1); // here cnt result is 3
+                ProcessBlockToGrooveThreadQues->new_notes.ReadFrom(&read_note, 1); // here cnt result is 3
 
                 // groove should only be updated in playback mode
                 //if (read_note.capturedInPlaying) // todo uncomment
@@ -105,17 +101,17 @@ void GrooveThread::run()
                 monotonic_groove.hvo.compressAll();
             }
         }
-
+        
         // see if new control params received from the gui
-        if (veloff_fromGui_que != nullptr)
+        if (GroovePianoRollWidget2GrooveThreadQues != nullptr)
         {
             array<float, 4> newVelOffsetrange {};
 
-            while (veloff_fromGui_que->getNumReady() > 0
+            while (GroovePianoRollWidget2GrooveThreadQues->newVelOffRanges.getNumReady() > 0
                    and not this->threadShouldExit())
             {
                 // Step 1. get new vel/offset ranges received
-                veloff_fromGui_que->ReadFrom(&newVelOffsetrange, 1);
+                GroovePianoRollWidget2GrooveThreadQues->newVelOffRanges.ReadFrom(&newVelOffsetrange, 1);
 
                 // update local range values
                 vel_range = {newVelOffsetrange[0], newVelOffsetrange[1]};
@@ -129,20 +125,17 @@ void GrooveThread::run()
             }
         }
 
+
         // Send groove to other threads if new one available
         if (isNewGrooveAvailable)
         {
-
             // DBG(" NEW GROOVE AVAILABLE");
-            if (groove_fromGrooveThreadtoModelThread_que != nullptr)
+            if (GrooveThreadToModelThreadQues != nullptr)
             {
-                groove_fromGrooveThreadtoModelThread_que->push(monotonic_groove);
-            }
+                GrooveThreadToModelThreadQues->new_grooves.push(monotonic_groove);
 
-            // send groove to be displayed on the interface
-            if (groove_toGui_que != nullptr)
-            {
-                groove_toGui_que->push(monotonic_groove);
+                // send groove to be displayed on the interface
+                GrooveThreadToModelThreadQues->new_grooves.push(monotonic_groove);
             }
 
         }

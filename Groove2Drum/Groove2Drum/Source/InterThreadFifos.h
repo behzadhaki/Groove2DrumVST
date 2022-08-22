@@ -7,88 +7,93 @@
 #include "Includes/LockFreeQueueTemplate.h"
 #include "Includes/CustomStructs.h"
 
-
-/**
- *  Lock-free Queues  for communicating data between main threads in the Processor
- */
-struct WithinMidiFXProcessorFifos
+// Lock-free Queues  for communicating data between main threads in the Processor
+namespace IntraProcessorFifos
 {
     // ========= processBlock() To GrooveThread =============================================
     // sends a received note from input to GrooveThread to update the input groove
-    unique_ptr<LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>>
-        note_fromProcessBlockToGrooveThread_que;
+    struct ProcessBlockToGrooveThreadQues
+    {
+        LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size> new_notes {};
+    };
+    // =================================================================================
+
+
 
     // ========= GrooveThread To Model Thread   =============================================
-    unique_ptr<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>>
-        groove_fromGrooveThreadToModelThread_que;
+    struct GrooveThreadToModelThreadQues
+    {
+        MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>
+            new_grooves {};
+    };
+
+
 
     // ========= Model Thread  To ProcessBlock =============================================
-    unique_ptr<GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>>
-        GeneratedData_fromModelThreadToProcessBlock_que;
-
-
-    // =============================================
-    // ======  Constructor                   =======
-    // =============================================
-    WithinMidiFXProcessorFifos()
+    struct ModelThreadToProcessBlockQues
     {
-        note_fromProcessBlockToGrooveThread_que = make_unique<LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>> ();
+        GeneratedDataQueue<HVO_params::time_steps,
+                           HVO_params::num_voices,
+                           GeneralSettings::processor_io_queue_size>
+            new_generations {};
+    };
+}
 
-        groove_fromGrooveThreadToModelThread_que = make_unique<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>>();
-
-        GeneratedData_fromModelThreadToProcessBlock_que = make_unique<GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>>();
-    }
-
-};
 
 
 /**
  *  Lock-free Queues  for communicating data back and forth between
  *  the Processor threads and the GUI widgets
  */
-struct GuiIOFifos
+namespace GuiIOFifos
 {
+
+    // todo -> modelThread to gui ques for notifying if model loaded and also loading other models from a file browser
+
     // ========= Processor To TextEditor =============================================
-    // used to communicate with BasicNote logger (i.e. display received notes in a textEditor)
-    unique_ptr<LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>> note_toGui_que;
-    // Used for showing text messages on a text editor (only use in a single thread!!)
-    unique_ptr<StringLockFreeQueue<GeneralSettings::gui_io_queue_size>>
-        text_toGui_que_MainProcessBlockOnly; // used for debugging only!
+    struct ProcessorToTextEditorQues
+    {
+        // used to communicate with BasicNote logger (i.e. display received notes in a textEditor)
+        LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size> notes {};
+        // Used for showing text messages on a text editor (only use in a single thread!!)
+        StringLockFreeQueue<GeneralSettings::gui_io_queue_size> texts {}; // used for debugging only!
+    };
+    // =================================================================================
+
 
 
     // =========      PianoRoll_InteractiveMonotonicGroove FIFOs  ===================
+
     // used for sending velocities and offset compression values from MonotonicGroove XYSlider
     // to GrooveThread in processor
-    unique_ptr<LockFreeQueue<array<float, 4>, GeneralSettings::gui_io_queue_size>>
-        velocityOffset_fromGui_que;                 // todo To integrate in code
+    struct GrooveThread2GGroovePianoRollWidgetQues
+    {
+        // used for sending the scaled groove to  MonotonicGroove Widget to display
+        MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size> new_grooves {};       // todo To integrate in code
+    };
 
-    // used for sending the scaled groove to  MonotonicGroove Widget to display
-    unique_ptr<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>> groove_toGui_que;       // todo To integrate in code
+    struct GroovePianoRollWidget2GrooveThreadQues
+    {
+        LockFreeQueue<array<float, 4>, GeneralSettings::gui_io_queue_size> newVelOffRanges {};                 // todo To integrate in code
+        // used for sending a manually drawn note in the MonotonicGroove Widget to GrooveThread
+        LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size> manually_drawn_notes {};          // todo To integrate in code
+    };
+    // =================================================================================
 
-    // used for sending a manually drawn note in the MonotonicGroove Widget to GrooveThread
-    unique_ptr<LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>> note_drawn_manually_fromGui_que;          // todo To integrate in code
 
 
     // =========         Generated Drums PianoRoll            ========================
     // used for receiving the latest perVoiceSamplingThresholds and maximum notes allowed from Generated Drums XYSliders
-    unique_ptr<LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>>  perVoiceSamplingThresh_fromGui_que;        // todo To integrate in code
-    unique_ptr<LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>>  perVoiceMaxVoicesAllowed_fromGui_que;      // todo To integrate in code
-
-
-    // =============================================
-    // ======  Constructor                   =======
-    // =============================================
-    GuiIOFifos()
+    struct ModelThreadToDrumPianoRollWidgetQues
     {
-        note_toGui_que = make_unique<LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>>();
-        text_toGui_que_MainProcessBlockOnly = make_unique<StringLockFreeQueue<GeneralSettings::gui_io_queue_size>>();
+        GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size> new_generated_data {};        // todo To integrate in code
+    };
 
-        velocityOffset_fromGui_que = make_unique<LockFreeQueue<array<float, 4>, GeneralSettings::gui_io_queue_size>>();
-        groove_toGui_que = make_unique<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>>();
-        note_drawn_manually_fromGui_que = make_unique<LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>>();
+    struct DrumPianoRollWidgetToModelThreadQues
+    {
+        LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size> new_sampling_thresholds {};        // todo To integrate in code
+        LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>  new_max_number_voices {};      // todo To integrate in code
+    };
+    // =================================================================================
 
-        perVoiceSamplingThresh_fromGui_que = make_unique<LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>>();
-        perVoiceMaxVoicesAllowed_fromGui_que = make_unique<LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>>();
-    }
-
-};
+}
