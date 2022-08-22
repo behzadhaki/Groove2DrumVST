@@ -8,7 +8,7 @@
 #include "ProcessingThreads/GrooveThread.h"
 #include "ProcessingThreads/ModelThread.h"
 
-#include "gui/CustomGuiTextEditors.h"
+// #include "gui/CustomGuiTextEditors.h"
 
 using namespace std;
 
@@ -35,6 +35,9 @@ public:
     // modelThread i.o queues w/ DrumPianoRoll Widget
     unique_ptr<GuiIOFifos::ModelThreadToDrumPianoRollWidgetQues> ModelThreadToDrumPianoRollWidgetQues;
     unique_ptr<GuiIOFifos::DrumPianoRollWidgetToModelThreadQues> DrumPianoRollWidgetToModelThreadQues;
+
+    // GUI THREADS HOSTED IN PROCESSOR
+
 
 private:
     // Queues for communicating Between the main threads in processor

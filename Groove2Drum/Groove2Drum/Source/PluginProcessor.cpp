@@ -9,6 +9,9 @@ using namespace std;
 
 MidiFXProcessor::MidiFXProcessor(){
 
+    //////////////////////////////////////////////////////////////////
+    //// Make_unique pointers for Queues
+    //////////////////////////////////////////////////////////////////
     // GuiIOFifos
     GrooveThread2GGroovePianoRollWidgetQues = make_unique<GuiIOFifos::GrooveThread2GGroovePianoRollWidgetQues>();
     GroovePianoRollWidget2GrooveThreadQues = make_unique<GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues>();
@@ -16,8 +19,18 @@ MidiFXProcessor::MidiFXProcessor(){
     DrumPianoRollWidgetToModelThreadQues = make_unique<GuiIOFifos::DrumPianoRollWidgetToModelThreadQues>();
     // IntraProcessorFifos
     ProcessBlockToGrooveThreadQues = make_unique<IntraProcessorFifos::ProcessBlockToGrooveThreadQues>();
+
+    //////////////////////////////////////////////////////////////////
+    //// Make_unique pointers for Threads
+    //////////////////////////////////////////////////////////////////
+    // Intra Processor Threads
     GrooveThreadToModelThreadQues = make_unique<IntraProcessorFifos::GrooveThreadToModelThreadQues>();
     ModelThreadToProcessBlockQues = make_unique<IntraProcessorFifos::ModelThreadToProcessBlockQues>();
+    // Gui Threads
+
+    /////////////////////////////////
+    //// Start Threads
+    /////////////////////////////////
 
     // give access to resources and run threads
     modelThread.startThreadUsingProvidedResources(GrooveThreadToModelThreadQues.get(),
@@ -29,7 +42,6 @@ MidiFXProcessor::MidiFXProcessor(){
                                                    GrooveThreadToModelThreadQues.get(),
                                                    GrooveThread2GGroovePianoRollWidgetQues.get(),
                                                    GroovePianoRollWidget2GrooveThreadQues.get());
-
 }
 
 MidiFXProcessor::~MidiFXProcessor(){
@@ -42,6 +54,7 @@ MidiFXProcessor::~MidiFXProcessor(){
     {
         grooveThread.prepareToStop();
     }
+
 }
 
 void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
