@@ -53,14 +53,14 @@ public:
 class BasicNoteStructLoggerTextEditor: public LoggerTextEditorTemplate
 {
 public:
-    BasicNoteStructLoggerTextEditor(LockFreeQueue<BasicNote, settings::gui_io_queue_size>* note_quePntr);
+    BasicNoteStructLoggerTextEditor(LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>* note_quePntr);
 
     ~BasicNoteStructLoggerTextEditor() override;
 
     void QueueDataProcessor() override;
 
 private:
-    LockFreeQueue<BasicNote, settings::gui_io_queue_size>* note_queP;
+    LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>* note_queP;
 
     int numNotesPrintedOnLine;
 
@@ -74,12 +74,12 @@ private:
 class TextMessageLoggerTextEditor: public LoggerTextEditorTemplate
 {
 public:
-    TextMessageLoggerTextEditor(string const label, StringLockFreeQueue<settings::gui_io_queue_size>* text_message_quePntr);
+    TextMessageLoggerTextEditor(string const label, StringLockFreeQueue<GeneralSettings::gui_io_queue_size>* text_message_quePntr);
     ~TextMessageLoggerTextEditor() override;
     void QueueDataProcessor() override;
 
 private:
-    StringLockFreeQueue<settings::gui_io_queue_size>* text_message_queue;
+    StringLockFreeQueue<GeneralSettings::gui_io_queue_size>* text_message_queue;
 
 };
 

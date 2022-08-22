@@ -21,18 +21,18 @@ GrooveThread::GrooveThread():
     groove_toGui_que = nullptr;
     readyToStop = false;
 
-    monotonic_groove = MonotonicGroove<time_steps>();
+    monotonic_groove = MonotonicGroove<HVO_params::time_steps>();
 
     gridlines = torch::range(0, 7.9, 0.25);
 
 }
 
 void GrooveThread::startThreadUsingProvidedResources(
-    LockFreeQueue<BasicNote, settings::processor_io_queue_size>* note_fromProcessBlockToGrooveThread_quePntr,
-    MonotonicGrooveQueue<settings::time_steps,processor_io_queue_size>* groove_fromGrooveThreadtoModelThread_quePntr,
-    LockFreeQueue<array<float, 4>, gui_io_queue_size>* veloff_fromGui_quePntr,
-    MonotonicGrooveQueue<settings::time_steps, gui_io_queue_size>* groove_toGui_quePntr,
-    StringLockFreeQueue<settings::gui_io_queue_size>* text_toGui_que_for_debuggingPntr
+    LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>* note_fromProcessBlockToGrooveThread_quePntr,
+    MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>* groove_fromGrooveThreadtoModelThread_quePntr,
+    LockFreeQueue<array<float, 4>, GeneralSettings::gui_io_queue_size>* veloff_fromGui_quePntr,
+    MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>* groove_toGui_quePntr,
+    StringLockFreeQueue<GeneralSettings::gui_io_queue_size>* text_toGui_que_for_debuggingPntr
 )
 {
     // get the pointer to queues and control parameters instantiated

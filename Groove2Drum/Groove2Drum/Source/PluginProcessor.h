@@ -36,7 +36,7 @@ private:
     unique_ptr<WithinMidiFXProcessorFifos> withinMidiFXProcessorFIFOs;
 
     // holds the latest generations to loop over
-    GeneratedData<settings::time_steps, settings::num_voices> latestGeneratedData;
+    GeneratedData<HVO_params::time_steps, HVO_params::num_voices> latestGeneratedData;
 
     // groove thread
     GrooveThread grooveThread;

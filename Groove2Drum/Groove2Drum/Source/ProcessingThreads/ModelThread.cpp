@@ -27,13 +27,13 @@ ModelThread::~ModelThread()
 
 
 void ModelThread::startThreadUsingProvidedResources(
-    MonotonicGrooveQueue<settings::time_steps,processor_io_queue_size>*
+    MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>*
         groove_fromGrooveThreadtoModelThread_quePntr,
-    LockFreeQueue<std::array<float, settings::num_voices>, settings::gui_io_queue_size>*
+    LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>*
         perVoiceSamplingThresh_fromGui_quePntr,
-    GeneratedDataQueue<settings::time_steps, settings::num_voices, settings::processor_io_queue_size>*
+    GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>*
         GeneratedData_fromModelThreadtoProcessBlock_quePntr,
-    StringLockFreeQueue<settings::gui_io_queue_size>*
+    StringLockFreeQueue<GeneralSettings::gui_io_queue_size>*
         text_toGui_que_for_debuggingPntr
     )
 {
@@ -46,7 +46,7 @@ void ModelThread::startThreadUsingProvidedResources(
     // load model
     modelAPI = MonotonicGrooveTransformerV1();
     bool isLoaded = modelAPI.loadModel(
-        settings::default_model_path, settings::time_steps, settings::num_voices);
+        GeneralSettings::default_model_path, HVO_params::time_steps, HVO_params::num_voices);
 
     // check if model loaded successfully
     if (isLoaded)
@@ -75,24 +75,21 @@ void ModelThread::run()
     bool newGrooveAvailable;
 
     // generated_hvo to be sent to next thread
-    HVO<settings::time_steps, settings::num_voices > generated_hvo;
+    HVO<HVO_params::time_steps, HVO_params::num_voices > generated_hvo;
 
     // placeholder for reading the latest groove received in queue
-    MonotonicGroove<settings::time_steps> scaled_groove;
+    MonotonicGroove<HVO_params::time_steps> scaled_groove;
 
     // local array to keep track of !!NEW!! sampling thresholds
     // although empty here, remember model is initialized using
     // default_sampling_thresholds in ../settings.h
-    array<float, settings::num_voices> perVoiceSamplingThresholds = {};
+    array<float, HVO_params::num_voices> perVoiceSamplingThresholds = {};
 
     while (!bExit)
     {
         // reset flags
         shouldResample = false;
         newGrooveAvailable = false;
-
-        bExit = threadShouldExit();
-
 
         if (perVoiceSamplingThresh_fromGui_que != nullptr)
         {
@@ -117,8 +114,6 @@ void ModelThread::run()
                 // read latest groove
                 scaled_groove = groove_fromGrooveThreadtoModelThread_que->getLatestOnly();
 
-                DBG("HERE NOW");
-
                 // set flag to re-run model
                 newGrooveAvailable = true;
 
@@ -138,15 +133,14 @@ void ModelThread::run()
 
            if (newGrooveAvailable)
             {
-                DBG("HERE NOW 2");
                 // pass scaled version mapped to closed hats to input
                 // !!!! dont't forget to use the scaled tensor (with modified vel/offsets)
                 bool useGrooveWithModifiedVelOffset = true;
                 int mapGrooveToVoiceNumber = 2;     // closed hihat
                 modelAPI.forward_pass(scaled_groove.getFullVersionTensor(
                     useGrooveWithModifiedVelOffset,
-                    mapGrooveToVoiceNumber));
-                DBG("HERE NOW 3");
+                    mapGrooveToVoiceNumber,
+                    HVO_params::num_voices));
                 shouldResample = true;
             }
 
@@ -155,13 +149,10 @@ void ModelThread::run()
         // should resample output if, input new groove received
         if (shouldResample)
         {
-            DBG("HERE NOW 4");
 
             auto [hits, velocities, offsets] = modelAPI.sample("Threshold");
-            generated_hvo = HVO<settings::time_steps, settings::num_voices>(
+            generated_hvo = HVO<HVO_params::time_steps, HVO_params::num_voices>(
                 hits, velocities, offsets);
-
-            DBG("HERE NOW 5");
 
             // TODO can comment block --- for debugging only
             {
@@ -176,8 +167,6 @@ void ModelThread::run()
                                     true);
             }
 
-            DBG("HERE NOW 6");
-
             // send generation to midiMessageFormatterThread
             /*for (int i = 0; i < generated_hvo.getModifiedGeneratedData().onset_ppqs.size(); i++)
                 DBG("Generation " << i << " onset ppq = " << generated_hvo.getModifiedGeneratedData().onset_ppqs[i] << " | pitch = " << generated_hvo.getModifiedGeneratedData().onset_pitches[i]  << " | vel = " <<generated_hvo.getModifiedGeneratedData().onset_velocities[i]);
@@ -186,29 +175,23 @@ void ModelThread::run()
             if (GeneratedData_fromModelThreadtoProcessBlock_que)
             {
                 auto temp = generated_hvo.getModifiedGeneratedData();
-                DBG("HERE NOW 8");
 
                 GeneratedData_fromModelThreadtoProcessBlock_que->push(
                     generated_hvo.getModifiedGeneratedData());
             }
-            else
-                DBG("GeneratedData_fromModelThreadtoProcessBlock_que is Null!!");
-
-            DBG("HERE NOW 7");
-
         }
 
         bExit = threadShouldExit();
 
         // avoid burning CPU, if reading is returning immediately
-        sleep (thread_settings::GrooveThread::waitTimeBtnIters);
+        sleep (thread_settings::ModelThread::waitTimeBtnIters);
     }
 }
 
 void ModelThread::prepareToStop()
 {
     //Need to wait enough so as to ensure the run() method is over before killing thread
-    this->stopThread(thread_settings::GrooveThread::waitTimeBtnIters*2);
+    this->stopThread(thread_settings::ModelThread::waitTimeBtnIters*2);
     readyToStop = true;
 }
 

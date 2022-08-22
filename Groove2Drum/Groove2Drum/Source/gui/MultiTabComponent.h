@@ -98,7 +98,8 @@ public:
 
         monotonicGroovePianoRoll = make_unique<PianoRoll_InteractiveMonotonicGroove>(true, time_steps_, step_resolution_ppq,4, 4, "TEST INTERACTIVE GROOVE");
         monotonicGrooveWidget = make_unique<MonotonicGrooveWidget>( time_steps_, step_resolution_ppq,4, 4);
-        DrumsPianoRoll = make_unique<PianoRoll_GeneratedDrums_AllVoices>(time_steps_, step_resolution_ppq, 4, 4, nine_voice_kit_labels, nine_voice_kit);
+        DrumsPianoRoll = make_unique<PianoRoll_GeneratedDrums_AllVoices>(time_steps_, step_resolution_ppq, 4, 4, nine_voice_kit_labels,
+            nine_voice_kit_default_midi_numbers);
 
         const auto tabColour = getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId).darker (0.1f);
 

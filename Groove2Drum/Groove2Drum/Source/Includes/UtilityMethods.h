@@ -24,7 +24,8 @@ template<int que_size>
 inline void place_BasicNote_in_queue(
     juce::MidiBuffer& midiMessages,
     juce::AudioPlayHead* playheadP,
-    LockFreeQueue<BasicNote, que_size>* note_que)
+    LockFreeQueue<BasicNote, que_size>* note_que,
+    double sample_rate)
 {
     double frameStartPpq;
     double qpm;
@@ -53,10 +54,12 @@ inline void place_BasicNote_in_queue(
                 if (message.isNoteOn())
                 {
                     BasicNote note(message.getNoteNumber(),
-                              message.getFloatVelocity(),
-                              frameStartPpq,
-                              message.getTimeStamp(),
-                              qpm);
+                                   message.getFloatVelocity(),
+                                   frameStartPpq,
+                                   message.getTimeStamp(),
+                                   qpm,
+                                   sample_rate);
+
                     note.capturedInPlaying = isPlaying;
                     note.capturedInLoop = isLooping;
                     note.captureWithBpm = captureWithBpm;
@@ -81,7 +84,8 @@ template<int que_size>
 inline void place_BasicNote_in_queue(
     juce::MidiBuffer& midiMessages,
     juce::Optional<juce::AudioPlayHead::PositionInfo > pinfo,
-    LockFreeQueue<BasicNote, que_size>* note_que)
+    LockFreeQueue<BasicNote, que_size>* note_que,
+    double sample_rate)
 {
     double frameStartPpq;
     double qpm;
@@ -110,7 +114,9 @@ inline void place_BasicNote_in_queue(
                                message.getFloatVelocity(),
                                frameStartPpq,
                                message.getTimeStamp(),
-                               qpm);
+                               qpm,
+                               sample_rate);
+
                 note.capturedInPlaying = isPlaying;
                 note.capturedInLoop = isLooping;
                 note.captureWithBpm = captureWithBpm;
@@ -131,13 +137,13 @@ inline string stream2string(std::ostringstream msg_stream)
 /**
  * Sends a string along with header to a logger thread using the specified queue
  *
- * @param text_message_queue (StringLockFreeQueue<settings::text_message_queue_size>*):
+ * @param text_message_queue (StringLockFreeQueue<GeneralSettings::text_message_queue_size>*):
  *                          queue for communicating with message receiver thread
  * @param message (string): main message to display
  * @param header  (string): message to be printed as a header before showing message
  * @param clearFirst (bool): if true, empties receiving gui thread before display
  */
-inline void showMessageinEditor(StringLockFreeQueue<settings::gui_io_queue_size>* text_message_queue,
+inline void showMessageinEditor(StringLockFreeQueue<GeneralSettings::gui_io_queue_size>* text_message_queue,
                                 string message, string header, bool clearFirst)
 {
     if (text_message_queue!=nullptr)

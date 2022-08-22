@@ -22,11 +22,11 @@ public:
 
     // give access to resources needed to communicate with other threads
     void startThreadUsingProvidedResources(
-        LockFreeQueue<BasicNote, settings::processor_io_queue_size>* note_fromProcessBlockToGrooveThread_quePntr,
-        MonotonicGrooveQueue<settings::time_steps,processor_io_queue_size>* groove_fromGrooveThreadtoModelThread_quePntr,
-        LockFreeQueue<array<float, 4>, gui_io_queue_size>* veloff_fromGui_quePntr,
-        MonotonicGrooveQueue<settings::time_steps, gui_io_queue_size>* groove_toGui_quePntr,
-        StringLockFreeQueue<settings::gui_io_queue_size>* text_toGui_que_for_debuggingPntr = nullptr
+        LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>* note_fromProcessBlockToGrooveThread_quePntr,
+        MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>* groove_fromGrooveThreadtoModelThread_quePntr,
+        LockFreeQueue<array<float, 4>, GeneralSettings::gui_io_queue_size>* veloff_fromGui_quePntr,
+        MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>* groove_toGui_quePntr,
+        StringLockFreeQueue<GeneralSettings::gui_io_queue_size>* text_toGui_que_for_debuggingPntr = nullptr
     );
 
     // run this in destructor destructing object
@@ -45,19 +45,19 @@ public:
 private:
 
     // ---- Locally Used for calculations ----------------------------------
-    LockFreeQueue<BasicNote, settings::processor_io_queue_size>* note_fromProcessBlockToGrooveThread_que{};    // queue for receiving the new BasicNotes
-    MonotonicGrooveQueue<settings::time_steps,
-                         processor_io_queue_size>* groove_fromGrooveThreadtoModelThread_que{}; // the queue for sending the updated groove to the next thread
+    LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>* note_fromProcessBlockToGrooveThread_que{};    // queue for receiving the new BasicNotes
+    MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>*
+        groove_fromGrooveThreadtoModelThread_que{}; // the queue for sending the updated groove to the next thread
     //----------------------------------------------------------------------
 
     //---- Control Parameters from GUI -------------------------------------
-    LockFreeQueue<array<float, 4>, gui_io_queue_size>* veloff_fromGui_que{};
+    LockFreeQueue<array<float, 4>, GeneralSettings::gui_io_queue_size>* veloff_fromGui_que{};
     array<float, 2> vel_range;
     array<float, 2> offset_range;
 
     // ---- sends data to gui -----------------------------------------------
     // the queue for sending the updated groove to the next thread
-    MonotonicGrooveQueue<settings::time_steps, gui_io_queue_size>* groove_toGui_que{};
+    MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>* groove_toGui_que{};
 
 
     // ;
@@ -67,7 +67,7 @@ private:
 
     // an internal HVO instance of size {time_steps, 1 voice)
     // for tracking the unscaled groove
-    MonotonicGroove<settings::time_steps> monotonic_groove;
+    MonotonicGroove<HVO_params::time_steps> monotonic_groove;
 
     // torch::Tensor unscaled_groove_overdubbed;
 
@@ -85,7 +85,7 @@ private:
     //----------------------------------------------------------------------
 
     //---- Debugger -------------------------------------
-    StringLockFreeQueue<settings::gui_io_queue_size>* text_toGui_que_for_debugging{};
+    StringLockFreeQueue<GeneralSettings::gui_io_queue_size>* text_toGui_que_for_debugging{};
     //----------------------------------------------------------------------
 
 };

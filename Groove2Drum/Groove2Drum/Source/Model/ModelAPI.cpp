@@ -52,7 +52,7 @@ bool MonotonicGrooveTransformerV1::loadModel(std::string model_path_, int time_s
         hits = torch::zeros({time_steps_, num_voices_});
         velocities = torch::zeros({time_steps_, num_voices_});
         offsets = torch::zeros({time_steps_, num_voices_});
-        per_voice_sampling_thresholds = vector2tensor(default_sampling_thresholds);
+        per_voice_sampling_thresholds = vector2tensor(nine_voice_kit_default_sampling_thresholds);
         return true;
     }
 

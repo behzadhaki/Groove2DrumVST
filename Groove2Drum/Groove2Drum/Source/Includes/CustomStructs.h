@@ -10,11 +10,8 @@
 
 #include <utility>
 
+
 using namespace std;
-using namespace settings;
-
-
-
 
 
 /**the onset of midi message has two attributes: (1) the ppq of the beginning of the frame
@@ -39,9 +36,9 @@ struct onset_time{
 
     // constructor for received timing of midi messages
     // Automatically calculates absolute timing of event in terms of ppq
-    onset_time(double frameStartPpq, double audioSamplePos, double qpm):ppq()
+    onset_time(double frameStartPpq, double audioSamplePos, double qpm, double sample_rate):ppq()
     {
-        ppq = calculate_absolute_ppq(frameStartPpq, audioSamplePos, qpm); // calculate ppq
+        ppq = calculate_absolute_ppq(frameStartPpq, audioSamplePos, qpm, sample_rate); // calculate ppq
     }
 
     //constructor for calculating ppq using grid_line index and offset
@@ -55,15 +52,15 @@ struct onset_time{
     }
 
     // used usually for finding absolute timing of messages received in processor MIDIBuffer
-    double calculate_absolute_ppq(double frameStartPpq, double audioSamplePos, double qpm)
+    double calculate_absolute_ppq(double frameStartPpq, double audioSamplePos, double qpm, double sample_rate)
     {
-        auto tmp_ppq = frameStartPpq + audioSamplePos * qpm / (60 * settings::sample_rate);
+        auto tmp_ppq = frameStartPpq + audioSamplePos * qpm / (60 * sample_rate);
         return tmp_ppq;
     }
 
     // used usually for preparing for playback through the processor MIDI buffer
-    juce::int64 calculate_num_samples_from_frame_ppq(double frameStartPpq, double qpm){
-        auto tmp_audioSamplePos = (ppq - frameStartPpq) * 60.0 * settings::sample_rate / qpm;
+    juce::int64 calculate_num_samples_from_frame_ppq(double frameStartPpq, double qpm, double sample_rate){
+        auto tmp_audioSamplePos = (ppq - frameStartPpq) * 60.0 * sample_rate / qpm;
         return juce::int64(tmp_audioSamplePos);
     }
 
@@ -105,13 +102,13 @@ struct BasicNote{
     BasicNote() = default;
 
     // constructor for placing notes received in the processor from the MIDIBuffer
-    BasicNote(int note_number, float velocity_Value, double frameStartPpq, double audioSamplePos, double qpm):
-        note(note_number), velocity(velocity_Value), time(frameStartPpq, audioSamplePos, qpm){
+    BasicNote(int note_number, float velocity_Value, double frameStartPpq, double audioSamplePos, double qpm, double sample_rate):
+        note(note_number), velocity(velocity_Value), time(frameStartPpq, audioSamplePos, qpm, sample_rate){
     }
 
     // constructor for placing notes generated
     BasicNote(int voice_index, float velocity_Value, int grid_line, double offset,
-         std::vector<int> voice_to_midi_map = nine_voice_kit):
+         std::vector<int> voice_to_midi_map = nine_voice_kit_default_midi_numbers):
         note(voice_to_midi_map[(unsigned long)voice_index]),
         velocity(velocity_Value), time(grid_line, offset) {}
 
@@ -165,7 +162,7 @@ template <int time_steps_, int num_voices_> struct GeneratedData{
         }
 
         // initialize probabilities
-        probabilities = torch::zeros({time_steps_, num_voices});
+        probabilities = torch::zeros({time_steps_, num_voices_});
     }
 
     void addNote(BasicNote note_)
@@ -293,7 +290,7 @@ template <int time_steps_, int num_voices_> struct HVO
         offsets_modified = offsets_unmodified * hits;
     }
 
-    vector<BasicNote> getUnmodifiedNotes(std::vector<int> voice_to_midi_map = nine_voice_kit)
+    vector<BasicNote> getUnmodifiedNotes(std::vector<int> voice_to_midi_map = nine_voice_kit_default_midi_numbers)
     {
 
         // get hit locations
@@ -320,7 +317,7 @@ template <int time_steps_, int num_voices_> struct HVO
         return Notes;
     }
 
-    vector<BasicNote> getModifiedNotes(std::vector<int> voice_to_midi_map = nine_voice_kit)
+    vector<BasicNote> getModifiedNotes(std::vector<int> voice_to_midi_map = nine_voice_kit_default_midi_numbers)
     {
 
         // get hit locations
@@ -347,7 +344,7 @@ template <int time_steps_, int num_voices_> struct HVO
         return Notes;
     }
 
-    GeneratedData<time_steps_, num_voices_> getUnmodifiedGeneratedData(std::vector<int> voice_to_midi_map = nine_voice_kit)
+    GeneratedData<time_steps_, num_voices_> getUnmodifiedGeneratedData(std::vector<int> voice_to_midi_map = nine_voice_kit_default_midi_numbers)
     {
         GeneratedData<time_steps_, num_voices_> generatedData;
 
@@ -360,7 +357,7 @@ template <int time_steps_, int num_voices_> struct HVO
         return generatedData;
     }
 
-    GeneratedData<time_steps_, num_voices_> getModifiedGeneratedData(std::vector<int> voice_to_midi_map = nine_voice_kit)
+    GeneratedData<time_steps_, num_voices_> getModifiedGeneratedData(std::vector<int> voice_to_midi_map = nine_voice_kit_default_midi_numbers)
     {
         GeneratedData<time_steps_, num_voices_> generatedData;
 
@@ -519,13 +516,14 @@ template <int time_steps_> struct MonotonicGroove
 {
     torch::Tensor registeration_times;
 
+    int time_steps;
 
     HVO<time_steps_, 1> hvo;    // holds the groove as is without modification
 
     MonotonicGroove()
     {
         registeration_times = torch::zeros({time_steps_, 1}, torch::kFloat32);
-
+        time_steps = time_steps_;
     }
 
     void resetGroove()
@@ -558,7 +556,7 @@ template <int time_steps_> struct MonotonicGroove
             if ((ppq - prev_registration_time_at_grid) > HVO_params::_32_note_ppq)
             {   // 2.b. add note if received not in the vicinity of previous note registered at the same position
                 if (note_.velocity != (hvo.velocities_unmodified[grid_index] * hvo.hits[grid_index]).template item<float>() and
-                    fmod((ppq - prev_registration_time_at_grid), (settings::time_steps/4))!=0)
+                    fmod((ppq - prev_registration_time_at_grid), (time_steps/4))!=0)
                 shouldAddNote = true;
             }
             else
@@ -593,21 +591,16 @@ template <int time_steps_> struct MonotonicGroove
         return hvo.getStringDescription(showHits, showVels, showOffsets, needScaled);
     }
 
-    torch::Tensor getFullVersionTensor(bool needScaled, int VoiceToPlace)
+    torch::Tensor getFullVersionTensor(bool needScaled, int VoiceToPlace, int num_voices)
     {
         auto singleVoiceTensor= hvo.getConcatenatedVersion(needScaled);
-        auto FullVoiceTensor = torch::zeros({settings::time_steps, settings::num_voices * 3});
-        for (int i=0; i<settings::time_steps; i++)
+        auto FullVoiceTensor = torch::zeros({time_steps, num_voices * 3});
+        for (int i=0; i<time_steps; i++)
         {
             FullVoiceTensor[i][VoiceToPlace] = singleVoiceTensor[i][0]; // hit
-            FullVoiceTensor[i][VoiceToPlace+settings::num_voices] = singleVoiceTensor[i][1]; //vel
-            FullVoiceTensor[i][VoiceToPlace+2*settings::num_voices] = singleVoiceTensor[i][2]; //offset
+            FullVoiceTensor[i][VoiceToPlace+num_voices] = singleVoiceTensor[i][1]; //vel
+            FullVoiceTensor[i][VoiceToPlace+2*num_voices] = singleVoiceTensor[i][2]; //offset
         }
         return FullVoiceTensor;
     }
-
-
-
-
-
 };

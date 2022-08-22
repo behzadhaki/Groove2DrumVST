@@ -27,24 +27,24 @@ public:
 
     /*** give access to resources needed to communicate with other threads
      * @param groove_fromGrooveThreadtoModelThread_quePntr
-     *              (MonotonicGrooveQueue<settings::time_steps,processor_io_queue_size>)
+     *              (MonotonicGrooveQueue<HVO_params::time_steps,processor_io_queue_size>)
      * @param perVoiceSamplingThresh_fromGui_quePntr
-     *              (LockFreeQueue<std::array<float, settings::num_voices>,
-     *              settings::gui_io_queue_size>)
+     *              (LockFreeQueue<std::array<float, HVO_params::num_voices>,
+     *              GeneralSettings::gui_io_queue_size>)
      * @param HVO_toProcessforPlayback_quePntr
-     *              (HVOQueue<settings::time_steps, settings::num_voices,
-     *              settings::processor_io_queue_size>)
+     *              (HVOQueue<HVO_params::time_steps, HVO_params::num_voices,
+     *              GeneralSettings::processor_io_queue_size>)
      * @param text_toGui_que_for_debuggingPntr
-     *              (StringLockFreeQueue<settings::gui_io_queue_size>)
+     *              (StringLockFreeQueue<GeneralSettings::gui_io_queue_size>)
      */
     void startThreadUsingProvidedResources(
-        MonotonicGrooveQueue<settings::time_steps,processor_io_queue_size>*
+        MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>*
             groove_fromGrooveThreadtoModelThread_quePntr,
-        LockFreeQueue<std::array<float, settings::num_voices>, settings::gui_io_queue_size>*
+        LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>*
             perVoiceSamplingThresh_fromGui_quePntr,
-        GeneratedDataQueue<settings::time_steps, settings::num_voices, settings::processor_io_queue_size>*
+        GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>*
             GeneratedData_fromModelThreadtoProcessBlock_quePntr,
-        StringLockFreeQueue<settings::gui_io_queue_size>*
+        StringLockFreeQueue<GeneralSettings::gui_io_queue_size>*
             text_toGui_que_for_debuggingPntr = nullptr
         );
 
@@ -61,19 +61,19 @@ public:
 private:
 
     // the queue for receiving notes from the GrooveThread
-    MonotonicGrooveQueue<settings::time_steps,
-                         processor_io_queue_size>* groove_fromGrooveThreadtoModelThread_que{};
+    MonotonicGrooveQueue<HVO_params::time_steps,
+                         GeneralSettings::processor_io_queue_size>* groove_fromGrooveThreadtoModelThread_que{};
 
     // queue for receiving the ranges used to map/scale/compress velocity/offset values
-    LockFreeQueue<std::array<float, settings::num_voices>, settings::gui_io_queue_size>*
+    LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>*
         perVoiceSamplingThresh_fromGui_que;
 
     // queue for sending out the generated pattern (in HVO format) to other threads
-    GeneratedDataQueue<settings::time_steps, settings::num_voices, settings::processor_io_queue_size>*
+    GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>*
         GeneratedData_fromModelThreadtoProcessBlock_que;
 
     //---- Debugger -------------------------------------
-    StringLockFreeQueue<settings::gui_io_queue_size>*
+    StringLockFreeQueue<GeneralSettings::gui_io_queue_size>*
         text_toGui_que_for_debugging{};
     //----------------------------------------------------------------------
 

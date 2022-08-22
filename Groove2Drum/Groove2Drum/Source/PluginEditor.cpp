@@ -15,7 +15,7 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
 
     // Create TextEditor for Text Messages
     // todo move the definition to processor!! to keep state
-    multiTabComponent = make_unique<MultiTabComponent>(MidiFXProcessorPointer/*, 800, 400*/, settings::time_steps, HVO_params::_16_note_ppq,settings::num_voices);
+    multiTabComponent = make_unique<MultiTabComponent>(MidiFXProcessorPointer/*, 800, 400*/, HVO_params::time_steps, HVO_params::_16_note_ppq,HVO_params::num_voices);
     addAndMakeVisible (multiTabComponent.get());
 
     // todo remove following tests

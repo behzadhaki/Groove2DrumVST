@@ -52,10 +52,15 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     tempBuffer.clear();
 
     // STEP 1
-    // get Playhead info and Add note and onset to note_toGui_que using BasicNote structure
+    // get Playhead info and buffer size and sample rate from host
     auto playhead = getPlayHead();
     auto Pinfo = playhead->getPosition();
+    auto fs = getSampleRate();
+    auto buffSize = buffer.getNumSamples();
 
+
+    // STEP 2
+    // check if new pattern is generated and available for playback
     if (withinMidiFXProcessorFIFOs->GeneratedData_fromModelThreadToProcessBlock_que
         != nullptr)
     {
@@ -66,15 +71,13 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         }
     }
 
-
-if (Pinfo->getIsPlaying())
-
+    // Step 3
+    // In playback mode, add drum note to the buffer if the time is right
+    if (Pinfo->getIsPlaying())
     {
         auto startPpq = *Pinfo->getPpqPosition();
         auto qpm = *Pinfo->getBpm();
-        auto start_ = fmod(startPpq, settings::time_steps/4); // start_ should be always between 0 and 8
-        auto fs = getSampleRate();
-        auto buffSize = buffer.getNumSamples();
+        auto start_ = fmod(startPpq, HVO_params::time_steps/4); // start_ should be always between 0 and 8
 
         //juce::MidiMessage msg = juce::MidiMessage::noteOn((int)1, (int)36, (float)100.0);
         if (latestGeneratedData.numberOfGenerations() > 0)
@@ -91,7 +94,6 @@ if (Pinfo->getIsPlaying())
                     // send note off
                     tempBuffer.addEvent(juce::MidiMessage::noteOff((int) 1, (int) latestGeneratedData.midiMessages[idx].getNoteNumber(), (float) 0), (int) samples_from_start_);
                 }
-
             }
         }
     }
@@ -100,15 +102,14 @@ if (Pinfo->getIsPlaying())
     if (not midiMessages.isEmpty() /*and groove_thread_ready*/)
     {
         // send BasicNotes to the GrooveThread and also gui logger for notes
-        place_BasicNote_in_queue<settings::gui_io_queue_size>(midiMessages, Pinfo, processorGuiFIFOS->note_toGui_que.get());
-        place_BasicNote_in_queue<settings::processor_io_queue_size>(midiMessages, Pinfo, withinMidiFXProcessorFIFOs->note_fromProcessBlockToGrooveThread_que.get());
+        place_BasicNote_in_queue<GeneralSettings::gui_io_queue_size>(midiMessages, Pinfo, processorGuiFIFOS->note_toGui_que.get(), fs);
+        place_BasicNote_in_queue<GeneralSettings::processor_io_queue_size>(midiMessages, Pinfo, withinMidiFXProcessorFIFOs->note_fromProcessBlockToGrooveThread_que.get(), fs);
     }
 
     midiMessages.swapWith(tempBuffer);
 
 
     buffer.clear(); //
-
 }
 
 juce::AudioProcessorEditor* MidiFXProcessor::createEditor()

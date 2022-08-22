@@ -39,7 +39,7 @@ void LoggerTextEditorTemplate::run()
 
 
 BasicNoteStructLoggerTextEditor::BasicNoteStructLoggerTextEditor(
-    LockFreeQueue<BasicNote, settings::gui_io_queue_size>* note_quePntr): LoggerTextEditorTemplate()
+    LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>* note_quePntr): LoggerTextEditorTemplate()
 {
     note_queP = note_quePntr;
 
@@ -99,7 +99,7 @@ void BasicNoteStructLoggerTextEditor::QueueDataProcessor()
 }
 
 TextMessageLoggerTextEditor::TextMessageLoggerTextEditor(
-    string const label, StringLockFreeQueue<settings::gui_io_queue_size>* text_message_quePntr):LoggerTextEditorTemplate()
+    string const label, StringLockFreeQueue<GeneralSettings::gui_io_queue_size>* text_message_quePntr):LoggerTextEditorTemplate()
 {
     text_message_queue = text_message_quePntr;
 

@@ -35,7 +35,7 @@ public:
         // Draw up piano roll
         /*auto w_per_block = (int) size_width/num_gridlines;*/
 
-        for (unsigned long i=0; i<time_steps; i++)
+        for (unsigned long i=0; i<HVO_params::time_steps; i++)
         {
             if (fmod(i, n_steps_per_beat*n_beats_per_bar) == 0)      // bar position
             {
