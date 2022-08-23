@@ -1,7 +1,8 @@
 #pragma once
 
 #include "PluginProcessor.h"
-#include "gui/MultiTabComponent.h"
+#include "gui/PianoRoll_GeneratedDrums.h"
+#include "gui/PianoRoll_InteractiveMonotonicGroove.h"
 
 using namespace std;
 
@@ -13,6 +14,8 @@ public:
     void resized() override;
 
 private:
-    unique_ptr<MultiTabComponent> multiTabComponent;
+    // gui widgets
+    unique_ptr<PianoRoll_GeneratedDrums_AllVoices> DrumsPianoRollWidget;
+    unique_ptr<MonotonicGrooveWidget> MonotonicGroovePianoRollsWidget;
 };
 

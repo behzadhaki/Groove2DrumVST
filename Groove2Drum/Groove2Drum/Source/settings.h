@@ -47,6 +47,9 @@ namespace HVO_params
     constexpr double _16_note_ppq { 0.25 };         // each 16th note is 1/4th of a quarter
     constexpr double _32_note_ppq { 0.125 };        // each 32nd note is 1/8th of a quarter
     constexpr int _n_16_notes { 32 };               // duration of the HVO tensors is 32 16th notes (2 bars of 4-4)
+    constexpr int num_steps_per_beat { 4 };
+    constexpr int num_beats_per_bar { 4 };
+
     constexpr double _max_offset { 0.5 };           // offsets are defined in range (-0.5, 0.5)
     constexpr double _min_offset { -0.5 };          // offsets are defined in range (-0.5, 0.5)
     constexpr double _max_vel { 1 };                // velocities are defined in range (0, 1)
