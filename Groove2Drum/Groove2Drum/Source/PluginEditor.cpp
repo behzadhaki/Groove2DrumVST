@@ -23,15 +23,23 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     addAndMakeVisible(MonotonicGroovePianoRollsWidget.get());
 
 
-
+    // start message manager thread
+    ProcessorToGuiQueueManagerThread_.startThreadUsingProvidedResources(DrumsPianoRollWidget.get(), MidiFXProcessorPointer.ModelThreadToDrumPianoRollWidgetQues.get());
     // todo for testing only
     // todo to remove later
+
     DrumsPianoRollWidget->addEventWithPPQ(7, 0.0f, 1, .2f, .9f);
     DrumsPianoRollWidget->addEventWithPPQ(4, 3.21f, 1, 0.5f, .4f);
 
         // Set window size
     setResizable (true, true);
     setSize (800, 400);
+}
+
+MidiFXProcessorEditor::~MidiFXProcessorEditor()
+{
+    ProcessorToGuiQueueManagerThread_.signalThreadShouldExit();
+    ProcessorToGuiQueueManagerThread_.stopThread(1000);
 }
 
 void MidiFXProcessorEditor::resized()
