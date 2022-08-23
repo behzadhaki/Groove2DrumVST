@@ -17,6 +17,10 @@
 #define nine_voice_kit_labels std::vector<std::string>({"Kick", "Snare", "Closed Hat", "Open Hat", "Low Tom", "Mid Tom", "Hi Tom", "Crash", "Ride"})
 #define monotonic_trigger std::vector<int> ({20, 21, 22})
 
+#define prob_color_hit juce::Colours::lemonchiffon.withAlpha(0.7f)
+#define prob_color_non_hit juce::Colours::lemonchiffon.withAlpha(0.3f)
+#define hit_color juce::Colours::lemonchiffon.withAlpha(.85f)
+
 // ======================================================================================
 // ==================     General Settings                 ==============================
 // ======================================================================================

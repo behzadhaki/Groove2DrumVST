@@ -30,11 +30,20 @@ public:
         auto w = float(getWidth());
         auto h = float(getHeight());
 
-        auto x_ = max(min((x_ParameterValue - x_min) * w / (x_max - x_min), w), 0.0f);
+        auto x_ = round(max(min((x_ParameterValue - x_min) * w / (x_max - x_min), w), 0.0f));
         auto y_ = max(min((1 - (y_ParameterValue - y_min) / (y_max - y_min)) * h, h), 0.0f);
 
-        g.drawLine(0.0f, y_, x_, y_);
-        g.drawLine(x_, h, x_, y_);
+
+        // g.setColour(juce::Colours::beige);
+        g.setColour(prob_color_hit);
+        juce::Point<float> p1 {0, 0};
+        juce::Point<float> p2 {x_, y_};
+        juce::Rectangle<float> rect {p1, p2};
+        g.fillRect(rect);
+        g.drawRect(rect, 0.2f);
+        g.setColour(juce::Colours::white);
+        g.drawLine(0.0f, y_, x_, y_, 2);
+        g.drawLine(x_, 0, x_, y_, 2);
 
     }
 
@@ -43,7 +52,7 @@ public:
         auto w = float(getWidth());
         auto h = float(getHeight());
 
-        float x_coor = max(min(xyCoordinate.getX(), w), 0.0f);
+        float x_coor = round(max(min(xyCoordinate.getX(), w), 0.0f));
         float y_coor = max(min(xyCoordinate.getY(), h), 0.0f);
 
         x_ParameterValue = x_min + x_coor / w * (x_max - x_min);
@@ -80,7 +89,24 @@ public:
 
     void mouseDoubleClick(const juce::MouseEvent& ev) override
     {
-        moveUsingActualValues(x_default, y_default);
+        // more than 2 clicks goes back to default
+        if (ev.getNumberOfClicks()>2)
+        {
+            moveUsingActualValues(x_default, y_default);
+        }
+        else
+        {
+            // shift with double click sets area to max
+            if (ev.mods.isShiftDown())
+            {
+                moveToCoordinate(juce::Point<float> {(float)getX(), (float)getY()});
+            }
+            else // regular double click sets area to 0 --> no possible hits
+            {
+                moveToCoordinate(juce::Point<float> {0.0f, 0.0f});
+            }
+        }
+
         shareParameter();
     }
 

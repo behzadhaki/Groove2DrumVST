@@ -62,15 +62,17 @@ public:
         if (hit == 1)
         {
             // draw a mustart colored line for the note hit
-            g.setColour(juce::Colour::fromFloatRGBA(1.0f,0.7f,0.0f, 1.0f));
+            g.setColour(hit_color);
 
             auto x_pos = location * w;
             auto y_pos = (float)(1 - velocity) * h;
             juce::Point<float> p1 {x_pos, h};
             juce::Point<float> p2 {x_pos, y_pos};
-            auto thickness = 3.0f;
+            auto thickness = 2.0f;
             g.drawLine ({p1, p2}, thickness);
 
+            juce::Rectangle<float> rect {p2 , juce::Point<float> {x_pos + w * 0.3f, y_pos + w * 0.3f}};
+            g.fillRect(rect);
             g.drawRect(x_pos, y_pos , w * 0.3f, w * 0.3f, thickness );
             // g.drawLine(x_pos, getHeight(),x_pos, y_pos);
         }
@@ -216,7 +218,8 @@ public:
         auto control_rect = juce::Rectangle<float> (juce::Point<float> ((float) proportionOfWidth(from_edge), h), juce::Point<float> ((float)proportionOfWidth(1.0f - from_edge), p));
 
         auto half_P = (float) proportionOfHeight(1.0f - hit_prob/2.0f);
-        g.setColour (juce::Colours::darkkhaki);
+        // g.setColour (juce::Colours::darkkhaki);
+        g.setColour(prob_color_non_hit);
         myPath1.startNewSubPath (0.0f, h);
 
         myPath1.lineTo(juce::Point<float> (w, h));
@@ -229,12 +232,12 @@ public:
             myPath.startNewSubPath (0.0f, h);
 
             auto fillType = juce::FillType();
-            fillType.setColour(juce::Colours::darkkhaki);
+            fillType.setColour(prob_color_non_hit);
 
             if (willGetPlayed)
             {
-                g.setColour(juce::Colours::lightgreen);
-                fillType.setColour(juce::Colours::lightgreen);
+                g.setColour(prob_color_hit);
+                fillType.setColour(prob_color_hit);
             }
 
             myPath.quadraticTo(control_rect.getBottomLeft(), juce::Point<float> ((float)proportionOfWidth(from_edge), half_P));
