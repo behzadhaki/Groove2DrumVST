@@ -38,8 +38,9 @@ void MidiFXProcessorEditor::resized()
 {
     auto area = getLocalBounds();
     setBounds(area);                            // bounds for main Editor GUI
+    area.removeFromRight(proportionOfWidth(0.3f)); // reserve right side for other controls
     DrumsPianoRollWidget->setBounds (area.removeFromTop(area.proportionOfHeight(0.7f))); // piano rolls at top
-    MonotonicGroovePianoRollsWidget->setBounds(area.removeFromBottom(area.proportionOfHeight(0.2f))); // groove at bottom
+    MonotonicGroovePianoRollsWidget->setBounds(area.removeFromBottom(area.proportionOfHeight(0.9f))); // groove at bottom
 }
 
 void MidiFXProcessorEditor::paint(juce::Graphics& g)

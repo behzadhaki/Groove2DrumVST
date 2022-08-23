@@ -76,7 +76,7 @@ public:
         auto label_width = (int) (label_ratio_of_width * w);
         label.setBounds(area.removeFromLeft(label_width));
             
-        auto grid_width = int((1.0f-label_ratio_of_width) * (0.95f*w) / (float) num_gridlines);
+        auto grid_width = area.getWidth() / (num_gridlines+4);
         for (int i = 0; i<num_gridlines; i++)
         {
             interactivePRollBlocks[i]->setBounds (area.removeFromLeft(grid_width));
