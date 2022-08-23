@@ -519,14 +519,14 @@ public:
 
 template <int time_steps_, int num_voices_, int queue_size> class HVPpqQueue
 {
-private:
+public:
     //juce::ScopedPointer<juce::AbstractFifo> lockFreeFifo;   depreciated!!
     std::unique_ptr<juce::AbstractFifo> lockFreeFifo;
     juce::Array<HVPpq<time_steps_, num_voices_>> data{};
 
     int time_steps, num_voices;
 
-public:
+
     HVPpqQueue(){
 
         time_steps = time_steps_;

@@ -11,7 +11,7 @@
 #include "../settings.h"
 #include "../Model/ModelAPI.h"
 
-class ModelThread: public juce::Thread
+class ModelThread: public juce::Thread, public juce::ChangeBroadcaster
 {
 public:
 

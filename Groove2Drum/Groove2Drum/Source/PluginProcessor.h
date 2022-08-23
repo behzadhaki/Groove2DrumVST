@@ -38,8 +38,12 @@ public:
 
     // GUI THREADS HOSTED IN PROCESSOR
 
+    // Threads used for generating patterns in the background
+    GrooveThread grooveThread;
+    ModelThread modelThread;
 
 private:
+
     // Queues for communicating Between the main threads in processor
     unique_ptr<IntraProcessorFifos::ProcessBlockToGrooveThreadQues> ProcessBlockToGrooveThreadQues;
     unique_ptr<IntraProcessorFifos::GrooveThreadToModelThreadQues> GrooveThreadToModelThreadQues;
@@ -48,9 +52,7 @@ private:
     // holds the latest generations to loop over
     GeneratedData<HVO_params::time_steps, HVO_params::num_voices> latestGeneratedData;
 
-    // Threads used for generating patterns in the background
-    GrooveThread grooveThread;
-    ModelThread modelThread;
+
 
     //  midiBuffer to fill up with generated data
     juce::MidiBuffer tempBuffer;

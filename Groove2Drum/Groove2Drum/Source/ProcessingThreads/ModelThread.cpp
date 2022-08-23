@@ -17,14 +17,12 @@ ModelThread::ModelThread(): juce::Thread("Model_Thread")
 }
 
 
-
 ModelThread::~ModelThread()
 {
     if (not readyToStop)
     {
         prepareToStop();
     }
-
 }
 
 
@@ -56,8 +54,6 @@ void ModelThread::startThreadUsingProvidedResources(IntraProcessorFifos::GrooveT
         /*showMessageinEditor(text_toGui_que_for_debugging,
                             modelAPI.model_path, "", true);*/
     }
-
-
     startThread();
 }
 
@@ -141,6 +137,9 @@ void ModelThread::run()
                                                                         HVO_params::num_voices);
                 modelAPI.forward_pass(groove_tensor);
                 shouldResample = true;
+
+                sendChangeMessage();
+
             }
 
         }
@@ -175,6 +174,7 @@ void ModelThread::run()
         // sleep (thread_settings::ModelThread::waitTimeBtnIters);
     }
 }
+
 
 void ModelThread::prepareToStop()
 {

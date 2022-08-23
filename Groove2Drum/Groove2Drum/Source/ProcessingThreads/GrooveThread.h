@@ -10,10 +10,9 @@
 #include "../InterThreadFifos.h"
 #include "../settings.h"
 
-class GrooveThread:public juce::Thread
+class GrooveThread:public juce::Thread, public juce::ChangeBroadcaster
 {
 public:
-
     // constructor
     GrooveThread();
 

@@ -274,4 +274,34 @@ public:
         PianoRoll[voice_number]->addEventWithPPQ(hit_, velocity_, ppq_, probability_);
 
     }
+
+    void updateWithNewScore(HVPpq <HVO_params::time_steps, HVO_params::num_voices> latest_generated_data)
+    {
+        for (int t_= 0; t_ < latest_generated_data.time_steps; t_++)
+        {
+            for (int vn_= 0; vn_ < latest_generated_data.num_voices; vn_++)
+            {
+                DBG(" ADDING STEP "
+                    << t_ << " ,voice " << vn_ << " ppq "
+                    << latest_generated_data.ppqs[t_][vn_].item().toFloat());
+                DBG(" hit "
+                    << latest_generated_data.hits[t_][vn_].item().toInt()
+                    << " ,vel "
+                    << latest_generated_data.velocities[t_][vn_]
+                           .item()
+                           .toFloat()
+                    << " prob "
+                    << latest_generated_data.hit_probabilities[t_][vn_]
+                           .item()
+                           .toFloat());
+
+                addEventWithPPQ(
+                    vn_,
+                    latest_generated_data.ppqs[t_][vn_].item().toFloat(),
+                    latest_generated_data.hits[t_][vn_].item().toInt(),
+                    latest_generated_data.velocities[t_][vn_].item().toFloat(),
+                    latest_generated_data.hit_probabilities[t_][vn_].item().toFloat());
+            }
+        }
+    }
 };

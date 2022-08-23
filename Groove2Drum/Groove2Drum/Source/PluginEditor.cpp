@@ -5,6 +5,8 @@
 MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPointer)
     : AudioProcessorEditor(&MidiFXProcessorPointer)
 {
+    MidiFXProcessorPointer_ = &MidiFXProcessorPointer;
+
     // get settings from HVO_params struct in Settings.h
     auto num_steps = HVO_params::time_steps;
     auto step_ppq_res = HVO_params::_16_note_ppq;
@@ -22,24 +24,24 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     addAndMakeVisible(DrumsPianoRollWidget.get());
     addAndMakeVisible(MonotonicGroovePianoRollsWidget.get());
 
-
     // start message manager thread
-    ProcessorToGuiQueueManagerThread_.startThreadUsingProvidedResources(DrumsPianoRollWidget.get(), MidiFXProcessorPointer.ModelThreadToDrumPianoRollWidgetQues.get());
+    // ProcessorToGuiQueueManagerThread_.startThreadUsingProvidedResources(DrumsPianoRollWidget.get(), MidiFXProcessorPointer.ModelThreadToDrumPianoRollWidgetQues.get());
     // todo for testing only
     // todo to remove later
-
     DrumsPianoRollWidget->addEventWithPPQ(7, 0.0f, 1, .2f, .9f);
     DrumsPianoRollWidget->addEventWithPPQ(4, 3.21f, 1, 0.5f, .4f);
 
-        // Set window size
+    // Set window size
     setResizable (true, true);
     setSize (800, 400);
+
 }
 
 MidiFXProcessorEditor::~MidiFXProcessorEditor()
 {
-    ProcessorToGuiQueueManagerThread_.signalThreadShouldExit();
-    ProcessorToGuiQueueManagerThread_.stopThread(1000);
+    MidiFXProcessorPointer_->modelThread.removeChangeListener(this);
+    /*ProcessorToGuiQueueManagerThread_.signalThreadShouldExit();
+    ProcessorToGuiQueueManagerThread_.stopThread(100);*/
 }
 
 void MidiFXProcessorEditor::resized()
@@ -56,5 +58,22 @@ void MidiFXProcessorEditor::paint(juce::Graphics& g)
     g.fillAll(getLookAndFeel().findColour(
         juce::ResizableWindow::backgroundColourId));
 }
-
-
+void MidiFXProcessorEditor::changeListenerCallback (juce::ChangeBroadcaster* source)
+{
+    if (source == &MidiFXProcessorPointer_->modelThread)
+    {
+        DBG("MODEL GENERATED NEW DATA!");
+        auto ptr_ = MidiFXProcessorPointer_->ModelThreadToDrumPianoRollWidgetQues.get();
+        if (ptr_->new_generated_data.getNumReady()>0)
+        {
+            auto latest_score =
+                ptr_->new_generated_data.getLatestOnly();
+            DrumsPianoRollWidget->updateWithNewScore(latest_score);
+        }
+        //auto_latest_generated_data =
+    }
+    /*if (source == &MidiFXProcessorPointer_->grooveThread)
+    {
+        DBG("NEW GROOVE AVAILABLE");
+    }*/
+}

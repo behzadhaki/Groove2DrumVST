@@ -70,10 +70,11 @@ public:
             juce::Point<float> p2 {x_pos, y_pos};
             auto thickness = 2.0f;
             g.drawLine ({p1, p2}, thickness);
-
+            /*
             juce::Rectangle<float> rect {p2 , juce::Point<float> {x_pos + w * 0.3f, y_pos + w * 0.3f}};
+
             g.fillRect(rect);
-            g.drawRect(x_pos, y_pos , w * 0.3f, w * 0.3f, thickness );
+            g.drawRect(x_pos, y_pos , w * 0.3f, w * 0.3f, thickness );*/
             // g.drawLine(x_pos, getHeight(),x_pos, y_pos);
         }
 

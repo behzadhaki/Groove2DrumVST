@@ -8,7 +8,7 @@
 #include "InterThreadFifos.h"
 #include "gui/PianoRoll_GeneratedDrums.h"
 
-class ProcessorToGuiQueueManagerThread: public juce::Thread
+class ProcessorToGuiQueueManagerThread: public juce::Thread, public juce::ChangeBroadcaster
 {
 public:
     ProcessorToGuiQueueManagerThread():Thread("ProcessorToGuiQueueManagerThread")
@@ -23,6 +23,8 @@ public:
         DrumsPianoRollWidget = DrumsPianoRollWidgetPntr;
         ModelThreadToDrumPianoRollWidgetQues = ModelThreadToDrumPianoRollWidgetQuesPntr;
 
+        setPriority(5);
+
         // start thread
         startThread();
     }
@@ -35,22 +37,37 @@ public:
             if (ModelThreadToDrumPianoRollWidgetQues->new_generated_data.getNumReady() > 0)
             {
                 auto latest_generated_data = ModelThreadToDrumPianoRollWidgetQues->new_generated_data.getLatestOnly();
-                juce::MessageManagerLock mmlock;
+                //
 
                 for (int t_= 0; t_ < latest_generated_data.time_steps; t_++)
                 {
                     for (int vn_= 0; vn_ < latest_generated_data.num_voices; vn_++)
                     {
+                        auto bExit = threadShouldExit();
+                        if (!bExit)
+                        {
+                            juce::MessageManagerLock mmlock;
+                            DBG(" ADDING STEP "
+                                << t_ << " ,voice " << vn_ << " ppq "
+                                << latest_generated_data.ppqs[t_][vn_].item().toFloat());
+                            DBG(" hit "
+                                << latest_generated_data.hits[t_][vn_].item().toInt()
+                                << " ,vel "
+                                << latest_generated_data.velocities[t_][vn_]
+                                       .item()
+                                       .toFloat()
+                                << " prob "
+                                << latest_generated_data.hit_probabilities[t_][vn_]
+                                       .item()
+                                       .toFloat());
 
-                        DBG(" ADDING STEP "<<t_<<" ,voice "<<vn_<< " ppq "<< latest_generated_data.ppqs[t_][vn_].item().toFloat());
-                        DBG(" hit "<<latest_generated_data.hits[t_][vn_].item().toInt()<<" ,vel "<<latest_generated_data.velocities[t_][vn_].item().toFloat()<< " prob "<< latest_generated_data.hit_probabilities[t_][vn_].item().toFloat());
-
-                        DrumsPianoRollWidget->addEventWithPPQ(
-                            vn_,
-                            latest_generated_data.ppqs[t_][vn_].item().toFloat(),
-                            latest_generated_data.hits[t_][vn_].item().toInt(),
-                            latest_generated_data.velocities[t_][vn_].item().toFloat(),
-                            latest_generated_data.hit_probabilities[t_][vn_].item().toFloat());
+                            DrumsPianoRollWidget->addEventWithPPQ(
+                                vn_,
+                                latest_generated_data.ppqs[t_][vn_].item().toFloat(),
+                                latest_generated_data.hits[t_][vn_].item().toInt(),
+                                latest_generated_data.velocities[t_][vn_].item().toFloat(),
+                                latest_generated_data.hit_probabilities[t_][vn_].item().toFloat());
+                        }
                     }
                 }
             }
@@ -64,7 +81,7 @@ public:
         {
             QueueDataProcessor();
             bExit = threadShouldExit();
-            sleep (10); // avoid burning CPU, if reading is returning immediately
+            sleep (50); // avoid burning CPU, if reading is returning immediately
         }
     }
 

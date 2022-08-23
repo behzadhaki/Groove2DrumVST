@@ -123,7 +123,9 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
 juce::AudioProcessorEditor* MidiFXProcessor::createEditor()
 {
-    return new MidiFXProcessorEditor(*this);
+    auto editor = new MidiFXProcessorEditor(*this);
+    modelThread.addChangeListener(editor);
+    return editor;
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
