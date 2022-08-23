@@ -5,7 +5,7 @@
 #pragma once
 
 #include "PianoRoll_InteractiveIndividualBlock.h"
-
+#include "../settings.h"
 
 using namespace std;
 
@@ -85,7 +85,6 @@ public:
         int current_widget_idx = 0;
         for (auto & ListenerWidget : ListenerWidgets)
         {
-            ListenerWidget->probabilityCurveWidgetPntr->setWillPlay(false);      // set to False first, check below if selected
             auto hit_prob_ = ListenerWidget->probabilityCurveWidgetPntr->hit_prob;
             if (hit_prob_ > 0)
 
@@ -99,10 +98,6 @@ public:
 
         auto indices = n_largest_indices(probabilities.begin(), probabilities.end(), min(int(getXValue()), int(probabilities.size())));
 
-        for (auto i: indices)
-        {
-            ListenerWidgets[probs_for_widgets_idx[i]]->probabilityCurveWidgetPntr->setWillPlay(true);
-        }
 
         BroadCastThresholds();
     }
@@ -132,10 +127,6 @@ public:
     juce::Label label;
 
 
-    juce::Colour def_c {juce::Colour::fromFloatRGBA(1.0f,1.0f,1.0f,0.8f)};
-    juce::Colour beat_c { juce::Colour::fromFloatRGBA(.75f,.75f,.75f, 0.5f)};
-    juce::Colour bar_c {  juce::Colour::fromFloatRGBA(.6f,.6f,.6f, 0.5f) };
-
     int num_gridlines;
     float step_ppq;
 
@@ -162,15 +153,15 @@ public:
         {
             if (fmod(i, n_steps_per_beat*n_beats_per_bar) == 0)      // bar position
             {
-                interactivePRollBlocks.push_back(make_shared<PianoRoll_InteractiveIndividualBlockWithProbability>(false, bar_c, i, voice_number_));
+                interactivePRollBlocks.push_back(make_shared<PianoRoll_InteractiveIndividualBlockWithProbability>(false, bar_backg_color, i, voice_number_));
             }
             else if(fmod(i, n_steps_per_beat) == 0)                  // beat position
             {
-                interactivePRollBlocks.push_back(make_shared<PianoRoll_InteractiveIndividualBlockWithProbability>(false, beat_c, i, voice_number_));
+                interactivePRollBlocks.push_back(make_shared<PianoRoll_InteractiveIndividualBlockWithProbability>(false, beat_backg_color, i, voice_number_));
             }
             else                                                    // every other position
             {
-                interactivePRollBlocks.push_back(make_shared<PianoRoll_InteractiveIndividualBlockWithProbability>(false, def_c, i, voice_number_));
+                interactivePRollBlocks.push_back(make_shared<PianoRoll_InteractiveIndividualBlockWithProbability>(false, rest_backg_color, i, voice_number_));
             }
             auto prob_widget_listener = interactivePRollBlocks[i]->probabilityCurveWidgetPntr.get(); // allow slider to update line in the probability widgets
             prob_widget_listener->setSamplingThreshold(MaxCount_Prob_XYPlane->getYValue());         // synchronize thresh line with the defaul in Slider
@@ -184,16 +175,12 @@ public:
 
     }
 
-    // location must be between 0 or 1
-    void addEventToStep(int idx, float location, int hit_, float velocity_, float probability_)
-    {
-        interactivePRollBlocks[idx]->addEvent(hit_, velocity_, location, probability_);
-    }
+
     void addEventWithPPQ(int hit_, float velocity_, float ppq_, float probability_)
     {
         auto idx = (unsigned long) (floor(ppq_/step_ppq));
-        interactivePRollBlocks[idx]->addEventWithPPQ(hit_, velocity_, ppq_, probability_, step_ppq);
-        MaxCount_Prob_XYPlane->BroadCastAllInfo();      // this should be here, otherwise, after adding a note, colors only change according when mouse is clicked
+        DBG("yvalue "<< MaxCount_Prob_XYPlane->getYValue());
+        interactivePRollBlocks[idx]->addEventWithPPQ(hit_, velocity_, ppq_, probability_, step_ppq, MaxCount_Prob_XYPlane->getYValue());
     }
 
     void resized() override {
@@ -233,6 +220,7 @@ public:
     int num_voices;
     float step_ppq_duration;
 
+
     PianoRoll_GeneratedDrums_AllVoices(int num_gridlines_, float step_ppq_duration_, int n_steps_per_beat_, int n_beats_per_bar_, vector<string> DrumVoiceNames_, vector<int> DrumVoiceMidiNumbers_)
     {
         assert (DrumVoiceNames_.size()==DrumVoiceMidiNumbers_.size());
@@ -262,11 +250,6 @@ public:
         }
     }
 
-    void addEventToStep(int voice_number, int grid_index, float location, int hit_, float velocity_, float probability_)
-    {
-        PianoRoll[voice_number]->interactivePRollBlocks[grid_index]->addEvent(hit_, velocity_, location, probability_);
-    }
-
     void addEventWithPPQ(int voice_number, float ppq_, int hit_, float velocity_, float probability_)
     {
         auto idx = (unsigned long) (floor(ppq_/step_ppq_duration));
@@ -277,11 +260,12 @@ public:
 
     void updateWithNewScore(HVPpq <HVO_params::time_steps, HVO_params::num_voices> latest_generated_data)
     {
-        for (int t_= 0; t_ < latest_generated_data.time_steps; t_++)
+
+        for (int vn_= 0; vn_ < latest_generated_data.num_voices; vn_++)
         {
-            for (int vn_= 0; vn_ < latest_generated_data.num_voices; vn_++)
+            for (int t_= 0; t_ < latest_generated_data.time_steps; t_++)
             {
-                DBG(" ADDING STEP "
+                /*DBG(" ADDING STEP "
                     << t_ << " ,voice " << vn_ << " ppq "
                     << latest_generated_data.ppqs[t_][vn_].item().toFloat());
                 DBG(" hit "
@@ -293,7 +277,7 @@ public:
                     << " prob "
                     << latest_generated_data.hit_probabilities[t_][vn_]
                            .item()
-                           .toFloat());
+                           .toFloat());*/
 
                 addEventWithPPQ(
                     vn_,
@@ -302,6 +286,13 @@ public:
                     latest_generated_data.velocities[t_][vn_].item().toFloat(),
                     latest_generated_data.hit_probabilities[t_][vn_].item().toFloat());
             }
+
         }
+
+
+        old_generated_data = latest_generated_data;
     }
+
+private:
+    HVPpq <HVO_params::time_steps, HVO_params::num_voices> old_generated_data{};
 };

@@ -21,6 +21,10 @@
 #define prob_color_non_hit juce::Colours::lemonchiffon.withAlpha(0.3f)
 #define hit_color juce::Colours::lemonchiffon.withAlpha(.85f)
 
+
+#define rest_backg_color juce::Colour::fromFloatRGBA(1.0f,1.0f,1.0f,0.8f)
+#define  beat_backg_color juce::Colour::fromFloatRGBA(.75f,.75f,.75f, 0.5f)
+#define bar_backg_color juce::Colour::fromFloatRGBA(.6f,.6f,.6f, 0.5f)
 // ======================================================================================
 // ==================     General Settings                 ==============================
 // ======================================================================================
@@ -34,7 +38,6 @@ namespace GeneralSettings
     // char constexpr* default_model_path {(char*)"/Users/behzadhaki/Github/Groove2DrumVST/Groove2Drum/Groove2Drum/Source/model/misunderstood_bush_246-epoch_26_tst.pt"};
     // FIXME add to readme.me for setup ==> model should be placed in root (/Library/Groove2Drum/trained_models) folder
     char constexpr* default_model_path {(char*)"/Library/Groove2Drum/trained_models/model.pt"};
-
 }
 
 // ======================================================================================

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "PluginProcessor.h"
-#include "ProcessorToGuiQueueManagerThread.h"
 #include "gui/PianoRoll_GeneratedDrums.h"
 #include "gui/PianoRoll_InteractiveMonotonicGroove.h"
 
@@ -21,9 +20,6 @@ private:
     // gui widgets
     unique_ptr<PianoRoll_GeneratedDrums_AllVoices> DrumsPianoRollWidget;
     unique_ptr<MonotonicGrooveWidget> MonotonicGroovePianoRollsWidget;
-
-    // thread for managing incoming messages from processor
-    ProcessorToGuiQueueManagerThread ProcessorToGuiQueueManagerThread_;
 
 };
 

@@ -131,12 +131,14 @@ public:
         hit = hit_;
         velocity = velocity_;
         location = location_;
+
         repaint();
         sendDataToQueue();
     }
 
     void addEventWithPPQ(int hit_, float velocity_, float ppq_, float step_resolution)
     {
+        ppq = ppq_;
         location = fmod(ppq_, step_resolution)/step_resolution;
         addEvent(hit_, velocity_, location);
     }
@@ -170,6 +172,10 @@ public:
     {
         return voice_num;
     }
+    float getPpq()
+    {
+        return ppq;
+    }
     /*void resized() override {
         auto area = getLocalBounds();
         this->setBounds(area);
@@ -177,6 +183,7 @@ public:
 private:
     bool isClickable;
     int hit;
+    float ppq;
     float velocity;
     float location;
     juce::Colour backgroundcolor;
@@ -192,7 +199,6 @@ public:
     float line_thickness;
     float hit_prob = 0;
     float sampling_threshold = 0;
-    bool willGetPlayed = false;         // for drum pianoroll --> if true, will be a playable note
 
     ProbabilityLevelWidget(juce:: Colour backgroundcolor_, float line_thickness_=2)
     {
@@ -235,7 +241,7 @@ public:
             auto fillType = juce::FillType();
             fillType.setColour(prob_color_non_hit);
 
-            if (willGetPlayed)
+            if (hit_prob > sampling_threshold)
             {
                 g.setColour(prob_color_hit);
                 fillType.setColour(prob_color_hit);
@@ -252,10 +258,23 @@ public:
         }
     }
 
-    void setProbability(float hit_prob_)
+    /*void setProbability(float hit_prob_)
     {
-        hit_prob = hit_prob_;
-        repaint();
+        if (hit_prob-hit_prob_>0.01 )
+        {
+            hit_prob = hit_prob_;
+            repaint();
+        }
+    }*/
+
+    void setProbability(float hit_prob_, float sampling_thresh)
+    {
+        if (abs(hit_prob-hit_prob_)>0.01 or sampling_threshold!=sampling_thresh)
+        {
+            hit_prob = hit_prob_;
+            sampling_threshold = sampling_thresh;
+            repaint();
+        }
     }
 
     void setSamplingThreshold(float thresh)
@@ -264,11 +283,7 @@ public:
         repaint();
     }
 
-    void setWillPlay(bool isSelected)
-    {
-        willGetPlayed = isSelected;
-        repaint();
-    }
+
 };
 
 
@@ -288,17 +303,65 @@ public:
         addAndMakeVisible(probabilityCurveWidgetPntr.get());
     }
 
-    void addEvent(int hit_, float velocity_, float location, float hit_prob_)
+    /*void addEvent(int hit_, float velocity_, float location, float hit_prob_)
     {
         pianoRollBlockWidgetPntr->addEvent(hit_, velocity_, location);
         probabilityCurveWidgetPntr->setProbability(hit_prob_);
+    }*/
+
+    void addEvent(int hit_, float velocity_, float location, float hit_prob_, float sampling_threshold)
+    {
+        pianoRollBlockWidgetPntr->addEvent(hit_, velocity_, location);
+        probabilityCurveWidgetPntr->setProbability(hit_prob_, sampling_threshold);
     }
 
-    void addEventWithPPQ(int hit_, float velocity_, float ppq_, float hit_prob_, float step_resolution)
+
+    /*void addEventWithPPQ(int hit_, float velocity_, float ppq_, float hit_prob_, float step_resolution)
     {
-        pianoRollBlockWidgetPntr->addEventWithPPQ(hit_, velocity_, ppq_, step_resolution);
-        probabilityCurveWidgetPntr->setProbability(hit_prob_);
-        repaint();
+        if (pianoRollBlockWidgetPntr->getHit() != hit_ or pianoRollBlockWidgetPntr->getVelocity() != hit_ or
+            pianoRollBlockWidgetPntr->getPpq() != ppq_)
+        {
+            pianoRollBlockWidgetPntr->addEventWithPPQ(hit_, velocity_, ppq_, step_resolution);
+        }
+        else
+        {
+            DBG ("NOTHING CHANGED on Roll Widget!!");
+        }
+
+        if (probabilityCurveWidgetPntr->hit_prob != hit_prob_)
+        {
+            DBG ("OLD PROB! "<< probabilityCurveWidgetPntr->hit_prob << "new Prob" << hit_prob_);
+            probabilityCurveWidgetPntr->setProbability(hit_prob_);
+        }
+        else
+        {
+            DBG ("NOTHING CHANGED on Probst!!");
+        }
+        // repaint();
+    }*/
+
+    void addEventWithPPQ(int hit_, float velocity_, float ppq_, float hit_prob_, float step_resolution, float sampling_threshold)
+    {
+        if (pianoRollBlockWidgetPntr->getHit() != hit_ or pianoRollBlockWidgetPntr->getVelocity() != hit_ or
+            pianoRollBlockWidgetPntr->getPpq() != ppq_)
+        {
+            pianoRollBlockWidgetPntr->addEventWithPPQ(hit_, velocity_, ppq_, step_resolution);
+        }
+        else
+        {
+            DBG ("NOTHING CHANGED on Roll Widget!!");
+        }
+
+        if (probabilityCurveWidgetPntr->hit_prob != hit_prob_)
+        {
+            DBG ("OLD PROB! "<< probabilityCurveWidgetPntr->hit_prob << "new Prob" << hit_prob_);
+            probabilityCurveWidgetPntr->setProbability(hit_prob_, sampling_threshold);
+        }
+        else
+        {
+            DBG ("NOTHING CHANGED on Probst!!");
+        }
+        // repaint();
     }
 
     void resized() override

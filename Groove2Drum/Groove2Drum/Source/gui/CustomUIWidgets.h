@@ -12,7 +12,7 @@ class XYPlane : public juce::Component
 public:
     float x_min; float x_max; float x_default;
     float y_min; float y_max; float y_default;
-    float x_ParameterValue; float y_ParameterValue; // actual values of x or y parameters
+    float x_ParameterValue; float y_ParameterValue; // actual values of x or y parameters within the min/max ranges specified (NOT in terms of pixels!)
 
 
     XYPlane(float x_min_, float x_max_, float x_default_, float y_min_, float y_max_, float y_default_):
