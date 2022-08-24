@@ -25,7 +25,6 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
         DrumsPianoRollWidget->updateWithNewScore(latest_score);
     }
 
-
     MonotonicGroovePianoRollsWidget = make_unique<MonotonicGrooveWidget>
         (num_steps, step_ppq_res, steps_perBeat, beats_perBar);
 
@@ -38,17 +37,22 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     // todo for testing only
     // todo to remove later
     /*DrumsPianoRollWidget->addEventWithPPQ(7, 0.0f, 1, .2f, .9f);
-    DrumsPianoRollWidget->addEventWithPPQ(4, 3.21f, 1, 0.5f, .4f);*/
+    DrumsPianoRollWidget->addEventWithPPQ(4, 3.21f, 1, 0.1f, .4f);
+    DrumsPianoRollWidget->addEventWithPPQ(4, 3.01f, 0, 0.5f, 0.0f);
+    DrumsPianoRollWidget->addEventWithPPQ(4, 4.01f, 1, 0.5f, 0.0f);*/
+
 
     // Set window size
     setResizable (true, true);
     setSize (800, 400);
 
+    startTimer(50);
+
 }
 
 MidiFXProcessorEditor::~MidiFXProcessorEditor()
 {
-    MidiFXProcessorPointer_->modelThread.removeChangeListener(this);
+    /*MidiFXProcessorPointer_->modelThread.removeChangeListener(this);*/
     /*ProcessorToGuiQueueManagerThread_.signalThreadShouldExit();
     ProcessorToGuiQueueManagerThread_.stopThread(100);*/
 }
@@ -67,6 +71,17 @@ void MidiFXProcessorEditor::paint(juce::Graphics& g)
     g.fillAll(getLookAndFeel().findColour(
         juce::ResizableWindow::backgroundColourId));
 }
+void MidiFXProcessorEditor::timerCallback()
+{
+
+    auto ptr_ = MidiFXProcessorPointer_->ModelThreadToDrumPianoRollWidgetQues.get();
+    if (ptr_->new_generated_data.getNumReady()>0)
+    {
+        DrumsPianoRollWidget->updateWithNewScore(ptr_->new_generated_data.getLatestOnly());
+    }
+
+}
+/*
 void MidiFXProcessorEditor::changeListenerCallback (juce::ChangeBroadcaster* source)
 {
     if (source == &MidiFXProcessorPointer_->modelThread)
@@ -81,8 +96,8 @@ void MidiFXProcessorEditor::changeListenerCallback (juce::ChangeBroadcaster* sou
         }
         //auto_latest_generated_data =
     }
-    /*if (source == &MidiFXProcessorPointer_->grooveThread)
+    *//*if (source == &MidiFXProcessorPointer_->grooveThread)
     {
         DBG("NEW GROOVE AVAILABLE");
-    }*/
-}
+    }*//*
+}*/

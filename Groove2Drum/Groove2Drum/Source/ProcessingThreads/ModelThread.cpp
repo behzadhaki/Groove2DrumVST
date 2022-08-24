@@ -138,7 +138,7 @@ void ModelThread::run()
                 modelAPI.forward_pass(groove_tensor);
                 shouldResample = true;
 
-                sendChangeMessage();
+                /*sendChangeMessage();*/
 
             }
 

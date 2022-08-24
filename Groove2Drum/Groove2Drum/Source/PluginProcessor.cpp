@@ -124,7 +124,7 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 juce::AudioProcessorEditor* MidiFXProcessor::createEditor()
 {
     auto editor = new MidiFXProcessorEditor(*this);
-    modelThread.addChangeListener(editor);
+    /*modelThread.addChangeListener(editor);*/
     return editor;
 }
 

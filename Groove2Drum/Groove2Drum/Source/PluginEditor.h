@@ -6,14 +6,16 @@
 
 using namespace std;
 
-class MidiFXProcessorEditor : public juce::AudioProcessorEditor, public juce::ChangeListener
+class MidiFXProcessorEditor : public juce::AudioProcessorEditor, public juce::Timer /*, public juce::ChangeListener*/
 {
 public:
     explicit MidiFXProcessorEditor(MidiFXProcessor&) ;
     ~MidiFXProcessorEditor() override;
     void paint(juce::Graphics&) override;
     void resized() override;
-    void changeListenerCallback (juce::ChangeBroadcaster* source) override;
+    /*void changeListenerCallback (juce::ChangeBroadcaster* source) override;*/
+    void timerCallback() override;
+
 private:
     MidiFXProcessor* MidiFXProcessorPointer_;
 

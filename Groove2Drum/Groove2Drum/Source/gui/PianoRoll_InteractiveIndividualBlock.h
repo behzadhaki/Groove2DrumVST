@@ -342,7 +342,7 @@ public:
 
     void addEventWithPPQ(int hit_, float velocity_, float ppq_, float hit_prob_, float step_resolution, float sampling_threshold)
     {
-        if (pianoRollBlockWidgetPntr->getHit() != hit_ or pianoRollBlockWidgetPntr->getVelocity() != hit_ or
+        if (pianoRollBlockWidgetPntr->getHit() != hit_ or pianoRollBlockWidgetPntr->getVelocity() != velocity_ or
             pianoRollBlockWidgetPntr->getPpq() != ppq_)
         {
             pianoRollBlockWidgetPntr->addEventWithPPQ(hit_, velocity_, ppq_, step_resolution);
@@ -361,6 +361,8 @@ public:
         {
             DBG ("NOTHING CHANGED on Probst!!");
         }
+
+
         // repaint();
     }
 
