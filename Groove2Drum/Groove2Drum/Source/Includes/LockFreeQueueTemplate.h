@@ -21,6 +21,15 @@ private:
     unique_ptr<juce::AbstractFifo> lockFreeFifo;
     string data[queue_size];
 
+    // keep track of number of reads/writes and the latest_value without moving FIFO
+    int num_reads = 0;
+    int num_writes = 0;
+    bool writingActive = false;
+
+
+    string latest_written_data = "";
+
+
 public:
     StringLockFreeQueue()
     {
@@ -32,14 +41,16 @@ public:
     void addText (string writeText)
     {
         int start1, start2, blockSize1, blockSize2;
-
+        writingActive = true;
         lockFreeFifo ->prepareToWrite(
             1, start1, blockSize1,
             start2, blockSize2);
 
         data[start1] = writeText;
-
+        latest_written_data = writeText;
+        num_writes += 1;
         lockFreeFifo->finishedWrite(1);
+        writingActive = false;
     }
 
     string getText()
@@ -54,6 +65,7 @@ public:
         retrievedText = data[start1];
 
         lockFreeFifo -> finishedRead(1);
+        num_reads += 1;
 
         return retrievedText;
     }
@@ -61,6 +73,30 @@ public:
     int getNumReady()
     {
         return lockFreeFifo -> getNumReady();
+    }
+
+
+    int getNumberOfReads()
+    {
+        return num_reads;
+    }
+
+    int getNumberOfWrites()
+    {
+        return num_writes;
+    }
+
+    // This method is useful for keeping track of whether any data has previously written to Queue regardless of being read or not
+    // !! This method should only be used for initialization of GUI objects !!
+    // !!! To use the QUEUE for lock free communication use the getText() method !!!
+    string getLatestDataWithoutMovingFIFOHeads()
+    {
+        return latest_written_data;
+    }
+
+    bool isWritingInProgress()
+    {
+        return writingActive;
     }
 
 
@@ -80,6 +116,12 @@ private:
     std::unique_ptr<juce::AbstractFifo> lockFreeFifo;
     juce::Array<T> data;
 
+    // keep track of number of reads/writes and the latest_value without moving FIFO
+    int num_reads = 0;
+    int num_writes = 0;
+    T latest_written_data;
+    bool writingActive = false;
+
 public:
     LockFreeQueue()
     {
@@ -94,6 +136,8 @@ public:
     void WriteTo (const T* writeData, int numTowrite)
     {
         int start1, start2, blockSize1, blockSize2;
+
+        writingActive = true;
 
         lockFreeFifo ->prepareToWrite(
             numTowrite, start1, blockSize1,
@@ -118,7 +162,11 @@ public:
             }
         }
 
+        latest_written_data = writeData[numTowrite-1];
+        num_writes = num_writes + numTowrite;
         lockFreeFifo->finishedWrite(numTowrite);
+        writingActive = false;
+
     }
 
     void ReadFrom(T* readData, int numToRead)
@@ -146,7 +194,9 @@ public:
                 *(readData+blockSize1+i) = *(start_data_ptr + i);
             }
         }
+
         lockFreeFifo -> finishedRead(blockSize1+blockSize2);
+        num_reads += numToRead;
     }
 
     int getNumReady()
@@ -158,21 +208,20 @@ public:
     void push ( T writeData)
     {
         int start1, start2, blockSize1, blockSize2;
-        DBG ("IN PUSH METHOD");
+        writingActive = true;
         lockFreeFifo ->prepareToWrite(
             1, start1, blockSize1,
             start2, blockSize2);
 
-        DBG ("PREPARED TO WRITE");
         auto start_data_ptr = data.getRawDataPointer() + start1;
-        DBG ("GOT POINTER");
-
 
         *start_data_ptr =  writeData;
-        DBG ("wrote data");
 
+        latest_written_data = writeData;
+        num_writes += 1;
         lockFreeFifo->finishedWrite(1);
-        DBG ("finished write");
+
+        writingActive = false;
 
     }
 
@@ -187,6 +236,7 @@ public:
         auto start_data_ptr = data.getRawDataPointer() + start1;
         auto res =  *(start_data_ptr);
         lockFreeFifo->finishedRead(1);
+        num_reads += 1;
         return res;
     }
 
@@ -204,6 +254,7 @@ public:
             auto start_data_ptr = data.getRawDataPointer() + start2;
             readData = *(start_data_ptr+blockSize2-1);
             lockFreeFifo -> finishedRead(blockSize1+blockSize2);
+            num_reads += 1;
             return readData;
 
         }
@@ -212,10 +263,36 @@ public:
             auto start_data_ptr = data.getRawDataPointer() + start1;
             readData = *(start_data_ptr+blockSize1-1);
             lockFreeFifo -> finishedRead(blockSize1+blockSize2);
+            num_reads += 1;
             return readData;
         }
 
     }
+
+
+        int getNumberOfReads()
+        {
+            return num_reads;
+        }
+
+        int getNumberOfWrites()
+        {
+            return num_writes;
+        }
+
+        // This method is useful for keeping track of whether any data has previously written to Queue regardless of being read or not
+        // !! This method should only be used for initialization of GUI objects !!
+        // !!! To use the QUEUE for lock free communication use the ReadFrom() or pop() methods!!!
+        T getLatestDataWithoutMovingFIFOHeads()
+        {
+            return latest_written_data;
+        }
+
+
+        bool isWritingInProgress()
+        {
+            return writingActive;
+        }
 };
 
 
@@ -233,6 +310,14 @@ private:
     juce::Array<MonotonicGroove<time_steps_>> data{};
 
     int time_steps;
+
+    // keep track of number of reads/writes and the latest_value without moving FIFO
+    int num_reads = 0;
+    int num_writes = 0;
+    MonotonicGroove<time_steps_> latest_written_data {};
+    bool writingActive = false;
+
+
 public:
     MonotonicGrooveQueue(){
 
@@ -256,6 +341,7 @@ public:
     {
         int start1, start2, blockSize1, blockSize2;
 
+        writingActive = true;
         lockFreeFifo ->prepareToWrite(
             1, start1, blockSize1,
             start2, blockSize2);
@@ -263,7 +349,11 @@ public:
         auto start_data_ptr = data.getRawDataPointer() + start1;
         *start_data_ptr =  writeData;
 
+        latest_written_data = writeData;
+        num_writes += 1;
         lockFreeFifo->finishedWrite(1);
+        writingActive = false;
+
     }
 
     MonotonicGroove<time_steps_> pop()
@@ -277,28 +367,25 @@ public:
         auto start_data_ptr = data.getRawDataPointer() + start1;
         auto res =  *(start_data_ptr);
         lockFreeFifo->finishedRead(1);
+        num_reads += 1;
         return res;
 
     }
 
     MonotonicGroove<time_steps_>  getLatestOnly()
     {
-        DBG("HERE IN MonotonicGroove getLatestOnly()");
         int start1, start2, blockSize1, blockSize2;
 
         lockFreeFifo ->prepareToRead(
             getNumReady(), start1, blockSize1,
             start2, blockSize2);
 
-        DBG("Got locations");
-
         if (blockSize2 > 0)
         {
             auto start_data_ptr = data.getRawDataPointer() + start2;
             auto readData = *(start_data_ptr+blockSize2-1);
             lockFreeFifo -> finishedRead(blockSize1+blockSize2);
-            DBG("read using blockSize2");
-
+            num_reads += 1;
             return readData;
 
         }
@@ -307,11 +394,9 @@ public:
             auto start_data_ptr = data.getRawDataPointer() + start1;
             auto readData = *(start_data_ptr+blockSize1-1);
             lockFreeFifo -> finishedRead(blockSize1+blockSize2);
-            DBG("read using blockSize1");
+            num_reads += 1;
             return readData;
         }
-
-        DBG("nothing read");
 
     }
 
@@ -320,7 +405,298 @@ public:
         return lockFreeFifo -> getNumReady();
     }
 
+
+    int getNumberOfReads()
+    {
+        return num_reads;
+    }
+
+    int getNumberOfWrites()
+    {
+        return num_writes;
+    }
+
+    // This method is useful for keeping track of whether any data has previously written to Queue regardless of being read or not
+    // !! This method should only be used for initialization of GUI objects !!
+    // !!! To use the QUEUE for lock free communication use the pop() or getLatestOnly() methods!!!
+    MonotonicGroove<time_steps_> getLatestDataWithoutMovingFIFOHeads()
+    {
+        return latest_written_data;
+    }
+
+
+    bool isWritingInProgress()
+    {
+        return writingActive;
+    }
 };
+
+
+
+
+
+template <int time_steps_, int num_voices_, int queue_size> class GeneratedDataQueue
+{
+private:
+    //juce::ScopedPointer<juce::AbstractFifo> lockFreeFifo;   depreciated!!
+    std::unique_ptr<juce::AbstractFifo> lockFreeFifo;
+    juce::Array<GeneratedData<time_steps_, num_voices_>> data{};
+
+    int time_steps, num_voices;
+
+    // keep track of number of reads/writes and the latest_value without moving FIFO
+    int num_reads = 0;
+    int num_writes = 0;
+    GeneratedData<time_steps_, num_voices_> latest_written_data {};
+    bool writingActive = false;
+
+public:
+    GeneratedDataQueue(){
+
+        time_steps = time_steps_;
+        num_voices = num_voices_;
+
+        lockFreeFifo = std::unique_ptr<juce::AbstractFifo> (
+            new juce::AbstractFifo(queue_size));
+
+        data.ensureStorageAllocated(queue_size);
+
+        while (data.size() < queue_size)
+        {
+            auto empty_GenerateData= GeneratedData<time_steps_, num_voices_>();
+            data.add(empty_GenerateData);
+        }
+    }
+
+    void push (const GeneratedData<time_steps_, num_voices_> writeData)
+    {
+        int start1, start2, blockSize1, blockSize2;
+
+        writingActive = true;
+        lockFreeFifo ->prepareToWrite(
+            1, start1, blockSize1,
+            start2, blockSize2);
+
+        auto start_data_ptr = data.getRawDataPointer() + start1;
+        *start_data_ptr =  writeData;
+
+        latest_written_data = writeData;
+        num_writes += 1;
+        lockFreeFifo->finishedWrite(1);
+        writingActive = false;
+
+    }
+
+    GeneratedData<time_steps_, num_voices_> pop()
+    {
+        int start1, start2, blockSize1, blockSize2;
+
+        lockFreeFifo ->prepareToRead(
+            1, start1, blockSize1,
+            start2, blockSize2);
+
+        auto start_data_ptr = data.getRawDataPointer() + start1;
+        auto res =  *(start_data_ptr);
+        lockFreeFifo->finishedRead(1);
+        num_reads += 1;
+        return res;
+    }
+
+    GeneratedData<time_steps_, num_voices_>  getLatestOnly()
+    {
+        DBG("HERE IN GeneratedDataQueue getLatestOnly()");
+        int start1, start2, blockSize1, blockSize2;
+
+        lockFreeFifo->prepareToRead(
+            getNumReady(), start1, blockSize1, start2, blockSize2);
+
+        DBG("Got locations");
+
+        if (blockSize2 > 0)
+        {
+            auto start_data_ptr = data.getRawDataPointer() + start2;
+            auto readData = *(start_data_ptr + blockSize2 - 1);
+            lockFreeFifo->finishedRead(blockSize1 + blockSize2);
+            num_reads += 1;
+            DBG("read using blockSize2");
+
+            return readData;
+        }
+        if (blockSize1 > 0)
+        {
+            auto start_data_ptr = data.getRawDataPointer() + start1;
+            auto readData = *(start_data_ptr + blockSize1 - 1);
+            lockFreeFifo->finishedRead(blockSize1 + blockSize2);
+            num_reads += 1;
+            return readData;
+        }
+
+        return GeneratedData<time_steps_, num_voices_>();
+    }
+
+    int getNumReady()
+    {
+        return lockFreeFifo -> getNumReady();
+    }
+
+
+    int getNumberOfReads()
+    {
+        return num_reads;
+    }
+
+    int getNumberOfWrites()
+    {
+        return num_writes;
+    }
+
+    // This method is useful for keeping track of whether any data has previously written to Queue regardless of being read or not
+    // !! This method should only be used for initialization of GUI objects !!
+    // !!! To use the QUEUE for lock free communication use the pop() or getLatestOnly() methods!!!
+    GeneratedData<time_steps_, num_voices_> getLatestDataWithoutMovingFIFOHeads()
+    {
+        return latest_written_data;
+    }
+
+    bool isWritingInProgress()
+    {
+        return writingActive;
+    }
+};
+
+
+
+template <int time_steps_, int num_voices_, int queue_size> class HVPpqQueue
+{
+    //juce::ScopedPointer<juce::AbstractFifo> lockFreeFifo;   depreciated!!
+    std::unique_ptr<juce::AbstractFifo> lockFreeFifo;
+    juce::Array<HVPpq<time_steps_, num_voices_>> data{};
+
+    int time_steps, num_voices;
+
+    // keep track of number of reads/writes and the latest_value without moving FIFO
+    int num_reads = 0;
+    int num_writes = 0;
+    HVPpq<time_steps_, num_voices_> latest_written_data {};
+    bool writingActive = false;
+
+
+
+public:
+
+    HVPpqQueue(){
+
+        time_steps = time_steps_;
+        num_voices = num_voices_;
+
+        lockFreeFifo = std::unique_ptr<juce::AbstractFifo> (
+            new juce::AbstractFifo(queue_size));
+
+        data.ensureStorageAllocated(queue_size);
+
+        while (data.size() < queue_size)
+        {
+            auto empty_HVPpq = HVPpq<time_steps_, num_voices_>();
+            data.add(empty_HVPpq);
+        }
+
+    }
+
+    void push (const HVPpq<time_steps_, num_voices_> writeData)
+    {
+        int start1, start2, blockSize1, blockSize2;
+
+        writingActive = true;
+        lockFreeFifo ->prepareToWrite(
+            1, start1, blockSize1,
+            start2, blockSize2);
+
+        auto start_data_ptr = data.getRawDataPointer() + start1;
+        *start_data_ptr =  writeData;
+
+        latest_written_data = writeData;
+        num_writes += 1;
+        lockFreeFifo->finishedWrite(1);
+        writingActive = false;
+
+    }
+
+    HVPpq<time_steps_, num_voices_> pop()
+    {
+        int start1, start2, blockSize1, blockSize2;
+
+        lockFreeFifo ->prepareToRead(
+            1, start1, blockSize1,
+            start2, blockSize2);
+
+        auto start_data_ptr = data.getRawDataPointer() + start1;
+        auto res =  *(start_data_ptr);
+        lockFreeFifo->finishedRead(1);
+        num_reads += 1;
+        return res;
+    }
+
+    HVPpq<time_steps_, num_voices_>  getLatestOnly()
+    {
+        DBG("HERE IN HVOQUE getLatestOnly()");
+        int start1, start2, blockSize1, blockSize2;
+
+        lockFreeFifo->prepareToRead(
+            getNumReady(), start1, blockSize1, start2, blockSize2);
+
+        DBG("Got locations");
+
+        if (blockSize2 > 0)
+        {
+            auto start_data_ptr = data.getRawDataPointer() + start2;
+            auto readData = *(start_data_ptr + blockSize2 - 1);
+            lockFreeFifo->finishedRead(blockSize1 + blockSize2);
+            num_reads += 1;
+            DBG("read using blockSize2");
+
+            return readData;
+        }
+        if (blockSize1 > 0)
+        {
+            auto start_data_ptr = data.getRawDataPointer() + start1;
+            auto readData = *(start_data_ptr + blockSize1 - 1);
+            lockFreeFifo->finishedRead(blockSize1 + blockSize2);
+            num_reads += 1;
+            return readData;
+        }
+    }
+
+    int getNumReady()
+    {
+        return lockFreeFifo -> getNumReady();
+    }
+
+    int getNumberOfReads()
+    {
+        return num_reads;
+    }
+
+    int getNumberOfWrites()
+    {
+        return num_writes;
+    }
+
+    // This method is useful for keeping track of whether any data has previously written to Queue regardless of being read or not
+    // !! This method should only be used for initialization of GUI objects !!
+    // !!! To use the QUEUE for lock free communication use the pop() or getLatestOnly() methods!!!
+    HVPpq<time_steps_, num_voices_> getLatestDataWithoutMovingFIFOHeads()
+    {
+        return latest_written_data;
+    }
+
+
+    bool isWritingInProgress()
+    {
+        return writingActive;
+    }
+};
+
+
 
 
 /***
@@ -338,6 +714,13 @@ private:
     juce::Array<HVO<time_steps_, num_voices_>> data{};
 
     int time_steps, num_voices;
+
+    // keep track of number of reads/writes and the latest_value without moving FIFO
+    int num_reads = 0;
+    int num_writes = 0;
+    HVO<time_steps_, num_voices_> latest_written_data {};
+    bool writingActive = false;
+
 
 public:
     HVOQueue(){
@@ -362,6 +745,7 @@ public:
     {
         int start1, start2, blockSize1, blockSize2;
 
+        writingActive = true;
         lockFreeFifo ->prepareToWrite(
             1, start1, blockSize1,
             start2, blockSize2);
@@ -369,7 +753,11 @@ public:
         auto start_data_ptr = data.getRawDataPointer() + start1;
         *start_data_ptr =  writeData;
 
+        latest_written_data = writeData;
+        num_writes += 1;
         lockFreeFifo->finishedWrite(1);
+        writingActive = false;
+
     }
 
     HVO<time_steps_, num_voices_> pop()
@@ -383,24 +771,23 @@ public:
         auto start_data_ptr = data.getRawDataPointer() + start1;
         auto res =  *(start_data_ptr);
         lockFreeFifo->finishedRead(1);
+        num_reads += 1;
         return res;
     }
 
     HVO<time_steps_, num_voices_>  getLatestOnly()
     {
-        DBG("HERE IN HVOQUE getLatestOnly()");
         int start1, start2, blockSize1, blockSize2;
 
         lockFreeFifo->prepareToRead(
             getNumReady(), start1, blockSize1, start2, blockSize2);
-
-        DBG("Got locations");
 
         if (blockSize2 > 0)
         {
             auto start_data_ptr = data.getRawDataPointer() + start2;
             auto readData = *(start_data_ptr + blockSize2 - 1);
             lockFreeFifo->finishedRead(blockSize1 + blockSize2);
+            num_reads += 1;
             DBG("read using blockSize2");
 
             return readData;
@@ -410,7 +797,7 @@ public:
             auto start_data_ptr = data.getRawDataPointer() + start1;
             auto readData = *(start_data_ptr + blockSize1 - 1);
             lockFreeFifo->finishedRead(blockSize1 + blockSize2);
-            DBG("read using blockSize1");
+            num_reads += 1;
             return readData;
         }
     }
@@ -419,191 +806,29 @@ public:
     {
         return lockFreeFifo -> getNumReady();
     }
-};
 
 
-
-template <int time_steps_, int num_voices_, int queue_size> class GeneratedDataQueue
-{
-private:
-    //juce::ScopedPointer<juce::AbstractFifo> lockFreeFifo;   depreciated!!
-    std::unique_ptr<juce::AbstractFifo> lockFreeFifo;
-    juce::Array<GeneratedData<time_steps_, num_voices_>> data{};
-
-    int time_steps, num_voices;
-
-public:
-    GeneratedDataQueue(){
-
-        time_steps = time_steps_;
-        num_voices = num_voices_;
-
-        lockFreeFifo = std::unique_ptr<juce::AbstractFifo> (
-            new juce::AbstractFifo(queue_size));
-
-        data.ensureStorageAllocated(queue_size);
-
-        while (data.size() < queue_size)
-        {
-            auto empty_GenerateData= GeneratedData<time_steps_, num_voices_>();
-            data.add(empty_GenerateData);
-        }
-    }
-
-    void push (const GeneratedData<time_steps_, num_voices_> writeData)
+    int getNumberOfReads()
     {
-        int start1, start2, blockSize1, blockSize2;
-
-        lockFreeFifo ->prepareToWrite(
-            1, start1, blockSize1,
-            start2, blockSize2);
-
-        auto start_data_ptr = data.getRawDataPointer() + start1;
-        *start_data_ptr =  writeData;
-
-        lockFreeFifo->finishedWrite(1);
+        return num_reads;
     }
 
-    GeneratedData<time_steps_, num_voices_> pop()
+    int getNumberOfWrites()
     {
-        int start1, start2, blockSize1, blockSize2;
-
-        lockFreeFifo ->prepareToRead(
-            1, start1, blockSize1,
-            start2, blockSize2);
-
-        auto start_data_ptr = data.getRawDataPointer() + start1;
-        auto res =  *(start_data_ptr);
-        lockFreeFifo->finishedRead(1);
-        return res;
+        return num_writes;
     }
 
-    GeneratedData<time_steps_, num_voices_>  getLatestOnly()
+    // This method is useful for keeping track of whether any data has previously written to Queue regardless of being read or not
+    // !! This method should only be used for initialization of GUI objects !!
+    // !!! To use the QUEUE for lock free communication use the pop() or getLatestOnly() methods!!!
+    HVO<time_steps_, num_voices_> getLatestDataWithoutMovingFIFOHeads()
     {
-        DBG("HERE IN GeneratedDataQueue getLatestOnly()");
-        int start1, start2, blockSize1, blockSize2;
-
-        lockFreeFifo->prepareToRead(
-            getNumReady(), start1, blockSize1, start2, blockSize2);
-
-        DBG("Got locations");
-
-        if (blockSize2 > 0)
-        {
-            auto start_data_ptr = data.getRawDataPointer() + start2;
-            auto readData = *(start_data_ptr + blockSize2 - 1);
-            lockFreeFifo->finishedRead(blockSize1 + blockSize2);
-            DBG("read using blockSize2");
-
-            return readData;
-        }
-        if (blockSize1 > 0)
-        {
-            auto start_data_ptr = data.getRawDataPointer() + start1;
-            auto readData = *(start_data_ptr + blockSize1 - 1);
-            lockFreeFifo->finishedRead(blockSize1 + blockSize2);
-            DBG("read using blockSize1");
-            return readData;
-        }
-
-        return GeneratedData<time_steps_, num_voices_>();
+        return latest_written_data;
     }
 
-    int getNumReady()
+
+    bool isWritingInProgress()
     {
-        return lockFreeFifo -> getNumReady();
-    }
-};
-
-
-
-template <int time_steps_, int num_voices_, int queue_size> class HVPpqQueue
-{
-public:
-    //juce::ScopedPointer<juce::AbstractFifo> lockFreeFifo;   depreciated!!
-    std::unique_ptr<juce::AbstractFifo> lockFreeFifo;
-    juce::Array<HVPpq<time_steps_, num_voices_>> data{};
-
-    int time_steps, num_voices;
-
-
-    HVPpqQueue(){
-
-        time_steps = time_steps_;
-        num_voices = num_voices_;
-
-        lockFreeFifo = std::unique_ptr<juce::AbstractFifo> (
-            new juce::AbstractFifo(queue_size));
-
-        data.ensureStorageAllocated(queue_size);
-
-        while (data.size() < queue_size)
-        {
-            auto empty_HVPpq = HVPpq<time_steps_, num_voices_>();
-            data.add(empty_HVPpq);
-        }
-
-    }
-
-    void push (const HVPpq<time_steps_, num_voices_> writeData)
-    {
-        int start1, start2, blockSize1, blockSize2;
-
-        lockFreeFifo ->prepareToWrite(
-            1, start1, blockSize1,
-            start2, blockSize2);
-
-        auto start_data_ptr = data.getRawDataPointer() + start1;
-        *start_data_ptr =  writeData;
-
-        lockFreeFifo->finishedWrite(1);
-    }
-
-    HVPpq<time_steps_, num_voices_> pop()
-    {
-        int start1, start2, blockSize1, blockSize2;
-
-        lockFreeFifo ->prepareToRead(
-            1, start1, blockSize1,
-            start2, blockSize2);
-
-        auto start_data_ptr = data.getRawDataPointer() + start1;
-        auto res =  *(start_data_ptr);
-        lockFreeFifo->finishedRead(1);
-        return res;
-    }
-
-    HVPpq<time_steps_, num_voices_>  getLatestOnly()
-    {
-        DBG("HERE IN HVOQUE getLatestOnly()");
-        int start1, start2, blockSize1, blockSize2;
-
-        lockFreeFifo->prepareToRead(
-            getNumReady(), start1, blockSize1, start2, blockSize2);
-
-        DBG("Got locations");
-
-        if (blockSize2 > 0)
-        {
-            auto start_data_ptr = data.getRawDataPointer() + start2;
-            auto readData = *(start_data_ptr + blockSize2 - 1);
-            lockFreeFifo->finishedRead(blockSize1 + blockSize2);
-            DBG("read using blockSize2");
-
-            return readData;
-        }
-        if (blockSize1 > 0)
-        {
-            auto start_data_ptr = data.getRawDataPointer() + start1;
-            auto readData = *(start_data_ptr + blockSize1 - 1);
-            lockFreeFifo->finishedRead(blockSize1 + blockSize2);
-            DBG("read using blockSize1");
-            return readData;
-        }
-    }
-
-    int getNumReady()
-    {
-        return lockFreeFifo -> getNumReady();
+        return writingActive;
     }
 };
