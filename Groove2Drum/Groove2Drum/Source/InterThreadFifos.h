@@ -90,8 +90,8 @@ namespace GuiIOFifos
 
     struct DrumPianoRollWidgetToModelThreadQues
     {
-        LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size> new_sampling_thresholds {};        // todo To integrate in code
-        LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>  new_max_number_voices {};      // todo To integrate in code
+        std::array<LockFreeQueue<float, GeneralSettings::gui_io_queue_size>, HVO_params::num_voices> new_sampling_thresholds {};
+        std::array<LockFreeQueue<float, GeneralSettings::gui_io_queue_size>, HVO_params::num_voices> new_max_number_voices {};
     };
     // =================================================================================
 

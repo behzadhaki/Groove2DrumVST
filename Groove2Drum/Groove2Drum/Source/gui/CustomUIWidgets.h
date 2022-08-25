@@ -5,6 +5,7 @@
 #pragma once
 
 #include <shared_plugin_helpers/shared_plugin_helpers.h>
+#include "../InterThreadFifos.h"
 
 namespace UI
 {
@@ -339,8 +340,9 @@ namespace SingleStepPianoRollBlock
         float line_thickness;
         float hit_prob = 0;
         float sampling_threshold = 0;
+        int hit;
 
-        ProbabilityLevelWidget(juce:: Colour backgroundcolor_, float line_thickness_=2)
+        ProbabilityLevelWidget(juce:: Colour backgroundcolor_, int voice_number_, float line_thickness_=2)
         {
             backgroundcolor = backgroundcolor_;
             line_thickness = line_thickness_;
@@ -381,7 +383,7 @@ namespace SingleStepPianoRollBlock
                 auto fillType = juce::FillType();
                 fillType.setColour(prob_color_non_hit);
 
-                if (hit_prob > sampling_threshold)
+                if (hit == 1 )
                 {
                     g.setColour(prob_color_hit);
                     fillType.setColour(prob_color_hit);
@@ -407,14 +409,13 @@ namespace SingleStepPianoRollBlock
             }
         }*/
 
-        void setProbability(float hit_prob_, float sampling_thresh)
+        void setProbability(int hit_, float hit_prob_, float sampling_thresh)
         {
-            if (abs(hit_prob-hit_prob_)>0.01 or sampling_threshold!=sampling_thresh)
-            {
-                hit_prob = hit_prob_;
-                sampling_threshold = sampling_thresh;
-                repaint();
-            }
+            hit = hit_;
+            hit_prob = hit_prob_;
+            sampling_threshold = sampling_thresh;
+            repaint();
+
         }
 
         void setSamplingThreshold(float thresh)
@@ -429,9 +430,11 @@ namespace SingleStepPianoRollBlock
 
     class PianoRoll_InteractiveIndividualBlockWithProbability : public juce::Component
     {
+
     public:
         unique_ptr<PianoRoll_InteractiveIndividualBlock> pianoRollBlockWidgetPntr;  // unique_ptr so as to allow for initialization in the constructor
         unique_ptr<ProbabilityLevelWidget> probabilityCurveWidgetPntr;         // component instance within which we'll draw the probability curve
+
 
         PianoRoll_InteractiveIndividualBlockWithProbability(bool isClickable_, juce::Colour backgroundcolor_, int grid_index_, int voice_num_)
         {
@@ -439,7 +442,7 @@ namespace SingleStepPianoRollBlock
             addAndMakeVisible(pianoRollBlockWidgetPntr.get());
 
 
-            probabilityCurveWidgetPntr = make_unique<ProbabilityLevelWidget>(juce::Colours::black /*backgroundcolor_*/);
+            probabilityCurveWidgetPntr = make_unique<ProbabilityLevelWidget>(juce::Colours::black /*backgroundcolor_*/, voice_num_);
             addAndMakeVisible(probabilityCurveWidgetPntr.get());
         }
 
@@ -450,10 +453,8 @@ namespace SingleStepPianoRollBlock
             {
                 pianoRollBlockWidgetPntr->addEvent(hit_, velocity_, offset);
             }
-            if (probabilityCurveWidgetPntr->hit_prob != hit_prob_)
-            {
-                probabilityCurveWidgetPntr->setProbability(hit_prob_, sampling_threshold);
-            }
+
+            probabilityCurveWidgetPntr->setProbability(hit_, hit_prob_, sampling_threshold);
 
         }
 
@@ -499,10 +500,16 @@ namespace SingleStepPianoRollBlock
     {
     public:
         vector<PianoRoll_InteractiveIndividualBlockWithProbability*> ListenerWidgets;
+        LockFreeQueue<float, GeneralSettings::gui_io_queue_size>* max_num_to_modelThread_que;
+        LockFreeQueue<float, GeneralSettings::gui_io_queue_size>* sample_thresh_to_modelThread_que;
 
-        XYPlaneWithtListeners(float x_min_, float x_max_, float x_default_, float y_min_, float y_max_, float y_default_):
-            XYPlane(x_min_, x_max_, x_default_, y_min_, y_max_, y_default_)
+        XYPlaneWithtListeners(float x_min_, float x_max_, float x_default_, float y_min_, float y_max_, float y_default_,
+                              LockFreeQueue<float, GeneralSettings::gui_io_queue_size>* max_num_to_modelThread_quePntr,
+                              LockFreeQueue<float, GeneralSettings::gui_io_queue_size>* sample_thresh_to_modelThread_quePntr):
+            XYPlane(x_min_, x_max_, x_default_, y_min_, y_max_, y_default)
         {
+            max_num_to_modelThread_que = max_num_to_modelThread_quePntr;
+            sample_thresh_to_modelThread_que =  sample_thresh_to_modelThread_quePntr;
         }
 
         void addWidget(PianoRoll_InteractiveIndividualBlockWithProbability* widget)
@@ -531,6 +538,9 @@ namespace SingleStepPianoRollBlock
         void BroadCastThresholds()
         {
             auto thresh = XYPlane::getYValue();
+            max_num_to_modelThread_que->push(getXValue());
+            sample_thresh_to_modelThread_que->push(thresh);
+
             for (int i=0; i<ListenerWidgets.size(); i++)
             {
                 ListenerWidgets[i]->probabilityCurveWidgetPntr->setSamplingThreshold(thresh);
@@ -555,9 +565,6 @@ namespace SingleStepPianoRollBlock
                     }
                 current_widget_idx++;
             }
-
-            auto indices = n_largest_indices(probabilities.begin(), probabilities.end(), min(int(getXValue()), int(probabilities.size())));
-
 
             BroadCastThresholds();
         }

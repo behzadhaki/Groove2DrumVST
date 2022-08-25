@@ -565,7 +565,6 @@ template <int time_steps_> struct MonotonicGroove
 
         if (shouldAddNote)
         {
-            // DBG ("UPDATING GROOVE");
             hvo.hits[grid_index] = 1;
             hvo.offsets_unmodified[grid_index] = offset;
             hvo.velocities_unmodified[grid_index] = note_.velocity;

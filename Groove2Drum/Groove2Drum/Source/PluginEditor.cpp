@@ -16,7 +16,8 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     // initialize widgets
     DrumsPianoRollWidget = make_unique<PianoRoll_GeneratedDrums_AllVoices>(
         num_steps, step_ppq_res, steps_perBeat, beats_perBar,
-        nine_voice_kit_labels, nine_voice_kit_default_midi_numbers);
+        nine_voice_kit_labels, nine_voice_kit_default_midi_numbers,
+        MidiFXProcessorPointer.DrumPianoRollWidgetToModelThreadQues.get());
 
     auto ptr_ = MidiFXProcessorPointer_->ModelThreadToDrumPianoRollWidgetQues.get();
     if (ptr_->new_generated_data.getNumberOfWrites()>0)
@@ -81,23 +82,3 @@ void MidiFXProcessorEditor::timerCallback()
     }
 
 }
-/*
-void MidiFXProcessorEditor::changeListenerCallback (juce::ChangeBroadcaster* source)
-{
-    if (source == &MidiFXProcessorPointer_->modelThread)
-    {
-        DBG("MODEL GENERATED NEW DATA!");
-        auto ptr_ = MidiFXProcessorPointer_->ModelThreadToDrumPianoRollWidgetQues.get();
-        if (ptr_->new_generated_data.getNumReady()>0)
-        {
-            auto latest_score =
-                ptr_->new_generated_data.getLatestOnly();
-            DrumsPianoRollWidget->updateWithNewScore(latest_score);
-        }
-        //auto_latest_generated_data =
-    }
-    *//*if (source == &MidiFXProcessorPointer_->grooveThread)
-    {
-        DBG("NEW GROOVE AVAILABLE");
-    }*//*
-}*/

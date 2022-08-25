@@ -76,7 +76,6 @@ void GrooveThread::run()
 
             while (ProcessBlockToGrooveThreadQues->new_notes.getNumReady() > 0 and not this->threadShouldExit())
             {
-                // DBG ("NOTE RECEIVED IN GROOVE THREAD");
 
                 // Step 1. get new note
                 ProcessBlockToGrooveThreadQues->new_notes.ReadFrom(&read_note, 1); // here cnt result is 3
@@ -129,7 +128,6 @@ void GrooveThread::run()
         // Send groove to other threads if new one available
         if (isNewGrooveAvailable)
         {
-            // DBG(" NEW GROOVE AVAILABLE");
             if (GrooveThreadToModelThreadQues != nullptr)
             {
                 GrooveThreadToModelThreadQues->new_grooves.push(monotonic_groove);

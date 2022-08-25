@@ -13,6 +13,9 @@
 
 // Voice Mappings corresponding to Kick, Snare, CH, OH, LoT, MidT, HiT, Crash, Ride
 #define nine_voice_kit_default_sampling_thresholds std::vector<float>({0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5})
+#define nine_voice_kit_default_max_voices_allowed std::vector<float>({8, 8, 8, 8, 8, 8, 8, 8, 8})
+
+
 #define nine_voice_kit_default_midi_numbers std::vector<int>({36, 38, 42, 46, 43, 47, 50, 49, 51})
 #define nine_voice_kit_labels std::vector<std::string>({"Kick", "Snare", "Closed Hat", "Open Hat", "Low Tom", "Mid Tom", "Hi Tom", "Crash", "Ride"})
 #define monotonic_trigger std::vector<int> ({20, 21, 22})

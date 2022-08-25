@@ -121,8 +121,8 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> MonotonicGrooveTransform
     }
 
     // Set non-hit vel and offset values to 0
-    velocities = velocities * hits;
-    offsets = offsets * hits;
+    // velocities = velocities * hits;
+    // offsets = offsets * hits;
 
     // DBG(tensor2string(hits));
 

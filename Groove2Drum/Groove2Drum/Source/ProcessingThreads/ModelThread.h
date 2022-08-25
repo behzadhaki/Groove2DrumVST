@@ -24,6 +24,12 @@ public:
     // run this in destructor destructing object
     void prepareToStop();
 
+    // local array to keep track of !!NEW!! sampling thresholds
+    // although empty here, remember model is initialized using
+    // default_sampling_thresholds in ../settings.h
+    vector<float> perVoiceSamplingThresholds {nine_voice_kit_default_sampling_thresholds};
+    vector<float> perVoiceMaxNumVoicesAllowed {nine_voice_kit_default_max_voices_allowed};
+
     void startThreadUsingProvidedResources(
         IntraProcessorFifos::GrooveThreadToModelThreadQues* GrooveThreadToModelThreadQuesPntr,
         IntraProcessorFifos::ModelThreadToProcessBlockQues* ModelThreadToProcessBlockQuesPntr,
@@ -41,6 +47,7 @@ public:
     // used to check if a parent thread has externally
     // requested the thread to stop
     bool readyToStop;
+
 
 private:
 

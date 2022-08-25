@@ -6,6 +6,7 @@
 
 #include "CustomUIWidgets.h"
 #include "../settings.h"
+#include "../Includes/CustomStructs.h"
 
 using namespace std;
 using namespace UI;
@@ -21,7 +22,9 @@ public:
 
     int num_gridlines;
 
-    PianoRoll_GeneratedDrums_SingleVoice(int num_gridlines_, float step_ppq_, int n_steps_per_beat, int n_beats_per_bar, string label_text, int voice_number_=0)
+    PianoRoll_GeneratedDrums_SingleVoice(LockFreeQueue<float, GeneralSettings::gui_io_queue_size>* max_num_to_modelThread_que,
+                                         LockFreeQueue<float, GeneralSettings::gui_io_queue_size>* sample_thresh_to_modelThread_que,
+                                         int num_gridlines_, float step_ppq_, int n_steps_per_beat, int n_beats_per_bar, string label_text, int voice_number_=0)
     {
         num_gridlines = num_gridlines_;
 
@@ -33,7 +36,7 @@ public:
         addAndMakeVisible(label);
 
         // xy slider broadcaster
-        MaxCount_Prob_XYPlane = make_shared<SingleStepPianoRollBlock::XYPlaneWithtListeners>(0, num_gridlines_, num_gridlines_/2, 0, 1, 0.5);
+        MaxCount_Prob_XYPlane = make_shared<SingleStepPianoRollBlock::XYPlaneWithtListeners>(0, num_gridlines_, num_gridlines_/2, 0, 1, 0.5, max_num_to_modelThread_que, sample_thresh_to_modelThread_que);
         addAndMakeVisible(MaxCount_Prob_XYPlane.get());
 
         // Draw up piano roll
@@ -68,7 +71,6 @@ public:
 
     void addEventToTimeStep(int time_step_ix, int hit_, float velocity_, float offset_, float probability_)
     {
-        DBG("yvalue "<< MaxCount_Prob_XYPlane->getYValue());
         interactivePRollBlocks[time_step_ix]->addEvent(hit_, velocity_, offset_, probability_, MaxCount_Prob_XYPlane->getYValue());
     }
 
@@ -109,19 +111,22 @@ public:
     int num_voices;
     float step_ppq_duration;
 
-
-    PianoRoll_GeneratedDrums_AllVoices(int num_gridlines_, float step_ppq_duration_, int n_steps_per_beat_, int n_beats_per_bar_, vector<string> DrumVoiceNames_, vector<int> DrumVoiceMidiNumbers_)
+    PianoRoll_GeneratedDrums_AllVoices(int num_gridlines_, float step_ppq_duration_, int n_steps_per_beat_, int n_beats_per_bar_, vector<string> DrumVoiceNames_, vector<int> DrumVoiceMidiNumbers_,
+                                       GuiIOFifos::DrumPianoRollWidgetToModelThreadQues* DrumPianoRollWidgetToModelThreadQuesPntr)
     {
         assert (DrumVoiceNames_.size()==DrumVoiceMidiNumbers_.size());
 
         num_voices = int(DrumVoiceMidiNumbers_.size());
         step_ppq_duration = step_ppq_duration_;
 
-        for (int voice_i=0; voice_i<num_voices; voice_i++)
+        for (size_t voice_i=0; voice_i<num_voices; voice_i++)
         {
             auto label_txt = DrumVoiceNames_[voice_i] + "\n[Midi "+to_string(DrumVoiceMidiNumbers_[voice_i])+"]";
 
-            PianoRoll.push_back(make_unique<PianoRoll_GeneratedDrums_SingleVoice>(num_gridlines_, step_ppq_duration, n_steps_per_beat_, n_beats_per_bar_, label_txt, voice_i));
+            PianoRoll.push_back(make_unique<PianoRoll_GeneratedDrums_SingleVoice>(
+                &DrumPianoRollWidgetToModelThreadQuesPntr->new_max_number_voices[voice_i],
+                &DrumPianoRollWidgetToModelThreadQuesPntr->new_sampling_thresholds[voice_i],
+                num_gridlines_, step_ppq_duration, n_steps_per_beat_, n_beats_per_bar_, label_txt, voice_i));
             addAndMakeVisible(PianoRoll[voice_i].get());
         }
     }

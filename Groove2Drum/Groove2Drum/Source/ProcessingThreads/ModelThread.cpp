@@ -73,10 +73,7 @@ void ModelThread::run()
     // placeholder for reading the latest groove received in queue
     MonotonicGroove<HVO_params::time_steps> scaled_groove;
 
-    // local array to keep track of !!NEW!! sampling thresholds
-    // although empty here, remember model is initialized using
-    // default_sampling_thresholds in ../settings.h
-    array<float, HVO_params::num_voices> perVoiceSamplingThresholds = {};
+
 
     while (!bExit)
     {
@@ -86,15 +83,33 @@ void ModelThread::run()
 
         if (DrumPianoRollWidgetToModelThreadQues != nullptr)
         {
-            if (DrumPianoRollWidgetToModelThreadQues->new_sampling_thresholds.getNumReady() > 0
-                and not this->threadShouldExit()){
+            auto thresh_changed_flag_ = false;
+            auto max_voice_count_changed_flag_ = false;
 
-                perVoiceSamplingThresholds = DrumPianoRollWidgetToModelThreadQues->new_sampling_thresholds.getLatestOnly();
+            for (size_t i=0; i<HVO_params::num_voices; i++)
+            {
+                if (DrumPianoRollWidgetToModelThreadQues->new_sampling_thresholds[i].getNumReady() > 0)
+                {
+                    perVoiceSamplingThresholds[i] = DrumPianoRollWidgetToModelThreadQues->new_sampling_thresholds[i].getLatestOnly();
+                    thresh_changed_flag_ = true;
+                }
+                if (DrumPianoRollWidgetToModelThreadQues->new_max_number_voices[i].getNumReady() > 0)
+                {
+                     perVoiceMaxNumVoicesAllowed[i] = DrumPianoRollWidgetToModelThreadQues->new_max_number_voices[i].getLatestOnly();
+                     max_voice_count_changed_flag_ = true;
+                }
+            }
+            if (thresh_changed_flag_)
+            {
+                /*std::vector<float> thresh_vec(std::begin(perVoiceSamplingThresholds),
+                                              std::end(perVoiceSamplingThresholds));*/
+                modelAPI.set_sampling_thresholds(perVoiceSamplingThresholds);
+                shouldResample = true;
+            }
 
-
-                std::vector<float> thresh_vec(std::begin(perVoiceSamplingThresholds),
-                                              std::end(perVoiceSamplingThresholds));
-                modelAPI.set_sampling_thresholds(thresh_vec);
+            if (max_voice_count_changed_flag_)
+            {
+                // modelAPI.set_max_count_per_voice_limits(perVoiceMaxNumVoicesAllowed);
                 shouldResample = true;
             }
         }

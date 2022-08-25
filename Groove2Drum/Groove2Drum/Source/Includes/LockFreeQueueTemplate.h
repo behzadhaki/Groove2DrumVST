@@ -504,13 +504,10 @@ public:
 
     GeneratedData<time_steps_, num_voices_>  getLatestOnly()
     {
-        DBG("HERE IN GeneratedDataQueue getLatestOnly()");
         int start1, start2, blockSize1, blockSize2;
 
         lockFreeFifo->prepareToRead(
             getNumReady(), start1, blockSize1, start2, blockSize2);
-
-        DBG("Got locations");
 
         if (blockSize2 > 0)
         {
@@ -518,7 +515,6 @@ public:
             auto readData = *(start_data_ptr + blockSize2 - 1);
             lockFreeFifo->finishedRead(blockSize1 + blockSize2);
             num_reads += 1;
-            DBG("read using blockSize2");
 
             return readData;
         }
@@ -638,13 +634,10 @@ public:
 
     HVOLight<time_steps_, num_voices_>  getLatestOnly()
     {
-        DBG("HERE IN HVOQUE getLatestOnly()");
         int start1, start2, blockSize1, blockSize2;
 
         lockFreeFifo->prepareToRead(
             getNumReady(), start1, blockSize1, start2, blockSize2);
-
-        DBG("Got locations");
 
         if (blockSize2 > 0)
         {
@@ -652,7 +645,6 @@ public:
             auto readData = *(start_data_ptr + blockSize2 - 1);
             lockFreeFifo->finishedRead(blockSize1 + blockSize2);
             num_reads += 1;
-            DBG("read using blockSize2");
 
             return readData;
         }
@@ -788,7 +780,6 @@ public:
             auto readData = *(start_data_ptr + blockSize2 - 1);
             lockFreeFifo->finishedRead(blockSize1 + blockSize2);
             num_reads += 1;
-            DBG("read using blockSize2");
 
             return readData;
         }
