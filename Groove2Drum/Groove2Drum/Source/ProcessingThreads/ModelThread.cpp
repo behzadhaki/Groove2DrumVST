@@ -109,12 +109,11 @@ void ModelThread::run()
 
             if (max_voice_count_changed_flag_)
             {
-                // modelAPI.set_max_count_per_voice_limits(perVoiceMaxNumVoicesAllowed);
+                modelAPI.set_max_count_per_voice_limits(perVoiceMaxNumVoicesAllowed);
                 shouldResample = true;
             }
         }
 
-        
         if (GrooveThreadToModelThreadQues != nullptr)
         {
             if (GrooveThreadToModelThreadQues->new_grooves.getNumReady() > 0
@@ -126,18 +125,6 @@ void ModelThread::run()
                 // set flag to re-run model
                 newGrooveAvailable = true;
 
-                // TODO can comment block --- for debugging only
-                /*{
-                    bool showHits = false;
-                    bool showVels = false;
-                    bool showOffs = true;
-                    bool needScaled = true;
-                    showMessageinEditor(text_toGui_que_for_debugging,
-                                        scaled_groove.getStringDescription(
-                                            showHits, showVels, showOffs, needScaled),
-                                        "Groove Offsets",
-                                        true);
-                }*/
             }
 
            if (newGrooveAvailable)

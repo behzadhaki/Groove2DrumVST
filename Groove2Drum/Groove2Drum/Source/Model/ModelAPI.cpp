@@ -54,6 +54,8 @@ bool MonotonicGrooveTransformerV1::loadModel(std::string model_path_, int time_s
         velocities = torch::zeros({time_steps_, num_voices_});
         offsets = torch::zeros({time_steps_, num_voices_});
         per_voice_sampling_thresholds = vector2tensor(nine_voice_kit_default_sampling_thresholds);
+        per_voice_max_count_allowed = vector2tensor(nine_voice_kit_default_max_voices_allowed);
+
         return true;
     }
 
@@ -75,7 +77,14 @@ void MonotonicGrooveTransformerV1::set_sampling_thresholds(vector<float> per_voi
     per_voice_sampling_thresholds = vector2tensor(per_voice_thresholds);
 }
 
+void MonotonicGrooveTransformerV1::set_max_count_per_voice_limits(vector<float> perVoiceMaxNumVoicesAllowed)
+{
+    assert(perVoiceMaxNumVoicesAllowed.size()==num_voices &&
+           "thresholds dim [num_voices]");
 
+    per_voice_max_count_allowed = vector2tensor(perVoiceMaxNumVoicesAllowed);
+
+}
 // Passes input through the model and updates logits, vels and offsets
 void MonotonicGrooveTransformerV1::forward_pass(torch::Tensor monotonicGrooveInput)
 {
