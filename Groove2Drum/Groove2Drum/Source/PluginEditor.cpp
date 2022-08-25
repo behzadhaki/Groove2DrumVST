@@ -17,7 +17,8 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     DrumsPianoRollWidget = make_unique<PianoRoll_GeneratedDrums_AllVoices>(
         num_steps, step_ppq_res, steps_perBeat, beats_perBar,
         nine_voice_kit_labels, nine_voice_kit_default_midi_numbers,
-        MidiFXProcessorPointer.DrumPianoRollWidgetToModelThreadQues.get());
+        MidiFXProcessorPointer.DrumPianoRollWidgetToModelThreadQues.get(),
+        MidiFXProcessorPointer.modelThread.perVoiceSamplingThresholds, MidiFXProcessorPointer.modelThread.perVoiceMaxNumVoicesAllowed);
 
     auto ptr_ = MidiFXProcessorPointer_->ModelThreadToDrumPianoRollWidgetQues.get();
     if (ptr_->new_generated_data.getNumberOfWrites()>0)

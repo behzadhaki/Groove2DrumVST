@@ -111,8 +111,10 @@ public:
     int num_voices;
     float step_ppq_duration;
 
-    PianoRoll_GeneratedDrums_AllVoices(int num_gridlines_, float step_ppq_duration_, int n_steps_per_beat_, int n_beats_per_bar_, vector<string> DrumVoiceNames_, vector<int> DrumVoiceMidiNumbers_,
-                                       GuiIOFifos::DrumPianoRollWidgetToModelThreadQues* DrumPianoRollWidgetToModelThreadQuesPntr)
+    PianoRoll_GeneratedDrums_AllVoices(int num_gridlines_, float step_ppq_duration_, int n_steps_per_beat_, int n_beats_per_bar_,
+                                       vector<string> DrumVoiceNames_, vector<int> DrumVoiceMidiNumbers_,
+                                       GuiIOFifos::DrumPianoRollWidgetToModelThreadQues* DrumPianoRollWidgetToModelThreadQuesPntr,
+                                       std::vector<float> sampling_thresholds, std::vector<float> max_voices_allowed)
     {
         assert (DrumVoiceNames_.size()==DrumVoiceMidiNumbers_.size());
 
@@ -127,6 +129,7 @@ public:
                 &DrumPianoRollWidgetToModelThreadQuesPntr->new_max_number_voices[voice_i],
                 &DrumPianoRollWidgetToModelThreadQuesPntr->new_sampling_thresholds[voice_i],
                 num_gridlines_, step_ppq_duration, n_steps_per_beat_, n_beats_per_bar_, label_txt, voice_i));
+            PianoRoll[voice_i]->MaxCount_Prob_XYPlane->updateDefaultValues(max_voices_allowed[voice_i], sampling_thresholds[voice_i]);
             addAndMakeVisible(PianoRoll[voice_i].get());
         }
     }
