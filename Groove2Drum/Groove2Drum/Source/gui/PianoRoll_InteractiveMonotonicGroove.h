@@ -3,7 +3,7 @@
 //
 #pragma once
 
-#include "PianoRoll_InteractiveIndividualBlock.h"
+#include "CustomUIWidgets.h"
 
 using namespace std;
 
@@ -11,7 +11,7 @@ class PianoRoll_InteractiveMonotonicGroove :public juce::Component
 {
 public:
 
-    vector<shared_ptr<PianoRoll_InteractiveIndividualBlock>> interactivePRollBlocks;
+    vector<shared_ptr<SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlock>> interactivePRollBlocks;
     juce::Colour def_c {juce::Colour::fromFloatRGBA(1.0f,1.0f,1.0f,0.8f)};
     juce::Colour beat_c { juce::Colour::fromFloatRGBA(.75f,.75f,.75f, 0.5f)};
     juce::Colour bar_c {  juce::Colour::fromFloatRGBA(.6f,.6f,.6f, 0.5f) };
@@ -39,35 +39,29 @@ public:
         {
             if (fmod(i, n_steps_per_beat*n_beats_per_bar) == 0)      // bar position
             {
-                interactivePRollBlocks.push_back(make_shared<PianoRoll_InteractiveIndividualBlock>(isInteractive, bar_c, i));
+                interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlock>(isInteractive, bar_c, i));
             }
             else if(fmod(i, n_steps_per_beat) == 0)                  // beat position
             {
-                interactivePRollBlocks.push_back(make_shared<PianoRoll_InteractiveIndividualBlock>(isInteractive, beat_c, i));
+                interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlock>(isInteractive, beat_c, i));
             }
             else                                                    // every other position
             {
-                interactivePRollBlocks.push_back(make_shared<PianoRoll_InteractiveIndividualBlock>(isInteractive, def_c, i));
+                interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlock>(isInteractive, def_c, i));
             }
 
             addAndMakeVisible(interactivePRollBlocks[i].get());
-
-
         }
 
 
     }
 
     // location must be between 0 or 1
-    void addEventToStep(int idx, float location, int hit_, float velocity_)
+    void addEventToStep(int idx, int hit_, float velocity_, float offset_)
     {
-        interactivePRollBlocks[idx]->addEvent(hit_, velocity_, location);
+        interactivePRollBlocks[idx]->addEvent(hit_, velocity_, offset_);
     }
-    void addEventWithPPQ(float ppq_, int hit_, float velocity_)
-    {
-        auto idx = (unsigned long) (floor(ppq_/step_ppq));
-        interactivePRollBlocks[idx]->addEventWithPPQ(hit_, velocity_, ppq_, step_ppq);
-    }
+
 
     void resized() override {
         auto area = getLocalBounds();

@@ -4,136 +4,26 @@
 
 #pragma once
 
-#include "PianoRoll_InteractiveIndividualBlock.h"
+#include "CustomUIWidgets.h"
 #include "../settings.h"
 
 using namespace std;
-
-template<typename Iterator>
-inline std::vector<size_t> n_largest_indices(Iterator it, Iterator end, size_t n) {
-    struct Element {
-        Iterator it;
-        size_t index;
-    };
-
-    std::vector<Element> top_elements;
-    top_elements.reserve(n + 1);
-
-    for(size_t index = 0; it != end; ++index, ++it) {
-        top_elements.insert(std::upper_bound(top_elements.begin(), top_elements.end(), *it, [](auto value, auto element){return value > *element.it;}), {it, index});
-        if (index >= n)
-            top_elements.pop_back();
-    }
-
-    std::vector<size_t> result;
-    result.reserve(top_elements.size());
-
-    for(auto &element: top_elements)
-        result.push_back(element.index);
-
-    return result;
-}
-
-
-class XYPlaneWithtListeners : public XYPlane
-{
-public:
-    vector<PianoRoll_InteractiveIndividualBlockWithProbability*> ListenerWidgets;
-
-    XYPlaneWithtListeners(float x_min_, float x_max_, float x_default_, float y_min_, float y_max_, float y_default_):
-        XYPlane(x_min_, x_max_, x_default_, y_min_, y_max_, y_default_)
-    {
-    }
-
-    void addWidget(PianoRoll_InteractiveIndividualBlockWithProbability* widget)
-    {
-        ListenerWidgets.push_back(widget);
-    }
-
-    void mouseDown(const juce::MouseEvent& ev) override
-    {
-        XYPlane::mouseDown(ev);
-        BroadCastAllInfo();
-    }
-
-    void mouseDoubleClick(const juce::MouseEvent& ev) override
-    {
-        XYPlane::mouseDoubleClick(ev);
-        BroadCastAllInfo();
-    }
-
-    void mouseDrag(const juce::MouseEvent& ev) override
-    {
-        XYPlane::mouseDrag(ev);
-        BroadCastAllInfo();
-    }
-
-    void BroadCastThresholds()
-    {
-        auto thresh = XYPlane::getYValue();
-        for (int i=0; i<ListenerWidgets.size(); i++)
-        {
-            ListenerWidgets[i]->probabilityCurveWidgetPntr->setSamplingThreshold(thresh);
-        }
-    }
-
-    void BroadCastAllInfo()
-    {
-        vector<float> probabilities {};
-        vector<float> probs_for_widgets_idx {};
-
-        int current_widget_idx = 0;
-        for (auto & ListenerWidget : ListenerWidgets)
-        {
-            auto hit_prob_ = ListenerWidget->probabilityCurveWidgetPntr->hit_prob;
-            if (hit_prob_ > 0)
-
-            if (getYValue() <= hit_prob_)
-            {
-                probabilities.push_back(hit_prob_);
-                probs_for_widgets_idx.push_back(current_widget_idx);
-            }
-            current_widget_idx++;
-        }
-
-        auto indices = n_largest_indices(probabilities.begin(), probabilities.end(), min(int(getXValue()), int(probabilities.size())));
-
-
-        BroadCastThresholds();
-    }
-
-    void ForceMoveToActualValues(float x_ParameterValue_, float y_ParameterValue_)
-    {
-        XYPlane::moveUsingActualValues(x_ParameterValue_, y_ParameterValue_);
-
-        BroadCastAllInfo();
-    }
-
-    void updateDefaultValues(float default_x_, float default_y_)
-    {
-        XYPlane::updateDefaultValues(default_x_, default_y_);
-        ForceMoveToActualValues(default_x_, default_y_);
-        BroadCastAllInfo();
-    }
-};
-
+using namespace UI;
 
 class PianoRoll_GeneratedDrums_SingleVoice :public juce::Component
 {
 public:
 
-    vector<shared_ptr<PianoRoll_InteractiveIndividualBlockWithProbability>> interactivePRollBlocks;
-    shared_ptr<XYPlaneWithtListeners> MaxCount_Prob_XYPlane; // x axis will be Max count (0 to time_steps), y axis is threshold 0 to 1
+    vector<shared_ptr<SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlockWithProbability>> interactivePRollBlocks;
+    shared_ptr<SingleStepPianoRollBlock::XYPlaneWithtListeners> MaxCount_Prob_XYPlane; // x axis will be Max count (0 to time_steps), y axis is threshold 0 to 1
     juce::Label label;
 
 
     int num_gridlines;
-    float step_ppq;
 
     PianoRoll_GeneratedDrums_SingleVoice(int num_gridlines_, float step_ppq_, int n_steps_per_beat, int n_beats_per_bar, string label_text, int voice_number_=0)
     {
         num_gridlines = num_gridlines_;
-        step_ppq = step_ppq_;
 
 
         // Set Modified Label
@@ -143,7 +33,7 @@ public:
         addAndMakeVisible(label);
 
         // xy slider broadcaster
-        MaxCount_Prob_XYPlane = make_shared<XYPlaneWithtListeners>(0, num_gridlines_, num_gridlines_/2, 0, 1, 0.5);
+        MaxCount_Prob_XYPlane = make_shared<SingleStepPianoRollBlock::XYPlaneWithtListeners>(0, num_gridlines_, num_gridlines_/2, 0, 1, 0.5);
         addAndMakeVisible(MaxCount_Prob_XYPlane.get());
 
         // Draw up piano roll
@@ -153,15 +43,15 @@ public:
         {
             if (fmod(i, n_steps_per_beat*n_beats_per_bar) == 0)      // bar position
             {
-                interactivePRollBlocks.push_back(make_shared<PianoRoll_InteractiveIndividualBlockWithProbability>(false, bar_backg_color, i, voice_number_));
+                interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlockWithProbability>(false, bar_backg_color, i, voice_number_));
             }
             else if(fmod(i, n_steps_per_beat) == 0)                  // beat position
             {
-                interactivePRollBlocks.push_back(make_shared<PianoRoll_InteractiveIndividualBlockWithProbability>(false, beat_backg_color, i, voice_number_));
+                interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlockWithProbability>(false, beat_backg_color, i, voice_number_));
             }
             else                                                    // every other position
             {
-                interactivePRollBlocks.push_back(make_shared<PianoRoll_InteractiveIndividualBlockWithProbability>(false, rest_backg_color, i, voice_number_));
+                interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlockWithProbability>(false, rest_backg_color, i, voice_number_));
             }
             auto prob_widget_listener = interactivePRollBlocks[i]->probabilityCurveWidgetPntr.get(); // allow slider to update line in the probability widgets
             prob_widget_listener->setSamplingThreshold(MaxCount_Prob_XYPlane->getYValue());         // synchronize thresh line with the defaul in Slider
@@ -171,16 +61,15 @@ public:
         }
 
         // set initial defaul values of XYPLane (MUST BE AFTER DEFINING AND ATTACHING THE PER STEP WIDGETS
-        MaxCount_Prob_XYPlane->updateDefaultValues(8, 0.4f);
+        MaxCount_Prob_XYPlane->updateDefaultValues(8, 0.5f);
 
     }
 
 
-    void addEventWithPPQ(int hit_, float velocity_, float ppq_, float probability_)
+    void addEventToTimeStep(int time_step_ix, int hit_, float velocity_, float offset_, float probability_)
     {
-        auto idx = (unsigned long) (floor(ppq_/step_ppq));
         DBG("yvalue "<< MaxCount_Prob_XYPlane->getYValue());
-        interactivePRollBlocks[idx]->addEventWithPPQ(hit_, velocity_, ppq_, probability_, step_ppq, MaxCount_Prob_XYPlane->getYValue());
+        interactivePRollBlocks[time_step_ix]->addEvent(hit_, velocity_, offset_, probability_, MaxCount_Prob_XYPlane->getYValue());
     }
 
     void resized() override {
@@ -250,40 +139,26 @@ public:
         }
     }
 
-    void addEventWithPPQ(int voice_number, float ppq_, int hit_, float velocity_, float probability_)
+    void addEventToVoice(int voice_number, int timestep_idx, int hit_, float velocity_, float offset, float probability_)
     {
-        auto idx = (unsigned long) (floor(ppq_/step_ppq_duration));
         // add note
-        PianoRoll[voice_number]->addEventWithPPQ(hit_, velocity_, ppq_, probability_);
+        PianoRoll[voice_number]->addEventToTimeStep(timestep_idx, hit_, velocity_, offset, probability_);
 
     }
 
-    void updateWithNewScore(HVPpq <HVO_params::time_steps, HVO_params::num_voices> latest_generated_data)
+    void updateWithNewScore(HVOLight <HVO_params::time_steps, HVO_params::num_voices> latest_generated_data)
     {
 
         for (int vn_= 0; vn_ < latest_generated_data.num_voices; vn_++)
         {
             for (int t_= 0; t_ < latest_generated_data.time_steps; t_++)
             {
-                /*DBG(" ADDING STEP "
-                    << t_ << " ,voice " << vn_ << " ppq "
-                    << latest_generated_data.ppqs[t_][vn_].item().toFloat());
-                DBG(" hit "
-                    << latest_generated_data.hits[t_][vn_].item().toInt()
-                    << " ,vel "
-                    << latest_generated_data.velocities[t_][vn_]
-                           .item()
-                           .toFloat()
-                    << " prob "
-                    << latest_generated_data.hit_probabilities[t_][vn_]
-                           .item()
-                           .toFloat());*/
-
-                addEventWithPPQ(
+                addEventToVoice(
                     vn_,
-                    latest_generated_data.ppqs[t_][vn_].item().toFloat(),
+                    t_,
                     latest_generated_data.hits[t_][vn_].item().toInt(),
                     latest_generated_data.velocities[t_][vn_].item().toFloat(),
+                    latest_generated_data.offsets[t_][vn_].item().toFloat(),
                     latest_generated_data.hit_probabilities[t_][vn_].item().toFloat());
             }
 
@@ -294,5 +169,5 @@ public:
     }
 
 private:
-    HVPpq <HVO_params::time_steps, HVO_params::num_voices> old_generated_data{};
+    HVOLight <HVO_params::time_steps, HVO_params::num_voices> old_generated_data{};
 };

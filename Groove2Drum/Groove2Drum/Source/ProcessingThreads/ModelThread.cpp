@@ -150,7 +150,7 @@ void ModelThread::run()
             auto [hits, velocities, offsets] = modelAPI.sample("Threshold");
             generated_hvo = HVO<HVO_params::time_steps, HVO_params::num_voices>(
                 hits, velocities, offsets);
-            auto pianoRollData = HVPpq<HVO_params::time_steps, HVO_params::num_voices>(
+            auto pianoRollData = HVOLight<HVO_params::time_steps, HVO_params::num_voices>(
                 hits, modelAPI.get_hits_probabilities(), velocities, offsets);
 
 

@@ -85,7 +85,7 @@ namespace GuiIOFifos
     // used for receiving the latest perVoiceSamplingThresholds and maximum notes allowed from Generated Drums XYSliders
     struct ModelThreadToDrumPianoRollWidgetQues
     {
-        HVPpqQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size> new_generated_data {};        // todo To integrate in code
+        HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size> new_generated_data {};        // todo To integrate in code
     };
 
     struct DrumPianoRollWidgetToModelThreadQues

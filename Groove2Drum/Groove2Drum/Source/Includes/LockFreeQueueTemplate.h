@@ -566,25 +566,25 @@ public:
 
 
 
-template <int time_steps_, int num_voices_, int queue_size> class HVPpqQueue
+template <int time_steps_, int num_voices_, int queue_size> class HVOLightQueue
 {
     //juce::ScopedPointer<juce::AbstractFifo> lockFreeFifo;   depreciated!!
     std::unique_ptr<juce::AbstractFifo> lockFreeFifo;
-    juce::Array<HVPpq<time_steps_, num_voices_>> data{};
+    juce::Array<HVOLight<time_steps_, num_voices_>> data{};
 
     int time_steps, num_voices;
 
     // keep track of number of reads/writes and the latest_value without moving FIFO
     int num_reads = 0;
     int num_writes = 0;
-    HVPpq<time_steps_, num_voices_> latest_written_data {};
+    HVOLight<time_steps_, num_voices_> latest_written_data {};
     bool writingActive = false;
 
 
 
 public:
 
-    HVPpqQueue(){
+    HVOLightQueue(){
 
         time_steps = time_steps_;
         num_voices = num_voices_;
@@ -596,13 +596,13 @@ public:
 
         while (data.size() < queue_size)
         {
-            auto empty_HVPpq = HVPpq<time_steps_, num_voices_>();
-            data.add(empty_HVPpq);
+            auto empty_HVOLight = HVOLight<time_steps_, num_voices_>();
+            data.add(empty_HVOLight);
         }
 
     }
 
-    void push (const HVPpq<time_steps_, num_voices_> writeData)
+    void push (const HVOLight<time_steps_, num_voices_> writeData)
     {
         int start1, start2, blockSize1, blockSize2;
 
@@ -621,7 +621,7 @@ public:
 
     }
 
-    HVPpq<time_steps_, num_voices_> pop()
+    HVOLight<time_steps_, num_voices_> pop()
     {
         int start1, start2, blockSize1, blockSize2;
 
@@ -636,7 +636,7 @@ public:
         return res;
     }
 
-    HVPpq<time_steps_, num_voices_>  getLatestOnly()
+    HVOLight<time_steps_, num_voices_>  getLatestOnly()
     {
         DBG("HERE IN HVOQUE getLatestOnly()");
         int start1, start2, blockSize1, blockSize2;
@@ -684,7 +684,7 @@ public:
     // This method is useful for keeping track of whether any data has previously written to Queue regardless of being read or not
     // !! This method should only be used for initialization of GUI objects !!
     // !!! To use the QUEUE for lock free communication use the pop() or getLatestOnly() methods!!!
-    HVPpq<time_steps_, num_voices_> getLatestDataWithoutMovingFIFOHeads()
+    HVOLight<time_steps_, num_voices_> getLatestDataWithoutMovingFIFOHeads()
     {
         return latest_written_data;
     }

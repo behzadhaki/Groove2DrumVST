@@ -602,24 +602,23 @@ template <int time_steps_> struct MonotonicGroove
 
 
 
-template <int time_steps_, int num_voices_> struct HVPpq
+template <int time_steps_, int num_voices_> struct HVOLight
 {
     int time_steps = time_steps_;
     int num_voices = num_voices_;
 
-
     torch::Tensor hits;
     torch::Tensor hit_probabilities;
     torch::Tensor velocities;
-    torch::Tensor ppqs;
+    torch::Tensor offsets;
 
     // Default Constructor
-    HVPpq()
+    HVOLight()
     {
         hits = torch::zeros({time_steps, num_voices});
         hit_probabilities = torch::zeros({time_steps, num_voices}, torch::kFloat32);
         velocities = torch::zeros({time_steps, num_voices}, torch::kFloat32);
-        ppqs = torch::zeros({time_steps, num_voices}, torch::kFloat32);
+        offsets = torch::zeros({time_steps, num_voices}, torch::kFloat32);
     }
 
     /**
@@ -628,23 +627,9 @@ template <int time_steps_, int num_voices_> struct HVPpq
      * @param velocities_
      * @param offsets_
      */
-    HVPpq(torch::Tensor hits_, torch::Tensor hit_probabilities_, torch::Tensor velocities_, torch::Tensor offsets_):
+    HVOLight(torch::Tensor hits_, torch::Tensor hit_probabilities_, torch::Tensor velocities_, torch::Tensor offsets_):
         hits(hits_), time_steps(time_steps_), num_voices(num_voices_),
         velocities(velocities_),
-        hit_probabilities(hit_probabilities_) {
-
-        ppqs = torch::zeros({time_steps, num_voices}, torch::kFloat32);
-
-        for (int time_ix = 0; time_ix < time_steps; time_ix++)
-        {
-            for (int voice_ix = 0; voice_ix < num_voices; voice_ix++)
-            {
-                onset_time time(time_ix, offsets_[time_ix][voice_ix].item().toDouble());
-                ppqs[time_ix][voice_ix] = time.ppq;
-            }
-        }
-    }
-
-
-
+        offsets(offsets_), hit_probabilities(hit_probabilities_)
+    {}
 };
