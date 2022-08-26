@@ -23,5 +23,8 @@ private:
     unique_ptr<PianoRoll_GeneratedDrums_AllVoices> DrumsPianoRollWidget;
     unique_ptr<MonotonicGrooveWidget> MonotonicGroovePianoRollsWidget;
 
+    // playhead position progress bar
+    double playhead_pos;
+    juce::ProgressBar PlayheadProgressBar {playhead_pos};
 };
 

@@ -65,12 +65,8 @@ public:
 
     void resized() override {
         auto area = getLocalBounds();
-        auto w = (float) getWidth();
-        auto label_ratio_of_width = 0.1f;
-        auto label_width = (int) (label_ratio_of_width * w);
-        label.setBounds(area.removeFromLeft(label_width));
-            
-        auto grid_width = area.getWidth() / (num_gridlines+4);
+        label.setBounds(area.removeFromLeft((int) area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width)));
+        auto grid_width = area.proportionOfWidth(gui_settings::PianoRolls::timestep_ratio_of_width);
         for (int i = 0; i<num_gridlines; i++)
         {
             interactivePRollBlocks[i]->setBounds (area.removeFromLeft(grid_width));

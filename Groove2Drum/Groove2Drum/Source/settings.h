@@ -93,5 +93,16 @@ namespace gui_settings{
     namespace TextMessageLoggerTextEditor{
         constexpr int maxChars { 3000 };
     }
+
+    namespace PianoRolls
+    {
+        constexpr float label_ratio_of_width {0.1f};        // ratio of label on left side relative to local width
+        constexpr float timestep_ratio_of_width {1.0f / (HVO_params::time_steps + 4.0f)};
+        constexpr float prob_to_pianoRoll_Ratio {0.4f};
+        constexpr float space_reserved_right_side_of_gui_ratio_of_width {0.3f};
+
+        constexpr float total_pianoRoll_ratio_of_width {timestep_ratio_of_width * HVO_params::time_steps};
+        constexpr float XYPlane_ratio_of_width {1.0f - (label_ratio_of_width + total_pianoRoll_ratio_of_width)};
+    }
 }
 

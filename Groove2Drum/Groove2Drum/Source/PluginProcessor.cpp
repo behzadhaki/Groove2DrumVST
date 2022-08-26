@@ -87,11 +87,11 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         auto startPpq = *Pinfo->getPpqPosition();
         auto qpm = *Pinfo->getBpm();
         auto start_ = fmod(startPpq, HVO_params::time_steps/4); // start_ should be always between 0 and 8
-
+        playhead_pos = start_ / (HVO_params::time_steps/4.0f);
         //juce::MidiMessage msg = juce::MidiMessage::noteOn((int)1, (int)36, (float)100.0);
         if (latestGeneratedData.numberOfGenerations() > 0)
         {
-            for (int idx = 0; idx < latestGeneratedData.numberOfGenerations(); idx++)
+            for (size_t idx = 0; idx < (size_t) latestGeneratedData.numberOfGenerations(); idx++)
             {
                 auto ppqs_from_start_ = latestGeneratedData.ppqs[idx] - start_;
                 auto samples_from_start_ = ppqs_from_start_ * (60 * fs) / qpm;
@@ -131,4 +131,9 @@ juce::AudioProcessorEditor* MidiFXProcessor::createEditor()
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new MidiFXProcessor();
+}
+
+float MidiFXProcessor::get_playhead_pos()
+{
+    return playhead_pos;
 }

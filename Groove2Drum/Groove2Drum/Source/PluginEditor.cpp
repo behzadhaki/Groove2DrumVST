@@ -43,6 +43,9 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     DrumsPianoRollWidget->addEventWithPPQ(4, 3.01f, 0, 0.5f, 0.0f);
     DrumsPianoRollWidget->addEventWithPPQ(4, 4.01f, 1, 0.5f, 0.0f);*/
 
+    // Progress Bar
+    playhead_pos = MidiFXProcessorPointer_->get_playhead_pos();
+    addAndMakeVisible(PlayheadProgressBar);
 
     // Set window size
     setResizable (true, true);
@@ -63,9 +66,24 @@ void MidiFXProcessorEditor::resized()
 {
     auto area = getLocalBounds();
     setBounds(area);                            // bounds for main Editor GUI
-    area.removeFromRight(proportionOfWidth(0.3f)); // reserve right side for other controls
+
+    // reserve right side for other controls
+    area.removeFromRight(proportionOfWidth(gui_settings::PianoRolls::space_reserved_right_side_of_gui_ratio_of_width));
+
+    // layout pianoRolls for generated drums at top
     DrumsPianoRollWidget->setBounds (area.removeFromTop(area.proportionOfHeight(0.7f))); // piano rolls at top
-    MonotonicGroovePianoRollsWidget->setBounds(area.removeFromBottom(area.proportionOfHeight(0.9f))); // groove at bottom
+
+    // layout pianoRolls for generated drums on top
+    MonotonicGroovePianoRollsWidget->setBounds(area.removeFromBottom(area.proportionOfHeight(0.8f))); // groove at bottom
+
+    // layout Playhead Progress Bar
+    area.removeFromLeft(area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width));
+    DBG(gui_settings::PianoRolls::label_ratio_of_width);
+    DBG(gui_settings::PianoRolls::XYPlane_ratio_of_width);
+
+    area.removeFromRight(area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width*1.2f));
+    PlayheadProgressBar.setBounds(area);
+
 }
 
 void MidiFXProcessorEditor::paint(juce::Graphics& g)
@@ -81,5 +99,7 @@ void MidiFXProcessorEditor::timerCallback()
     {
         DrumsPianoRollWidget->updateWithNewScore(ptr_->new_generated_data.getLatestOnly());
     }
+
+    playhead_pos = MidiFXProcessorPointer_->get_playhead_pos();
 
 }

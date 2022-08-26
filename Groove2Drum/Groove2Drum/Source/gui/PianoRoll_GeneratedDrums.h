@@ -76,30 +76,13 @@ public:
 
     void resized() override {
         auto area = getLocalBounds();
-        auto w = (float) area.getWidth();
-        auto h = (float) area.getHeight();
-
-        // layout slider on lower right corner
-        auto prob_to_pianoRoll_Ratio =  0.4f;
-        /*area.removeFromLeft(int(w-h*prob_to_pianoRoll_Ratio));
-        MaxCount_Prob_XYPlane->setBounds (area.removeFromBottom(int(h*prob_to_pianoRoll_Ratio)));*/
-
-        // layout the rest
-        w = (float) area.getWidth();
-        h = (float) area.getHeight();
-        auto label_ratio_of_width = 0.1f;
-        auto label_width = (int) (label_ratio_of_width * w);
-        label.setBounds(area.removeFromLeft(label_width));
-
-        //MaxCount_Prob_XYPlane->setBounds(area.removeFromRight(h));
-
-        auto grid_width = area.getWidth() / (num_gridlines+4);
+        label.setBounds(area.removeFromLeft((int) area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width)));
+        auto grid_width = area.proportionOfWidth(gui_settings::PianoRolls::timestep_ratio_of_width);
         for (int i = 0; i<num_gridlines; i++)
         {
             interactivePRollBlocks[i]->setBounds (area.removeFromLeft(grid_width));
         }
-
-        MaxCount_Prob_XYPlane->setBounds (area.removeFromBottom(int(h*prob_to_pianoRoll_Ratio)));
+        MaxCount_Prob_XYPlane->setBounds (area.removeFromBottom(proportionOfHeight(gui_settings::PianoRolls::prob_to_pianoRoll_Ratio)));
     }
 };
 
@@ -135,15 +118,11 @@ public:
     }
 
     void resized() override {
-        auto total_gaps = 0;//int((float) getHeight() * 0.1f);
         auto area = getLocalBounds();
-        int PRollheight;
-        PRollheight = (int((float) area.getHeight() )- total_gaps) / num_voices;
-        auto GapHeight = int (total_gaps / num_voices);
+        int PRollheight = (int((float) area.getHeight() )) / num_voices;
         for (int voice_i=0; voice_i<num_voices; voice_i++)
         {
             PianoRoll[voice_i]->setBounds(area.removeFromBottom(PRollheight));
-            // area.removeFromBottom(GapHeight);
         }
     }
 
