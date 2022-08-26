@@ -84,10 +84,18 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     // In playback mode, add drum note to the buffer if the time is right
     if (Pinfo->getIsPlaying())
     {
-        auto startPpq = *Pinfo->getPpqPosition();
+        if (*Pinfo->getPpqPosition() < startPpq)
+        {
+            // if playback head moved backwards or playback paused and restarted
+            // change the registration_times of groove events to ensure the
+            // groove properly overdubs
+            modelThread.scaled_groove.registeration_times.index({None, None}) = -100;
+        }
+
+        startPpq = *Pinfo->getPpqPosition();
         auto qpm = *Pinfo->getBpm();
         auto start_ = fmod(startPpq, HVO_params::time_steps/4); // start_ should be always between 0 and 8
-        playhead_pos = start_ / (HVO_params::time_steps/4.0f);
+        playhead_pos = fmod(startPpq + HVO_params::_32_note_ppq, HVO_params::time_steps/4) / (HVO_params::time_steps/4.0f);
         //juce::MidiMessage msg = juce::MidiMessage::noteOn((int)1, (int)36, (float)100.0);
         if (latestGeneratedData.numberOfGenerations() > 0)
         {

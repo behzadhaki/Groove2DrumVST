@@ -77,6 +77,7 @@ namespace GuiIOFifos
         // used for sending a manually drawn note in the MonotonicGroove Widget to GrooveThread
         LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size> manually_drawn_notes {};          // todo To integrate in code
     };
+
     // =================================================================================
 
 

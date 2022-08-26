@@ -45,7 +45,6 @@ public:
     // getters
     float get_playhead_pos();
 
-
 private:
 
     // Queues for communicating Between the main threads in processor
@@ -59,6 +58,11 @@ private:
     // holds the playhead position for displaying on GUI
     float playhead_pos;
 
+    // holds the previous start ppq to check restartedFlag status
+    double startPpq {0};
+
     //  midiBuffer to fill up with generated data
     juce::MidiBuffer tempBuffer;
+
+
 };

@@ -550,7 +550,7 @@ template <int time_steps_> struct MonotonicGroove
             auto prev_registration_time_at_grid = registeration_times[grid_index].template item<float>();
             if (abs(ppq - prev_registration_time_at_grid) > HVO_params::_32_note_ppq)
             {   // 2.b. add note if received not in the vicinity of previous note registered at the same position
-                if (note_.velocity != (hvo.velocities_unmodified[grid_index] * hvo.hits[grid_index]).template item<float>() and
+                if (note_.velocity != (hvo.velocities_unmodified[grid_index] * hvo.hits[grid_index]).template item<float>() or
                     fmod((ppq - prev_registration_time_at_grid), (time_steps/4))!=0)
                 shouldAddNote = true;
             }

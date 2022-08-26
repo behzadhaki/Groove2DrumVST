@@ -71,16 +71,13 @@ void MidiFXProcessorEditor::resized()
     area.removeFromRight(proportionOfWidth(gui_settings::PianoRolls::space_reserved_right_side_of_gui_ratio_of_width));
 
     // layout pianoRolls for generated drums at top
-    DrumsPianoRollWidget->setBounds (area.removeFromTop(area.proportionOfHeight(0.7f))); // piano rolls at top
+    DrumsPianoRollWidget->setBounds (area.removeFromTop(area.proportionOfHeight(gui_settings::PianoRolls::completePianoRollHeight))); // piano rolls at top
 
     // layout pianoRolls for generated drums on top
-    MonotonicGroovePianoRollsWidget->setBounds(area.removeFromBottom(area.proportionOfHeight(0.8f))); // groove at bottom
+    MonotonicGroovePianoRollsWidget->setBounds(area.removeFromBottom(area.proportionOfHeight(gui_settings::PianoRolls::completeMonotonicGrooveHeight))); // groove at bottom
 
     // layout Playhead Progress Bar
     area.removeFromLeft(area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width));
-    DBG(gui_settings::PianoRolls::label_ratio_of_width);
-    DBG(gui_settings::PianoRolls::XYPlane_ratio_of_width);
-
     area.removeFromRight(area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width*1.2f));
     PlayheadProgressBar.setBounds(area);
 
@@ -93,13 +90,30 @@ void MidiFXProcessorEditor::paint(juce::Graphics& g)
 }
 void MidiFXProcessorEditor::timerCallback()
 {
-
-    auto ptr_ = MidiFXProcessorPointer_->ModelThreadToDrumPianoRollWidgetQues.get();
-    if (ptr_->new_generated_data.getNumReady()>0)
+    // get Generations and probs from model thread to display on drum piano rolls
     {
-        DrumsPianoRollWidget->updateWithNewScore(ptr_->new_generated_data.getLatestOnly());
+        auto ptr_ = MidiFXProcessorPointer_->ModelThreadToDrumPianoRollWidgetQues.get();
+        if (ptr_->new_generated_data.getNumReady() > 0)
+        {
+            DrumsPianoRollWidget->updateWithNewScore(
+                ptr_->new_generated_data.getLatestOnly());
+        }
     }
 
+    // get Grooves from GrooveThread to display in Groove Piano Rolls
+    {
+        auto ptr_ = MidiFXProcessorPointer_->GrooveThread2GGroovePianoRollWidgetQues.get();
+
+        if (ptr_->new_grooves.getNumReady() > 0)
+        {
+            DBG("RECEIVED NEW GROOVE");
+            MonotonicGroovePianoRollsWidget->updateWithNewGroove(
+                ptr_->new_grooves.getLatestOnly());
+        }
+
+    }
+
+    // get playhead position to display on progress bar
     playhead_pos = MidiFXProcessorPointer_->get_playhead_pos();
 
 }

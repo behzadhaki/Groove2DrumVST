@@ -60,7 +60,11 @@ public:
         x_ParameterValue = x_min + x_coor / w * (x_max - x_min);
         y_ParameterValue = y_min + (1 - y_coor / h) * (y_max - y_min);
 
-
+        if (!(xyCoordinate.getX() == 0 and xyCoordinate.getY() == 0))
+        {
+            x_default = x_ParameterValue;
+            y_default = y_ParameterValue;
+        }
         repaint();
     }
 
@@ -84,31 +88,35 @@ public:
         shareParameter();
     }
 
-    void mouseDown(const juce::MouseEvent& ev) override
+    /*void mouseDown(const juce::MouseEvent& ev) override
     {
         m_mousepos = ev.position;
         moveToCoordinate(m_mousepos);
-    }
+    }*/
 
     void mouseDoubleClick(const juce::MouseEvent& ev) override
     {
         // more than 2 clicks goes back to default
-        if (ev.getNumberOfClicks()>2)
-        {
-            moveUsingActualValues(x_default, y_default);
-        }
-        else
+        if (x_ParameterValue == 0 and y_ParameterValue == 1)
         {
             // shift with double click sets area to max
             if (ev.mods.isShiftDown())
             {
                 moveToCoordinate(juce::Point<float> {(float)getX(), (float)getY()});
             }
-            else // regular double click sets area to 0 --> no possible hits
+            else
             {
-                moveToCoordinate(juce::Point<float> {0.0f, 0.0f});
+                DBG(x_default);
+                DBG(y_default);
+                moveUsingActualValues(x_default, y_default);
             }
+
         }
+        else // regular double click sets area to 0 --> no possible hits
+        {
+            moveToCoordinate(juce::Point<float> {0.0f, 0.0f});
+        }
+
 
         shareParameter();
     }
@@ -192,7 +200,7 @@ namespace SingleStepPianoRollBlock
             backgroundcolor = backgroundcolor_;
             isClickable = isClickable_;
             hit = 0;
-            velocity = 1;
+            velocity = 0;
             offset = 0;
             voice_num = voice_num_;
         }
@@ -242,7 +250,7 @@ namespace SingleStepPianoRollBlock
             }
         }
 
-        void mouseDown(const juce::MouseEvent& ev)
+        /*void mouseDown(const juce::MouseEvent& ev)
         {
             if (isClickable)
             {
@@ -257,7 +265,7 @@ namespace SingleStepPianoRollBlock
                 }
                 repaint();
             }
-        }
+        }*/
 
         void mouseDrag(const juce::MouseEvent& ev)
         {
@@ -276,21 +284,26 @@ namespace SingleStepPianoRollBlock
             }
         }
 
-        void mouseDoubleClick(const juce::MouseEvent& ) override
+        void mouseDoubleClick(const juce::MouseEvent& ev) override
         {
             if (isClickable)
             {
-                if (hit == 0)
+                if (hit == 0) // convert to hit
                 {
-                    hit = 1;
-                    velocity = 0.7f;
-                    offset = 0.0f;
+                    if (velocity == 0) // if no previous note here! make a new one with offset 0
+                    {
+                        hit = 1;
+                        velocity = 1.0f - ev.position.getY()/float(getHeight());
+                        offset = 0;
+                    }
+                    else            // if note already here, double click activates it again
+                    {
+                        hit = 1;
+                    }
                 }
-                else
+                else  // convert to silence without deleting velocity/offset info
                 {
                     hit = 0;
-                    velocity = 0.0;
-                    offset = 0.0f;
                 }
                 repaint();
                 sendDataToQueue();
@@ -491,11 +504,11 @@ namespace SingleStepPianoRollBlock
             ListenerWidgets.push_back(widget);
         }
 
-        void mouseDown(const juce::MouseEvent& ev) override
+        /*void mouseDown(const juce::MouseEvent& ev) override
         {
             XYPlane::mouseDown(ev);
             BroadCastAllInfo();
-        }
+        }*/
 
         void mouseDoubleClick(const juce::MouseEvent& ev) override
         {

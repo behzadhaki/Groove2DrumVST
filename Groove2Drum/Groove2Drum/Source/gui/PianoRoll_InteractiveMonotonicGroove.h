@@ -101,4 +101,20 @@ public:
 
     }
 
+    void updateWithNewGroove(MonotonicGroove<HVO_params::time_steps> new_groove)
+    {
+        DBG("DISTRIBUTING NEW GROOVE");
+        for (int i = 0; i < HVO_params::time_steps; i++)
+        {
+            unModifiedGrooveGui->interactivePRollBlocks[(size_t) i]->addEvent(
+                new_groove.hvo.hits[i].item().toInt(),
+                new_groove.hvo.velocities_unmodified[i].item().toFloat(),
+                new_groove.hvo.offsets_unmodified[i].item().toFloat());
+
+            ModifiedGrooveGui->interactivePRollBlocks[(size_t) i]->addEvent(
+                new_groove.hvo.hits[i].item().toInt(),
+                new_groove.hvo.velocities_modified[i].item().toFloat(),
+                new_groove.hvo.offsets_modified[i].item().toFloat());
+        }
+    }
 };

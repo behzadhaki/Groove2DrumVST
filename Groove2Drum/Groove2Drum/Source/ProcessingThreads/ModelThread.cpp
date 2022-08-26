@@ -67,12 +67,6 @@ void ModelThread::run()
     bool shouldResample;
     bool newGrooveAvailable;
 
-    // generated_hvo to be sent to next thread
-    HVO<HVO_params::time_steps, HVO_params::num_voices > generated_hvo;
-
-    // placeholder for reading the latest groove received in queue
-    MonotonicGroove<HVO_params::time_steps> scaled_groove;
-
 
 
     while (!bExit)
