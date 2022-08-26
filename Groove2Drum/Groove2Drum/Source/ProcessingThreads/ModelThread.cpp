@@ -149,7 +149,7 @@ void ModelThread::run()
         // should resample output if, input new groove received
         if (shouldResample)
         {
-            auto [hits, velocities, offsets] = modelAPI.sample("Threshold");
+            auto [hits, velocities, offsets] = modelAPI.sample("Threshold", perVoiceMaxNumVoicesAllowed);
             generated_hvo = HVO<HVO_params::time_steps, HVO_params::num_voices>(
                 hits, velocities, offsets);
             auto pianoRollData = HVOLight<HVO_params::time_steps, HVO_params::num_voices>(

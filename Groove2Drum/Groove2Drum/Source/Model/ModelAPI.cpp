@@ -3,11 +3,35 @@
 //
 
 #include "ModelAPI.h"
-#include "../settings.h"
-
 
 
 using namespace std;
+
+/*template<typename Iterator>
+inline std::vector<size_t> n_largest_indices(Iterator it, Iterator end, size_t n) {
+    struct Element {
+        Iterator it;
+        size_t index;
+    };
+
+    std::vector<Element> top_elements;
+    top_elements.reserve(n + 1);
+
+    for(size_t index = 0; it != end; ++index, ++it) {
+        top_elements.insert(std::upper_bound(top_elements.begin(), top_elements.end(), *it, [](auto value, auto element){return value > *element.it;}), {it, index});
+        if (index >= n)
+            top_elements.pop_back();
+    }
+
+    std::vector<size_t> result;
+    result.reserve(top_elements.size());
+
+    for(auto &element: top_elements)
+        result.push_back(element.index);
+
+    return result;
+}*/
+
 
 static torch::Tensor vector2tensor(vector<float> vec)
 {
@@ -121,10 +145,52 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> MonotonicGrooveTransform
             // Get voice threshold value
             auto thres_voice_i  = per_voice_sampling_thresholds[voice_i];
             // Get probabilities of voice hits at all timesteps
-            auto voice_hot_probs = hits_probabilities.index(
+            auto voice_hit_probs = hits_probabilities.index(
                 {row_indices, voice_i});
             // Find locations exceeding threshold and set to 1 (hit)
-            auto active_time_indices = voice_hot_probs>=thres_voice_i;
+            auto active_time_indices = voice_hit_probs>=thres_voice_i;
+            hits.index_put_({active_time_indices, voice_i}, 1);
+        }
+    }
+
+    // Set non-hit vel and offset values to 0 (don't do this, otherwise, changing thresh doesn't work properly at times!)
+    // velocities = velocities * hits;
+    // offsets = offsets * hits;
+
+    // DBG(tensor2string(hits));
+
+    return {hits, velocities, offsets};
+}
+
+std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> MonotonicGrooveTransformerV1::
+    sample(std::string sample_mode, vector<float> perVoiceMaxNumVoicesAllowed)
+{
+    assert (sample_mode=="Threshold" or sample_mode=="SampleProbability");
+
+    hits = torch::zeros({time_steps, num_voices});
+
+    auto row_indices = torch::arange(0, time_steps);
+    if (sample_mode=="Threshold")
+    {
+        // read CPU accessors in  https://pytorch.org/cppdocs/notes/tensor_basics.html
+        // asserts accessed part of tensor is 2-dimensional and holds floats.
+        //auto hits_probabilities_a = hits_probabilities.accessor<float,2>();
+
+        for (int voice_i=0; voice_i < num_voices; voice_i++){
+            // Get voice threshold value
+            auto thres_voice_i  = per_voice_sampling_thresholds[voice_i];
+            // Get probabilities of voice hits at all timesteps
+            auto voice_hit_probs = hits_probabilities.index(
+                {row_indices, voice_i});
+            auto tup = voice_hit_probs.topk((int) perVoiceMaxNumVoicesAllowed[size_t(voice_i)]);
+            auto candidate_probs = std::get<0>(tup);
+            auto candidate_prob_indices = std::get<1>(tup);
+
+            // Find locations exceeding threshold and set to 1 (hit)
+            auto accepted_candidate_indices = candidate_probs>=thres_voice_i;
+            auto active_time_indices = candidate_prob_indices.index({accepted_candidate_indices});
+
+
             hits.index_put_({active_time_indices, voice_i}, 1);
         }
     }
@@ -137,7 +203,6 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> MonotonicGrooveTransform
 
     return {hits, velocities, offsets};
 }
-
 // ------------------------------------------------------------
 // -------------------UTILS------------------------------------
 // ------------------------------------------------------------

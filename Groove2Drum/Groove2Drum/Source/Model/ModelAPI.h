@@ -6,6 +6,8 @@
 #define JUCECMAKEREPO_MODELAPI_H
 
 #include <torch/script.h> // One-stop header.
+#include "../settings.h"
+
 using namespace torch::indexing;
 using namespace std;
 
@@ -35,8 +37,10 @@ public:
     // Step 1. Passes input through the model and updates logits, vels and offsets
     void forward_pass(torch::Tensor monotonicGrooveInput);
     // Step 2. Sample hvo after the forward pass
-    std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sample(std::string sample_mode = "Threshold");
-
+    std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sample(
+        std::string sample_mode = "Threshold");
+    std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sample(
+        std::string sample_mode, vector<float> perVoiceMaxNumVoicesAllowed);
 
     // store path locally
     std::string model_path;
