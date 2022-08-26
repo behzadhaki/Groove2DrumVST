@@ -45,7 +45,9 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
 
     // Progress Bar
     playhead_pos = MidiFXProcessorPointer_->get_playhead_pos();
+    PlayheadProgressBar.setColour(PlayheadProgressBar.foregroundColourId, beat_backg_color);
     addAndMakeVisible(PlayheadProgressBar);
+
 
     // Set window size
     setResizable (true, true);
@@ -78,8 +80,8 @@ void MidiFXProcessorEditor::resized()
 
     // layout Playhead Progress Bar
     area.removeFromLeft(area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width));
-    area.removeFromRight(area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width*1.2f));
-    PlayheadProgressBar.setBounds(area);
+    // area.removeFromRight(area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width*1.2f));
+    PlayheadProgressBar.setBounds(area.removeFromLeft(DrumsPianoRollWidget->PianoRoll[0]->getPianoRollSectionWidth()));
 
 }
 

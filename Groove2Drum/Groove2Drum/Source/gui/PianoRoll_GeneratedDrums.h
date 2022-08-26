@@ -18,9 +18,9 @@ public:
     vector<shared_ptr<SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlockWithProbability>> interactivePRollBlocks;
     shared_ptr<SingleStepPianoRollBlock::XYPlaneWithtListeners> MaxCount_Prob_XYPlane; // x axis will be Max count (0 to time_steps), y axis is threshold 0 to 1
     juce::Label label;
+    int pianoRollSectionWidth {0};
 
-
-    int num_gridlines;
+    int num_gridlines ;
 
     PianoRoll_GeneratedDrums_SingleVoice(LockFreeQueue<float, GeneralSettings::gui_io_queue_size>* max_num_to_modelThread_que,
                                          LockFreeQueue<float, GeneralSettings::gui_io_queue_size>* sample_thresh_to_modelThread_que,
@@ -56,11 +56,11 @@ public:
             {
                 interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlockWithProbability>(false, rest_backg_color, i, voice_number_));
             }
+
             auto prob_widget_listener = interactivePRollBlocks[i]->probabilityCurveWidgetPntr.get(); // allow slider to update line in the probability widgets
             prob_widget_listener->setSamplingThreshold(MaxCount_Prob_XYPlane->getYValue());         // synchronize thresh line with the defaul in Slider
             MaxCount_Prob_XYPlane->addWidget(interactivePRollBlocks[i].get());
             addAndMakeVisible(interactivePRollBlocks[i].get());
-
         }
 
         // set initial defaul values of XYPLane (MUST BE AFTER DEFINING AND ATTACHING THE PER STEP WIDGETS
@@ -68,6 +68,10 @@ public:
 
     }
 
+    int getPianoRollSectionWidth()
+    {
+        return pianoRollSectionWidth;
+    }
 
     void addEventToTimeStep(int time_step_ix, int hit_, float velocity_, float offset_, float probability_)
     {
@@ -78,9 +82,11 @@ public:
         auto area = getLocalBounds();
         label.setBounds(area.removeFromLeft((int) area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width)));
         auto grid_width = area.proportionOfWidth(gui_settings::PianoRolls::timestep_ratio_of_width);
+        pianoRollSectionWidth = 0;
         for (int i = 0; i<num_gridlines; i++)
         {
             interactivePRollBlocks[i]->setBounds (area.removeFromLeft(grid_width));
+            pianoRollSectionWidth += interactivePRollBlocks[i]->getWidth();
         }
         MaxCount_Prob_XYPlane->setBounds (area.removeFromBottom(proportionOfHeight(gui_settings::PianoRolls::prob_to_pianoRoll_Ratio)));
     }
