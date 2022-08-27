@@ -73,6 +73,11 @@ public:
         return pianoRollSectionWidth;
     }
 
+    int getPianoRollLeftBound()
+    {
+        return label.getWidth();
+    }
+
     void addEventToTimeStep(int time_step_ix, int hit_, float velocity_, float offset_, float probability_)
     {
         interactivePRollBlocks[time_step_ix]->addEvent(hit_, velocity_, offset_, probability_, MaxCount_Prob_XYPlane->getYValue());
@@ -161,6 +166,21 @@ public:
         old_generated_data = latest_generated_data;
     }
 
+    void UpdatePlayheadLocation (double playhead_percentage_)
+    {
+        playhead_percentage = playhead_percentage_;
+        repaint();
+    }
+
+    void paint(juce::Graphics& g) override
+    {
+        auto w = PianoRoll[0]->getPianoRollSectionWidth();
+        auto x0 = PianoRoll[0]->getPianoRollLeftBound();
+        auto x = w * playhead_percentage + x0;
+        g.setColour(playback_progressbar_color);
+        g.drawLine(x, 0, x, getHeight());
+    }
 private:
     HVOLight <HVO_params::time_steps, HVO_params::num_voices> old_generated_data{};
+    double playhead_percentage {0};
 };

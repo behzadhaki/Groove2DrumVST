@@ -45,7 +45,7 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
 
     // Progress Bar
     playhead_pos = MidiFXProcessorPointer_->get_playhead_pos();
-    PlayheadProgressBar.setColour(PlayheadProgressBar.foregroundColourId, beat_backg_color);
+    PlayheadProgressBar.setColour(PlayheadProgressBar.foregroundColourId, playback_progressbar_color);
     addAndMakeVisible(PlayheadProgressBar);
 
 
@@ -89,6 +89,9 @@ void MidiFXProcessorEditor::paint(juce::Graphics& g)
 {
     g.fillAll(getLookAndFeel().findColour(
         juce::ResizableWindow::backgroundColourId));
+
+
+
 }
 void MidiFXProcessorEditor::timerCallback()
 {
@@ -117,5 +120,5 @@ void MidiFXProcessorEditor::timerCallback()
 
     // get playhead position to display on progress bar
     playhead_pos = MidiFXProcessorPointer_->get_playhead_pos();
-
+    DrumsPianoRollWidget->UpdatePlayheadLocation(playhead_pos);
 }
