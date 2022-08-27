@@ -50,6 +50,12 @@ GrooveThread::~GrooveThread()
 
 }
 
+void GrooveThread::ForceResetGroove()
+{
+    DBG("RESETTING GROOVE IN GROOVE THREAD _-> to be implemented");
+    shouldResetGroove = true;
+}
+
 void GrooveThread::run()
 {
     // notify if the thread is still running
@@ -68,7 +74,15 @@ void GrooveThread::run()
         // only need to recalc if new info received in queues
         isNewGrooveAvailable = false;
 
-        
+        if (shouldResetGroove)
+        {
+            monotonic_groove.resetGroove();
+            DBG (" GROOVE JUST RESET in Groove Thread");
+
+            shouldResetGroove = false;
+            isNewGrooveAvailable = true;
+        }
+
         // see if new BasicNotes received from main processblock
         if (ProcessBlockToGrooveThreadQues != nullptr)
         {

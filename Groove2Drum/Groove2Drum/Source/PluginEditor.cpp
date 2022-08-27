@@ -48,6 +48,16 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     PlayheadProgressBar.setColour(PlayheadProgressBar.foregroundColourId, playback_progressbar_color);
     addAndMakeVisible(PlayheadProgressBar);
 
+    // add buttons
+    addAndMakeVisible (resetGrooveButton);
+    resetGrooveButton.setButtonText ("Reset Groove");
+    resetGrooveButton.addListener (this);
+    addAndMakeVisible (resetSamplingParametersButton);
+    resetSamplingParametersButton.setButtonText ("Reset Sampling Parameters");
+    resetSamplingParametersButton.addListener (this);
+    addAndMakeVisible (resetAllButton);
+    resetAllButton.setButtonText ("Reset All");
+    resetAllButton.addListener (this);
 
     // Set window size
     setResizable (true, true);
@@ -59,9 +69,9 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
 
 MidiFXProcessorEditor::~MidiFXProcessorEditor()
 {
-    /*MidiFXProcessorPointer_->modelThread.removeChangeListener(this);*/
-    /*ProcessorToGuiQueueManagerThread_.signalThreadShouldExit();
-    ProcessorToGuiQueueManagerThread_.stopThread(100);*/
+    resetGrooveButton.removeListener(this);
+    resetSamplingParametersButton.removeListener(this);
+    resetAllButton.removeListener(this);
 }
 
 void MidiFXProcessorEditor::resized()
@@ -83,6 +93,18 @@ void MidiFXProcessorEditor::resized()
     // area.removeFromRight(area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width*1.2f));
     PlayheadProgressBar.setBounds(area.removeFromLeft(DrumsPianoRollWidget->PianoRoll[0]->getPianoRollSectionWidth()));
 
+    // put buttons
+    area = getLocalBounds();
+    area.removeFromLeft(area.proportionOfWidth(1.0f - gui_settings::PianoRolls::space_reserved_right_side_of_gui_ratio_of_width));
+    area.removeFromTop(area.proportionOfHeight(0.9));
+    auto gap_w = area.proportionOfWidth(.05f);
+    auto button_w = area.proportionOfWidth(.2f);
+    area.removeFromLeft(gap_w);
+    resetGrooveButton.setBounds(area.removeFromLeft(button_w));
+    area.removeFromLeft(gap_w);
+    resetSamplingParametersButton.setBounds(area.removeFromLeft(button_w));
+    area.removeFromLeft(gap_w);
+    resetAllButton.setBounds(area.removeFromLeft(button_w));
 }
 
 void MidiFXProcessorEditor::paint(juce::Graphics& g)
@@ -121,4 +143,20 @@ void MidiFXProcessorEditor::timerCallback()
     // get playhead position to display on progress bar
     playhead_pos = MidiFXProcessorPointer_->get_playhead_pos();
     DrumsPianoRollWidget->UpdatePlayheadLocation(playhead_pos);
+}
+
+void MidiFXProcessorEditor::buttonClicked (juce::Button* button)  // [2]
+{
+    if (button == &resetGrooveButton)
+    {
+        MidiFXProcessorPointer_->grooveThread.ForceResetGroove();
+    }
+    if (button == &resetSamplingParametersButton)
+    {
+        DBG("RESETING SamplingParams");
+    }
+    if (button == &resetAllButton)
+    {
+        DBG("RESETING ALL");
+    }
 }

@@ -95,6 +95,7 @@ public:
         }
         MaxCount_Prob_XYPlane->setBounds (area.removeFromBottom(proportionOfHeight(gui_settings::PianoRolls::prob_to_pianoRoll_Ratio)));
     }
+
 };
 
 

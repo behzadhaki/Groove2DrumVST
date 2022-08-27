@@ -33,6 +33,9 @@ public:
     // run() is explicitly called
     void run() override;
 
+    // reset Groove if requested
+    void ForceResetGroove();
+
     // Used to check if thread is ready to be stopped
     // used to check if a parent thread has externally
     // requested the thread to stop
@@ -75,6 +78,8 @@ private:
     // int find_nearest_gridline(float ppq);
     // bool shouldReplace(BasicNote latest_Note);
 
+    // Flag to see if reseting the groove has been requested
+    bool shouldResetGroove {false};
     //----------------------------------------------------------------------
 
 };

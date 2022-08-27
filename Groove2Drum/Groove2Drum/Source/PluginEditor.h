@@ -6,7 +6,8 @@
 
 using namespace std;
 
-class MidiFXProcessorEditor : public juce::AudioProcessorEditor, public juce::Timer /*, public juce::ChangeListener*/
+class MidiFXProcessorEditor : public juce::AudioProcessorEditor, public juce::Timer,
+                              public juce::Button::Listener /*, public juce::ChangeListener*/
 {
 public:
     explicit MidiFXProcessorEditor(MidiFXProcessor&) ;
@@ -15,6 +16,7 @@ public:
     void resized() override;
     /*void changeListenerCallback (juce::ChangeBroadcaster* source) override;*/
     void timerCallback() override;
+    void buttonClicked (juce::Button* button) override;
 
 private:
     MidiFXProcessor* MidiFXProcessorPointer_;
@@ -22,6 +24,11 @@ private:
     // gui widgets
     unique_ptr<PianoRoll_GeneratedDrums_AllVoices> DrumsPianoRollWidget;
     unique_ptr<MonotonicGrooveWidget> MonotonicGroovePianoRollsWidget;
+
+    // buttons for reseting groove or xyslider params
+    juce::TextButton resetGrooveButton;
+    juce::TextButton resetSamplingParametersButton;
+    juce::TextButton resetAllButton;
 
     // playhead position progress bar
     double playhead_pos;
