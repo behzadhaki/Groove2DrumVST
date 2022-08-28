@@ -28,7 +28,7 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     }
 
     MonotonicGroovePianoRollsWidget = make_unique<MonotonicGrooveWidget>
-        (num_steps, step_ppq_res, steps_perBeat, beats_perBar);
+        (num_steps, step_ppq_res, steps_perBeat, beats_perBar, MidiFXProcessorPointer_->GroovePianoRollWidget2GrooveThreadQues.get());
 
     // Add widgets to Main Editor GUI
     addAndMakeVisible(DrumsPianoRollWidget.get());

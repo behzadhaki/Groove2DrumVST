@@ -20,11 +20,12 @@ public:
     juce::Label label;
     unique_ptr<XYPlane> xySlider;
 
-    PianoRoll_InteractiveMonotonicGroove(bool isInteractive,int num_gridlines_, float step_ppq_, int n_steps_per_beat, int n_beats_per_bar, string label_text)
+
+    PianoRoll_InteractiveMonotonicGroove(bool isInteractive,int num_gridlines_, float step_ppq_, int n_steps_per_beat, int n_beats_per_bar, string label_text,
+                                         GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQues = nullptr)
     {
         num_gridlines = num_gridlines_;
         step_ppq = step_ppq_;
-
 
         // Set Modified Label
         label.setText(label_text, juce::dontSendNotification);
@@ -39,15 +40,15 @@ public:
         {
             if (fmod(i, n_steps_per_beat*n_beats_per_bar) == 0)      // bar position
             {
-                interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlock>(isInteractive, bar_c, i));
+                interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlock>(isInteractive, bar_c, i, 0, GroovePianoRollWidget2GrooveThreadQues));
             }
             else if(fmod(i, n_steps_per_beat) == 0)                  // beat position
             {
-                interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlock>(isInteractive, beat_c, i));
+                interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlock>(isInteractive, beat_c, i, 0, GroovePianoRollWidget2GrooveThreadQues));
             }
             else                                                    // every other position
             {
-                interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlock>(isInteractive, def_c, i));
+                interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlock>(isInteractive, def_c, i, 0,  GroovePianoRollWidget2GrooveThreadQues));
             }
 
             addAndMakeVisible(interactivePRollBlocks[i].get());
@@ -83,10 +84,10 @@ public:
     unique_ptr<PianoRoll_InteractiveMonotonicGroove> unModifiedGrooveGui;
     unique_ptr<PianoRoll_InteractiveMonotonicGroove> ModifiedGrooveGui;
 
-    MonotonicGrooveWidget(int num_gridlines_, float step_ppq_duration, int n_steps_per_beat_, int n_beats_per_bar)
+    MonotonicGrooveWidget(int num_gridlines_, float step_ppq_duration, int n_steps_per_beat_, int n_beats_per_bar, GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQues = nullptr)
     {
         // Create Unmodified Piano ROll
-        unModifiedGrooveGui = make_unique<PianoRoll_InteractiveMonotonicGroove>(true, num_gridlines_, step_ppq_duration, n_steps_per_beat_, n_beats_per_bar, "Unmodified Groove");
+        unModifiedGrooveGui = make_unique<PianoRoll_InteractiveMonotonicGroove>(true, num_gridlines_, step_ppq_duration, n_steps_per_beat_, n_beats_per_bar, "Unmodified Groove", GroovePianoRollWidget2GrooveThreadQues);
         addAndMakeVisible(unModifiedGrooveGui.get());
         // Create Unmodified Piano ROll
         ModifiedGrooveGui = make_unique<PianoRoll_InteractiveMonotonicGroove>(false, num_gridlines_, step_ppq_duration, n_steps_per_beat_, n_beats_per_bar, "Adjusted Groove");

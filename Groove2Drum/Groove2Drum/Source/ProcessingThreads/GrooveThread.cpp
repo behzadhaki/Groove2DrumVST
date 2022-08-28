@@ -64,6 +64,10 @@ void GrooveThread::run()
     // flag to check if groove has been updated in an iteration
     bool isNewGrooveAvailable;
 
+    // flag to check if new HandDrawn Note has been added to groove
+    bool isNewGrooveAvailableUsingHandDrawnNote;
+
+
     // local variables to keep track of vel_range = (min_vel, max_vel) and offset ranges
     vel_range = {HVO_params::_min_vel, HVO_params::_max_vel};
     offset_range = {HVO_params::_min_offset, HVO_params::_max_offset};
@@ -73,21 +77,40 @@ void GrooveThread::run()
     {
         // only need to recalc if new info received in queues
         isNewGrooveAvailable = false;
+        isNewGrooveAvailableUsingHandDrawnNote = false;
 
         if (shouldResetGroove)
         {
             monotonic_groove.resetGroove();
-            DBG (" GROOVE JUST RESET in Groove Thread");
-
             shouldResetGroove = false;
             isNewGrooveAvailable = true;
         }
 
-        // see if new BasicNotes received from main processblock
         if (ProcessBlockToGrooveThreadQues != nullptr)
         {
-            BasicNote read_note;
 
+            // see if new BasicNotes received from gui by hand drawing dragging a note
+            while (GroovePianoRollWidget2GrooveThreadQues->manually_drawn_notes.getNumReady() > 0)
+            {
+                // Step 1. get new note
+                auto handDrawnNote = GroovePianoRollWidget2GrooveThreadQues->manually_drawn_notes.pop(); // here cnt result is 3
+
+                // groove should only be updated in playback mode
+                //if (read_note.capturedInPlaying) // todo uncomment
+                {
+                    // step 2. add to groove
+                    bool grooveUpdated = monotonic_groove.overdubWithNote(handDrawnNote);
+
+                    // activate sending flag if at least one note added
+                    if (grooveUpdated)
+                    {
+                        isNewGrooveAvailableUsingHandDrawnNote = true;
+                    }
+                }
+            }
+
+            // see if new BasicNotes received from main processblock
+            BasicNote read_note;
             while (ProcessBlockToGrooveThreadQues->new_notes.getNumReady() > 0 and not this->threadShouldExit())
             {
 
@@ -140,13 +163,15 @@ void GrooveThread::run()
 
 
         // Send groove to other threads if new one available
-        if (isNewGrooveAvailable)
+        if (isNewGrooveAvailable or isNewGrooveAvailableUsingHandDrawnNote)
         {
             if (GrooveThreadToModelThreadQues != nullptr)
             {
                 // send to Model Thread to pass through the model
                 GrooveThreadToModelThreadQues->new_grooves.push(monotonic_groove);
-
+            }
+            if (isNewGrooveAvailable)
+            {
                 // send groove to be displayed on the interface
                 GrooveThread2GGroovePianoRollWidgetQues->new_grooves.push(monotonic_groove);
             }

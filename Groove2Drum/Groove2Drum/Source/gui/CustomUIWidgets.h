@@ -194,11 +194,13 @@ namespace SingleStepPianoRollBlock
         float low_offset = min(HVO_params::_min_offset, HVO_params::_max_offset); // min func just incase min and max offsets are wrongly defined
         float hi_offset = max(HVO_params::_min_offset, HVO_params::_max_offset); // max func just incase min and max offsets are wrongly defined
         float range_offset = hi_offset - low_offset;
+        GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQues;
 
-        PianoRoll_InteractiveIndividualBlock(bool isClickable_, juce::Colour backgroundcolor_, int grid_index_, int voice_num_ = 0) {
+        PianoRoll_InteractiveIndividualBlock(bool isClickable_, juce::Colour backgroundcolor_, int grid_index_, int voice_num_ = 0, GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQuesPntr = nullptr) {
             grid_index = grid_index_;
             backgroundcolor = backgroundcolor_;
             isClickable = isClickable_;
+            GroovePianoRollWidget2GrooveThreadQues = GroovePianoRollWidget2GrooveThreadQuesPntr;
             hit = 0;
             velocity = 0;
             offset = 0;
@@ -305,8 +307,8 @@ namespace SingleStepPianoRollBlock
                 {
                     hit = 0;
                 }
-                repaint();
                 sendDataToQueue();
+                repaint();
             }
         }
 
@@ -319,12 +321,11 @@ namespace SingleStepPianoRollBlock
             offset = offset_;
 
             repaint();
-            sendDataToQueue();
         }
 
         void sendDataToQueue()
         {
-            // todo to be implemented
+            GroovePianoRollWidget2GrooveThreadQues->manually_drawn_notes.push(BasicNote(voice_num, velocity, grid_index, offset));
         }
 
         // converts offset to actual x value on component
@@ -449,9 +450,9 @@ namespace SingleStepPianoRollBlock
         unique_ptr<ProbabilityLevelWidget> probabilityCurveWidgetPntr;         // component instance within which we'll draw the probability curve
 
 
-        PianoRoll_InteractiveIndividualBlockWithProbability(bool isClickable_, juce::Colour backgroundcolor_, int grid_index_, int voice_num_)
+        PianoRoll_InteractiveIndividualBlockWithProbability(bool isClickable_, juce::Colour backgroundcolor_, int grid_index_, int voice_num_, GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQues=nullptr)
         {
-            pianoRollBlockWidgetPntr = make_unique<PianoRoll_InteractiveIndividualBlock>(isClickable_, backgroundcolor_, grid_index_, voice_num_);
+            pianoRollBlockWidgetPntr = make_unique<PianoRoll_InteractiveIndividualBlock>(isClickable_, backgroundcolor_, grid_index_, voice_num_, GroovePianoRollWidget2GrooveThreadQues);
             addAndMakeVisible(pianoRollBlockWidgetPntr.get());
 
 
