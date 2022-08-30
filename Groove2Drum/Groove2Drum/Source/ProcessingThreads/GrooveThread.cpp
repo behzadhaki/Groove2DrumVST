@@ -169,7 +169,7 @@ void GrooveThread::run()
                 // send to Model Thread to pass through the model
                 GrooveThreadToModelThreadQues->new_grooves.push(monotonic_groove);
             }
-            if (isNewGrooveAvailable)
+            if (GrooveThread2GGroovePianoRollWidgetQues != nullptr)
             {
                 // send groove to be displayed on the interface
                 GrooveThread2GGroovePianoRollWidgetQues->new_grooves.push(monotonic_groove);
