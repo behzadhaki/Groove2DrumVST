@@ -20,15 +20,27 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
         MidiFXProcessorPointer.DrumPianoRollWidgetToModelThreadQues.get(),
         MidiFXProcessorPointer.modelThread.perVoiceSamplingThresholds, MidiFXProcessorPointer.modelThread.perVoiceMaxNumVoicesAllowed);
 
-    auto ptr_ = MidiFXProcessorPointer_->ModelThreadToDrumPianoRollWidgetQues.get();
-    if (ptr_->new_generated_data.getNumberOfWrites()>0)
-    {
-        auto latest_score = ptr_->new_generated_data.getLatestDataWithoutMovingFIFOHeads();
-        DrumsPianoRollWidget->updateWithNewScore(latest_score);
+    {   // re-draw events if Editor reconstructed mid-session
+        auto ptr_ = MidiFXProcessorPointer_->ModelThreadToDrumPianoRollWidgetQues.get();
+        if (ptr_->new_generated_data.getNumberOfWrites() > 0)
+        {
+            auto latest_score =
+                ptr_->new_generated_data.getLatestDataWithoutMovingFIFOHeads();
+            DrumsPianoRollWidget->updateWithNewScore(latest_score);
+        }
     }
 
     MonotonicGroovePianoRollsWidget = make_unique<MonotonicGrooveWidget>
         (num_steps, step_ppq_res, steps_perBeat, beats_perBar, MidiFXProcessorPointer_->GroovePianoRollWidget2GrooveThreadQues.get());
+    {   // re-draw events if Editor reconstructed mid-session
+        auto ptr_ = MidiFXProcessorPointer_->GrooveThread2GGroovePianoRollWidgetQues.get();
+        if (ptr_->new_grooves.getNumberOfWrites() > 0)
+        {
+            auto latest_groove =
+                ptr_->new_grooves.getLatestDataWithoutMovingFIFOHeads();
+            MonotonicGroovePianoRollsWidget->updateWithNewGroove(latest_groove);
+        }
+    }
 
     // Add widgets to Main Editor GUI
     addAndMakeVisible(DrumsPianoRollWidget.get());
