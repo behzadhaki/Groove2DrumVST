@@ -133,7 +133,6 @@ void MidiFXProcessorEditor::timerCallback()
 
         if (ptr_->new_grooves.getNumReady() > 0)
         {
-            DBG("RECEIVED NEW GROOVE");
             MonotonicGroovePianoRollsWidget->updateWithNewGroove(
                 ptr_->new_grooves.getLatestOnly());
         }

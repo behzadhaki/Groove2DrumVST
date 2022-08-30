@@ -527,7 +527,8 @@ template <int time_steps_> struct MonotonicGroove
         registeration_times = torch::zeros({time_steps_, 1}, torch::kFloat32);
     }
 
-    bool overdubWithNote(BasicNote note_)
+    // if force_overdub is true, places new note in groove regardless of timing vel info
+    bool overdubWithNote(BasicNote note_, bool force_overdub = false)
     {
 
         // 1. find the nearest grid line and calculate offset
@@ -540,35 +541,54 @@ template <int time_steps_> struct MonotonicGroove
         // 2. Place note in groove
         bool shouldAddNote = false;
 
-        if (note_.capturedInLoop)
+        if (force_overdub)
         {
-            // 2.a. if in loop mode, always adds the latest note received
             shouldAddNote = true;
+
         }
         else
         {
-            auto prev_registration_time_at_grid = registeration_times[grid_index].template item<float>();
-            if (abs(ppq - prev_registration_time_at_grid) > HVO_params::_32_note_ppq)
-            {   // 2.b. add note if received not in the vicinity of previous note registered at the same position
-                if (note_.velocity != (hvo.velocities_unmodified[grid_index] * hvo.hits[grid_index]).template item<float>() or
-                    fmod((ppq - prev_registration_time_at_grid), (time_steps/4))!=0)
+            if (note_.capturedInLoop)
+            {
+                // 2.a. if in loop mode, always adds the latest note received
                 shouldAddNote = true;
+
             }
             else
-            {   // 2c. if note received in the same vicinity, only add if velocity louder
-                if (note_.velocity >= (hvo.velocities_unmodified[grid_index] * hvo.hits[grid_index]).template item<float>())
-                {
-                    shouldAddNote = true;
+            {
+                auto prev_registration_time_at_grid = registeration_times[grid_index].template item<float>();
+                if (abs(ppq - prev_registration_time_at_grid) > HVO_params::_32_note_ppq)
+                {   // 2.b. add note if received not in the vicinity of previous note registered at the same position
+                    if (note_.velocity != (hvo.velocities_unmodified[grid_index] * hvo.hits[grid_index]).template item<float>() or
+                        fmod((ppq - prev_registration_time_at_grid), (time_steps/4))!=0)
+                        shouldAddNote = true;
+                }
+                else
+                {   // 2c. if note received in the same vicinity, only add if velocity louder
+                    if (note_.velocity >= (hvo.velocities_unmodified[grid_index] * hvo.hits[grid_index]).template item<float>())
+                    {
+                        shouldAddNote = true;
+                    }
                 }
             }
         }
 
         if (shouldAddNote)
         {
-            hvo.hits[grid_index] = 1;
+            if (note_.velocity > 0)
+            {
+                hvo.hits[grid_index] = 1;
+            }
+            else
+            {
+                hvo.hits[grid_index] = 0;
+            }
+
+
             hvo.offsets_unmodified[grid_index] = offset;
             hvo.velocities_unmodified[grid_index] = note_.velocity;
             registeration_times[grid_index] = note_.time.ppq;
+
             return true;
         }
         else

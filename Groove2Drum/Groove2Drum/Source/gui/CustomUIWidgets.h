@@ -325,7 +325,14 @@ namespace SingleStepPianoRollBlock
 
         void sendDataToQueue()
         {
-            GroovePianoRollWidget2GrooveThreadQues->manually_drawn_notes.push(BasicNote(voice_num, velocity, grid_index, offset));
+            if (hit == 1)
+            {
+                GroovePianoRollWidget2GrooveThreadQues->manually_drawn_notes.push(BasicNote(voice_num, velocity, grid_index, offset));
+            }
+            else
+            {
+                GroovePianoRollWidget2GrooveThreadQues->manually_drawn_notes.push(BasicNote(voice_num, 0, grid_index, 0));
+            }
         }
 
         // converts offset to actual x value on component

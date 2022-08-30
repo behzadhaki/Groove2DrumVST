@@ -95,11 +95,10 @@ void GrooveThread::run()
                 // Step 1. get new note
                 auto handDrawnNote = GroovePianoRollWidget2GrooveThreadQues->manually_drawn_notes.pop(); // here cnt result is 3
 
-                // groove should only be updated in playback mode
-                //if (read_note.capturedInPlaying) // todo uncomment
                 {
+                    DBG("RECEIVED");
                     // step 2. add to groove
-                    bool grooveUpdated = monotonic_groove.overdubWithNote(handDrawnNote);
+                    bool grooveUpdated = monotonic_groove.overdubWithNote(handDrawnNote, true);
 
                     // activate sending flag if at least one note added
                     if (grooveUpdated)
@@ -132,7 +131,7 @@ void GrooveThread::run()
             }
 
             // apply compression if new notes overdubbed
-            if (isNewGrooveAvailable)
+            if (isNewGrooveAvailable or isNewGrooveAvailableUsingHandDrawnNote)
             {
                 monotonic_groove.hvo.compressAll();
             }

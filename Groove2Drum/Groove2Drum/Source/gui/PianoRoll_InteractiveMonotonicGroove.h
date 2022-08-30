@@ -104,7 +104,6 @@ public:
 
     void updateWithNewGroove(MonotonicGroove<HVO_params::time_steps> new_groove)
     {
-        DBG("DISTRIBUTING NEW GROOVE");
         for (int i = 0; i < HVO_params::time_steps; i++)
         {
             unModifiedGrooveGui->interactivePRollBlocks[(size_t) i]->addEvent(
