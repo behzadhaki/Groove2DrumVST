@@ -270,29 +270,29 @@ public:
     }
 
 
-        int getNumberOfReads()
-        {
-            return num_reads;
-        }
+    int getNumberOfReads()
+    {
+        return num_reads;
+    }
 
-        int getNumberOfWrites()
-        {
-            return num_writes;
-        }
+    int getNumberOfWrites()
+    {
+        return num_writes;
+    }
 
-        // This method is useful for keeping track of whether any data has previously written to Queue regardless of being read or not
-        // !! This method should only be used for initialization of GUI objects !!
-        // !!! To use the QUEUE for lock free communication use the ReadFrom() or pop() methods!!!
-        T getLatestDataWithoutMovingFIFOHeads()
-        {
-            return latest_written_data;
-        }
+    // This method is useful for keeping track of whether any data has previously written to Queue regardless of being read or not
+    // !! This method should only be used for initialization of GUI objects !!
+    // !!! To use the QUEUE for lock free communication use the ReadFrom() or pop() methods!!!
+    T getLatestDataWithoutMovingFIFOHeads()
+    {
+        return latest_written_data;
+    }
 
 
-        bool isWritingInProgress()
-        {
-            return writingActive;
-        }
+    bool isWritingInProgress()
+    {
+        return writingActive;
+    }
 };
 
 

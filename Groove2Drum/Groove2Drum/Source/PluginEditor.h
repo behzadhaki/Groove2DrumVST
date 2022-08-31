@@ -7,7 +7,7 @@
 using namespace std;
 
 class MidiFXProcessorEditor : public juce::AudioProcessorEditor, public juce::Timer,
-                              public juce::Button::Listener /*, public juce::ChangeListener*/
+                              public juce::Button::Listener , public juce::Slider::Listener
 {
 public:
     explicit MidiFXProcessorEditor(MidiFXProcessor&) ;
@@ -33,5 +33,21 @@ private:
     // playhead position progress bar
     double playhead_pos;
     juce::ProgressBar PlayheadProgressBar {playhead_pos};
+
+    // vel offset ranges
+    array<float, 4> VelOffRanges {HVO_params::_min_vel, HVO_params::_max_vel, HVO_params::_min_offset, HVO_params::_max_offset};
+
+    void sliderValueChanged (juce::Slider* slider) override;
+
+private:
+
+    juce::Slider minVelSlider;
+    juce::Label  minVelLabel;
+    juce::Slider maxVelSlider;
+    juce::Label  maxVelLabel;
+    juce::Slider minOffsetSlider;
+    juce::Label  minOffsetLabel;
+    juce::Slider maxOffsetSlider;
+    juce::Label  maxOffsetLabel;
 };
 

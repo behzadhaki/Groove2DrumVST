@@ -64,7 +64,7 @@ namespace HVO_params
     constexpr double _max_offset { 0.5 };           // offsets are defined in range (-0.5, 0.5)
     constexpr double _min_offset { -0.5 };          // offsets are defined in range (-0.5, 0.5)
     constexpr double _max_vel { 1 };                // velocities are defined in range (0, 1)
-    constexpr double _min_vel { 1 };                // velocities are defined in range (0, 1)
+    constexpr double _min_vel { 0 };                // velocities are defined in range (0, 1)
 }
 
 // ======================================================================================

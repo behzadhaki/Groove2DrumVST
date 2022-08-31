@@ -92,6 +92,9 @@ public:
         // Create Unmodified Piano ROll
         ModifiedGrooveGui = make_unique<PianoRoll_InteractiveMonotonicGroove>(false, num_gridlines_, step_ppq_duration, n_steps_per_beat_, n_beats_per_bar, "Adjusted Groove");
         addAndMakeVisible(ModifiedGrooveGui.get());
+
+
+
     }
 
     void resized() override {
@@ -117,4 +120,6 @@ public:
                 new_groove.hvo.offsets_modified[i].item().toFloat());
         }
     }
+
+
 };
