@@ -6,164 +6,6 @@
 
 #include <shared_plugin_helpers/shared_plugin_helpers.h>
 #include "../InterThreadFifos.h"
-/*
-
-// ============================================================================================================
-// ==========           General User Interface Components such as basic XYPad  Implementation     =============
-// ========== https://forum.juce.com/t/how-to-draw-a-vertical-and-horizontal-line-of-the-mouse-position/31115/2
-// ==========
-// ============================================================================================================
-
-namespace UI
-{
-
-class XYPad : public juce::Component
-{
-public:
-    float x_min; float x_max; float x_default;
-    float y_min; float y_max; float y_default;
-    float x_ParameterValue; float y_ParameterValue; // actual values of x or y parameters within the min/max ranges specified (NOT in terms of pixels!)
-
-
-    XYPad(float x_min_, float x_max_, float x_default_, float y_min_, float y_max_, float y_default_):
-        x_min(x_min_), x_max(x_max_), x_default(x_default_),
-        y_min(y_min_), y_max(y_max_), y_default(y_default_),
-        x_ParameterValue(x_default_), y_ParameterValue(y_default_)
-    {}
-
-    void paint(juce::Graphics& g) override
-    {
-        g.fillAll(juce::Colours::black);
-        g.fillAll(juce::Colours::black);
-        g.setColour(juce::Colours::white);
-
-        auto w = float(getWidth());
-        auto h = float(getHeight());
-
-        auto x_ = round(max(min((x_ParameterValue - x_min) * w / (x_max - x_min), w), 0.0f));
-        auto y_ = max(min((1 - (y_ParameterValue - y_min) / (y_max - y_min)) * h, h), 0.0f);
-
-
-        // g.setColour(juce::Colours::beige);
-        g.setColour(prob_color_hit);
-        juce::Point<float> p1 {0, 0};
-        juce::Point<float> p2 {x_, y_};
-        juce::Rectangle<float> rect {p1, p2};
-        g.fillRect(rect);
-        g.drawRect(rect, 0.2f);
-        g.setColour(juce::Colours::white);
-        g.drawLine(0.0f, y_, x_, y_, 2);
-        g.drawLine(x_, 0, x_, y_, 2);
-
-    }
-
-    void moveToCoordinate(juce::Point<float> xyCoordinate)
-    {
-        auto w = float(getWidth());
-        auto h = float(getHeight());
-
-        float x_coor = round(max(min(xyCoordinate.getX(), w), 0.0f));
-        float y_coor = max(min(xyCoordinate.getY(), h), 0.0f);
-
-        x_ParameterValue = x_min + x_coor / w * (x_max - x_min);
-        y_ParameterValue = y_min + (1 - y_coor / h) * (y_max - y_min);
-
-        if (!(xyCoordinate.getX() == 0 and xyCoordinate.getY() == 0))
-        {
-            x_default = x_ParameterValue;
-            y_default = y_ParameterValue;
-        }
-        repaint();
-    }
-
-    void moveUsingActualValues(float x_ParameterValue_, float y_ParameterValue_)
-    {
-        x_ParameterValue = x_ParameterValue_;
-        y_ParameterValue = y_ParameterValue_;
-
-        repaint();
-    }
-
-    void shareParameter()
-    {
-        // implement the process for sharing data with other listeners
-        // parameter should be updated
-        // DBG("Implement Transfer to update to X " << x_ParameterValue << " ,Y "<<y_ParameterValue);
-    }
-
-    void mouseUp(const juce::MouseEvent& ev) override
-    {
-        shareParameter();
-    }
-
-    */
-/*void mouseDown(const juce::MouseEvent& ev) override
-    {
-        m_mousepos = ev.position;
-        moveToCoordinate(m_mousepos);
-    }*//*
-
-
-    void mouseDoubleClick(const juce::MouseEvent& ev) override
-    {
-        // more than 2 clicks goes back to default
-        if (x_ParameterValue == 0 and y_ParameterValue == 1)
-        {
-            // shift with double click sets area to max
-            if (ev.mods.isShiftDown())
-            {
-                moveToCoordinate(juce::Point<float> {(float)getX(), (float)getY()});
-            }
-            else
-            {
-                DBG(x_default);
-                DBG(y_default);
-                moveUsingActualValues(x_default, y_default);
-            }
-
-        }
-        else // regular double click sets area to 0 --> no possible hits
-        {
-            moveToCoordinate(juce::Point<float> {0.0f, 0.0f});
-        }
-
-
-        shareParameter();
-    }
-
-    void mouseDrag(const juce::MouseEvent& ev) override
-    {
-        m_mousepos = ev.position;
-        moveToCoordinate(m_mousepos);
-    }
-
-    float getXValue() const
-    {
-        return x_ParameterValue;
-    }
-
-    float getYValue() const
-    {
-        return y_ParameterValue;
-    }
-
-    void updateDefaultValues(float default_x_, float default_y_)
-    {
-        x_default = default_x_;
-        y_default = default_y_;
-        shareParameter();
-        repaint();
-    }
-
-private:
-    juce::Point<float> m_mousepos;
-};
-
-
-}
-
-
-*/
 
 
 // ============================================================================================================
@@ -620,96 +462,379 @@ namespace SingleStepPianoRollBlock
 }
 
 
-namespace UI {
-class GrooveControlSliders: public juce::Component
-{
-public:
-    GrooveControlSliders(juce::AudioProcessorValueTreeState* apvtsPntr)
+// ============================================================================================================
+// ==========              UI WIDGETS PLACED ON FINAL EDITOR GUI                                  =============
+// ==========
+// ============================================================================================================
+
+namespace FinalUIWidgets {
+
+    namespace GeneratedDrums
     {
-        // sliders for vel offset ranges
-        addAndMakeVisible (minVelSlider);
-        addAndMakeVisible (minVelLabel);
-        minVelLabel.setText ("Min Vel", juce::dontSendNotification);
-        minVelLabel.attachToComponent (&minVelSlider, true);
-        minVelSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "MIN_VELOCITY", minVelSlider);
+        /***
+         * a number of SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlockWithProbability placed together in a single
+         * row to represent the piano roll for a single drum voice. Also, a SingleStepPianoRollBlock::XYPadWithtListeners is used
+         * to interact with the voice sampling/max number of generations allowed.
+         */
+        class GeneratedDrums_SingleVoice :public juce::Component
+        {
+        public:
 
-        addAndMakeVisible (maxVelSlider);
-        addAndMakeVisible (maxVelLabel);
-        maxVelLabel.setText ("Max Vel", juce::dontSendNotification);
-        maxVelLabel.attachToComponent (&maxVelSlider, true);
-        maxVelSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "MAX_VELOCITY", maxVelSlider);
+            vector<shared_ptr<SingleStepPianoRollBlock::InteractiveIndividualBlockWithProbability>> interactivePRollBlocks;
+            shared_ptr<SingleStepPianoRollBlock::XYPadAutomatableWithSliders> MaxCount_Prob_XYPad; // x axis will be Max count (0 to time_steps), y axis is threshold 0 to 1
+            juce::Label label;
+            int pianoRollSectionWidth {0};
 
-        addAndMakeVisible (minOffsetSlider);
-        minOffsetSlider.setRange (HVO_params::_min_offset, HVO_params::_max_offset);
-        addAndMakeVisible (minOffsetLabel);
-        minOffsetLabel.setText ("Min Offset", juce::dontSendNotification);
-        minOffsetLabel.attachToComponent (&minOffsetSlider, true);
-        minOffsetSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "MIN_OFFSET", minOffsetSlider);
+            GeneratedDrums_SingleVoice(juce::AudioProcessorValueTreeState* apvtsPntr, string label_text, string maxCountParamID, string threshParamID)
+            {
+
+                // Set Modified Label
+                label.setText(label_text, juce::dontSendNotification);
+                label.setColour(juce::Label::textColourId, juce::Colours::white);
+                label.setJustificationType (juce::Justification::centredRight);
+                addAndMakeVisible(label);
+
+                // xy slider
+                MaxCount_Prob_XYPad = make_shared<SingleStepPianoRollBlock::XYPadAutomatableWithSliders>(apvtsPntr, maxCountParamID, threshParamID);
+                addAndMakeVisible(MaxCount_Prob_XYPad.get());
+
+                // Draw up piano roll
+                for (unsigned long i=0; i<HVO_params::time_steps; i++)
+                {
+                    if (fmod(i, HVO_params::num_steps_per_beat*HVO_params::num_beats_per_bar) == 0)      // bar position
+                    {
+                        interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::
+                                                                         InteractiveIndividualBlockWithProbability>(false, bar_backg_color, i));
+                    }
+                    else if(fmod(i, HVO_params::num_steps_per_beat) == 0)                  // beat position
+                    {
+                        interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::
+                                                                         InteractiveIndividualBlockWithProbability>(false, beat_backg_color, i));
+                    }
+                    else                                                    // every other position
+                    {
+                        interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::
+                                                                         InteractiveIndividualBlockWithProbability>(false, rest_backg_color, i));
+                    }
+
+                    MaxCount_Prob_XYPad->addWidget(interactivePRollBlocks[i].get());
+                    addAndMakeVisible(interactivePRollBlocks[i].get());
+                }
+
+            }
+
+            int getPianoRollSectionWidth()
+            {
+                return pianoRollSectionWidth;
+            }
+
+            int getPianoRollLeftBound()
+            {
+                return label.getWidth();
+            }
+
+            void addEventToTimeStep(int time_step_ix, int hit_, float velocity_, float offset_, float probability_)
+            {
+                interactivePRollBlocks[time_step_ix]->addEvent(hit_, velocity_, offset_, probability_, MaxCount_Prob_XYPad->ySlider.getValue());
+            }
+
+            void resized() override {
+                auto area = getLocalBounds();
+                label.setBounds(area.removeFromLeft((int) area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width)));
+                auto grid_width = area.proportionOfWidth(gui_settings::PianoRolls::timestep_ratio_of_width);
+                pianoRollSectionWidth = 0;
+                for (int i = 0; i<HVO_params::time_steps; i++)
+                {
+                    interactivePRollBlocks[i]->setBounds (area.removeFromLeft(grid_width));
+                    pianoRollSectionWidth += interactivePRollBlocks[i]->getWidth();
+                }
+                MaxCount_Prob_XYPad->setBounds (area.removeFromBottom(proportionOfHeight(gui_settings::PianoRolls::prob_to_pianoRoll_Ratio)));
+            }
+
+        };
+
+        /***
+         * num_voices of PianoRoll_GeneratedDrums_SingleVoice packed on top of each other to represent the entire pianoRoll
+         */
+        class GeneratedDrumsWidget :public juce::Component
+        {
+        public:
+            vector<unique_ptr<GeneratedDrums_SingleVoice>> PianoRolls;
+
+            GeneratedDrumsWidget(juce::AudioProcessorValueTreeState* apvtsPntr)
+            {
+                auto DrumVoiceNames_ = nine_voice_kit_labels;
+                auto DrumVoiceMidiNumbers_ = nine_voice_kit_default_midi_numbers;
+
+                for (size_t voice_i=0; voice_i<HVO_params::num_voices; voice_i++)
+                {
+                    auto voice_label = DrumVoiceNames_[voice_i];
+                    auto label_txt = voice_label + "\n[Midi "+to_string(DrumVoiceMidiNumbers_[voice_i])+"]";
+
+                    PianoRolls.push_back(make_unique<GeneratedDrums_SingleVoice>(
+                        apvtsPntr, label_txt, voice_label+"_X", voice_label+"_Y"));
+
+                    addAndMakeVisible(PianoRolls[voice_i].get());
+                }
+            }
+
+            void resized() override {
+                auto area = getLocalBounds();
+                int PRollheight = (int((float) area.getHeight() )) / HVO_params::num_voices;
+                for (int voice_i=0; voice_i<HVO_params::num_voices; voice_i++)
+                {
+                    PianoRolls[voice_i]->setBounds(area.removeFromBottom(PRollheight));
+                }
+            }
+
+            void addEventToVoice(int voice_number, int timestep_idx, int hit_, float velocity_, float offset, float probability_)
+            {
+                // add note
+                PianoRolls[voice_number]->addEventToTimeStep(timestep_idx, hit_, velocity_, offset, probability_);
+
+            }
+
+            void updateWithNewScore(HVOLight <HVO_params::time_steps, HVO_params::num_voices> latest_generated_data)
+            {
+
+                for (int vn_= 0; vn_ < latest_generated_data.num_voices; vn_++)
+                {
+                    for (int t_= 0; t_ < latest_generated_data.time_steps; t_++)
+                    {
+                        addEventToVoice(
+                            vn_,
+                            t_,
+                            latest_generated_data.hits[t_][vn_].item().toInt(),
+                            latest_generated_data.velocities[t_][vn_].item().toFloat(),
+                            latest_generated_data.offsets[t_][vn_].item().toFloat(),
+                            latest_generated_data.hit_probabilities[t_][vn_].item().toFloat());
+                    }
+
+                }
 
 
-        addAndMakeVisible (maxOffsetSlider);
-        maxOffsetSlider.setRange (HVO_params::_min_offset, HVO_params::_max_offset);
-        addAndMakeVisible (maxOffsetLabel);
-        maxOffsetLabel.setText ("Max Offset", juce::dontSendNotification);
-        maxOffsetLabel.attachToComponent (&maxOffsetSlider, true);
-        maxOffsetSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "MAX_OFFSET", maxOffsetSlider);
+                old_generated_data = latest_generated_data;
+            }
+
+            void UpdatePlayheadLocation (double playhead_percentage_)
+            {
+                playhead_percentage = playhead_percentage_;
+                repaint();
+            }
+
+            void paint(juce::Graphics& g) override
+            {
+                auto w = PianoRolls[0]->getPianoRollSectionWidth();
+                auto x0 = PianoRolls[0]->getPianoRollLeftBound();
+                auto x = w * playhead_percentage + x0;
+                g.setColour(playback_progressbar_color);
+                g.drawLine(x, 0, x, getHeight());
+            }
+        private:
+            HVOLight <HVO_params::time_steps, HVO_params::num_voices> old_generated_data{};
+            double playhead_percentage {0};
+        };
+
     }
 
-    void resized() override
+    namespace MonotonicGrooves
     {
-        // put vel offset range sliders
-        auto area = getLocalBounds();
-        auto height = area.proportionOfHeight(0.25f);
-        minVelSlider.setBounds(area.removeFromTop(height));
-        maxVelSlider.setBounds(area.removeFromTop(height));
-        minOffsetSlider.setBounds(area.removeFromTop(height));
-        maxOffsetSlider.setBounds(area.removeFromTop(height));
+        /***
+     * a number of SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlockWithProbability placed together in a single
+     * row to represent either the piano roll for the unmodified (interactive) OR the modified (non-interactive) sections of
+     * of the piano roll for the Input Groove.
+     */
+        class InteractiveMonotonicGrooveSingleRow :public juce::Component
+        {
+        public:
+
+            vector<shared_ptr<SingleStepPianoRollBlock::InteractiveIndividualBlock>> interactivePRollBlocks;
+            juce::Colour def_c {juce::Colour::fromFloatRGBA(1.0f,1.0f,1.0f,0.8f)};
+            juce::Colour beat_c { juce::Colour::fromFloatRGBA(.75f,.75f,.75f, 0.5f)};
+            juce::Colour bar_c {  juce::Colour::fromFloatRGBA(.6f,.6f,.6f, 0.5f) };
+            juce::Label label;
+
+            InteractiveMonotonicGrooveSingleRow(bool isInteractive, string label_text,
+                                                GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQues = nullptr)
+            {
+
+                // Set Modified Label
+                label.setText(label_text, juce::dontSendNotification);
+                label.setColour(juce::Label::textColourId, juce::Colours::white);
+                label.setJustificationType (juce::Justification::centredRight);
+                addAndMakeVisible(label);
+
+                // Draw up piano roll
+                /*auto w_per_block = (int) size_width/num_gridlines;*/
+
+                for (unsigned long i=0; i<HVO_params::time_steps; i++)
+                {
+                    if (fmod(i, HVO_params::num_steps_per_beat*HVO_params::num_beats_per_bar) == 0)      // bar position
+                    {
+                        interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::InteractiveIndividualBlock>(isInteractive, bar_c, i, GroovePianoRollWidget2GrooveThreadQues));
+                    }
+                    else if(fmod(i, HVO_params::num_steps_per_beat) == 0)                  // beat position
+                    {
+                        interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::InteractiveIndividualBlock>(isInteractive, beat_c, i, GroovePianoRollWidget2GrooveThreadQues));
+                    }
+                    else                                                    // every other position
+                    {
+                        interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::InteractiveIndividualBlock>(isInteractive, def_c, i, GroovePianoRollWidget2GrooveThreadQues));
+                    }
+
+                    addAndMakeVisible(interactivePRollBlocks[i].get());
+                }
+
+
+            }
+
+            // location must be between 0 or 1
+            void addEventToStep(int idx, int hit_, float velocity_, float offset_)
+            {
+                interactivePRollBlocks[idx]->addEvent(hit_, velocity_, offset_);
+            }
+
+
+            void resized() override {
+                auto area = getLocalBounds();
+                label.setBounds(area.removeFromLeft((int) area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width)));
+                auto grid_width = area.proportionOfWidth(gui_settings::PianoRolls::timestep_ratio_of_width);
+                for (int i = 0; i<HVO_params::time_steps; i++)
+                {
+                    interactivePRollBlocks[i]->setBounds (area.removeFromLeft(grid_width));
+                }
+            }
+
+
+        };
+
+        /**
+     * wraps two instances of PianoRoll_InteractiveMonotonicGroove together on top of each other.
+     * Bottom one is unModified groove (interactive) and top one is Modified groove (non-interactive)
+     * pianorolls.
+     */
+        class MonotonicGrooveWidget:public juce::Component
+        {
+        public:
+            unique_ptr<InteractiveMonotonicGrooveSingleRow> unModifiedGrooveGui;
+            unique_ptr<InteractiveMonotonicGrooveSingleRow> ModifiedGrooveGui;
+
+            MonotonicGrooveWidget(GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQues = nullptr)
+            {
+                // Create Unmodified Piano ROll
+                unModifiedGrooveGui = make_unique<InteractiveMonotonicGrooveSingleRow>(true, "Unmodified Groove", GroovePianoRollWidget2GrooveThreadQues);
+                addAndMakeVisible(unModifiedGrooveGui.get());
+                // Create Unmodified Piano ROll
+                ModifiedGrooveGui = make_unique<InteractiveMonotonicGrooveSingleRow>(false, "Adjusted Groove");
+                addAndMakeVisible(ModifiedGrooveGui.get());
+
+            }
+
+            void resized() override {
+                auto area = getLocalBounds();
+                auto height = int((float) area.getHeight() *0.45f);
+                ModifiedGrooveGui->setBounds(area.removeFromTop(height));
+                unModifiedGrooveGui->setBounds(area.removeFromBottom(height));
+
+            }
+
+            void updateWithNewGroove(MonotonicGroove<HVO_params::time_steps> new_groove)
+            {
+                for (int i = 0; i < HVO_params::time_steps; i++)
+                {
+                    unModifiedGrooveGui->interactivePRollBlocks[(size_t) i]->addEvent(
+                        new_groove.hvo.hits[i].item().toInt(),
+                        new_groove.hvo.velocities_unmodified[i].item().toFloat(),
+                        new_groove.hvo.offsets_unmodified[i].item().toFloat());
+
+                    ModifiedGrooveGui->interactivePRollBlocks[(size_t) i]->addEvent(
+                        new_groove.hvo.hits[i].item().toInt(),
+                        new_groove.hvo.velocities_modified[i].item().toFloat(),
+                        new_groove.hvo.offsets_modified[i].item().toFloat());
+                }
+            }
+
+        };
+
+
+        class GrooveControlSliders: public juce::Component
+        {
+        public:
+            // sliders for groove manipulation
+            juce::Slider minVelSlider;
+            juce::Label  minVelLabel;
+            unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> minVelSliderAPVTSAttacher;
+            juce::Slider maxVelSlider;
+            juce::Label  maxVelLabel;
+            unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> maxVelSliderAPVTSAttacher;
+            juce::Slider minOffsetSlider;
+            juce::Label  minOffsetLabel;
+            unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> minOffsetSliderAPVTSAttacher;
+            juce::Slider maxOffsetSlider;
+            juce::Label  maxOffsetLabel;
+            unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> maxOffsetSliderAPVTSAttacher;
+
+
+            GrooveControlSliders(juce::AudioProcessorValueTreeState* apvtsPntr)
+            {
+                // sliders for vel offset ranges
+                addAndMakeVisible (minVelSlider);
+                minVelLabel.setText ("Min Vel", juce::dontSendNotification);
+                addAndMakeVisible (minVelLabel);
+                minVelSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "MIN_VELOCITY", minVelSlider);
+
+                addAndMakeVisible (maxVelSlider);
+                addAndMakeVisible (maxVelLabel);
+                maxVelLabel.setText ("Max Vel", juce::dontSendNotification);
+                maxVelSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "MAX_VELOCITY", maxVelSlider);
+
+                addAndMakeVisible (minOffsetSlider);
+                minOffsetSlider.setRange (HVO_params::_min_offset, HVO_params::_max_offset);
+                addAndMakeVisible (minOffsetLabel);
+                minOffsetLabel.setText ("Min Offset", juce::dontSendNotification);
+                minOffsetSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "MIN_OFFSET", minOffsetSlider);
+
+
+                addAndMakeVisible (maxOffsetSlider);
+                maxOffsetSlider.setRange (HVO_params::_min_offset, HVO_params::_max_offset);
+                addAndMakeVisible (maxOffsetLabel);
+                maxOffsetLabel.setText ("Max Offset", juce::dontSendNotification);
+                maxOffsetSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "MAX_OFFSET", maxOffsetSlider);
+            }
+
+            void resized() override
+            {
+                // put vel offset range sliders
+                {
+                    auto area = getLocalBounds();
+                    area.removeFromLeft(area.proportionOfWidth(0.7f));
+                    auto height = area.proportionOfHeight(0.25f);
+                    minVelLabel.setBounds(area.removeFromTop(height));
+                    maxVelLabel.setBounds(area.removeFromTop(height));
+                    minOffsetLabel.setBounds(area.removeFromTop(height));
+                    maxOffsetLabel.setBounds(area.removeFromTop(height));
+                }
+
+                {
+                    auto area = getLocalBounds();
+                    area.removeFromRight(area.proportionOfWidth(0.3f));
+                    auto height = area.proportionOfHeight(0.25f);
+                    minVelSlider.setBounds(area.removeFromTop(height));
+                    maxVelSlider.setBounds(area.removeFromTop(height));
+                    minOffsetSlider.setBounds(area.removeFromTop(height));
+                    maxOffsetSlider.setBounds(area.removeFromTop(height));
+                }
+            }
+
+        };
     }
 
-private:
-    // sliders for groove manipulation
-    juce::Slider minVelSlider;
-    juce::Label  minVelLabel;
-    unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> minVelSliderAPVTSAttacher;
-    juce::Slider maxVelSlider;
-    juce::Label  maxVelLabel;
-    unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> maxVelSliderAPVTSAttacher;
-    juce::Slider minOffsetSlider;
-    juce::Label  minOffsetLabel;
-    unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> minOffsetSliderAPVTSAttacher;
-    juce::Slider maxOffsetSlider;
-    juce::Label  maxOffsetLabel;
-    unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> maxOffsetSliderAPVTSAttacher;
+    namespace ResetButtons
+    {
 
-};
+    }
+
+
+
 }
 
-/*
-
-// it should be inline because we don't have a separate cpp file
-// otherwise, linking errors
-// https://forum.juce.com/t/drawing-curve-with-3-points-or-help-with-quadratic-calculations/22330
-*/
-/**
- *  creates a concave up or down curve from (x1, y1) to (x2, y2)
- *  Used in SingleStepPianoRollBlock::ProbabilityLevelWidget
- * @param concaveup (true for concave up and false for concave down)
- * @return
- *//*
-
-inline array<float, 4> getPathParams(float x1, float y1, float x2, float y2, bool concaveup)
-{
-    float amplitude = 100;
-
-    float mult;
-    if (concaveup)
-        mult = 1.0f;
-    else
-        mult = -1.0f;
-
-    float a = atan2f(mult * (y2-y1), x2-x1) + juce::float_Pi/2.0;
-    float midx = (x2-x1)/2 + cos(a)*amplitude;
-    //float midy = (y2-y1)/2 + y1 - sin(a)*amplitude;
-    float midy = (y2-y1)/2 + sin(a)*amplitude;
-    return {midx, midy, x2, y2};
-}*/

@@ -14,7 +14,7 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     auto beats_perBar = HVO_params::num_beats_per_bar;
 
     // initialize widgets
-    DrumsPianoRollWidget = make_unique<GeneratedDrumsWidget>(
+    DrumsPianoRollWidget = make_unique<FinalUIWidgets::GeneratedDrums::GeneratedDrumsWidget>(
         &MidiFXProcessorPointer_->apvts);
     {   // re-draw events if Editor reconstructed mid-session
         auto ptr_ = MidiFXProcessorPointer_->ModelThreadToDrumPianoRollWidgetQue.get();
@@ -26,7 +26,7 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
         }
     }
 
-    MonotonicGroovePianoRollsWidget = make_unique<MonotonicGrooveWidget>
+    MonotonicGroovePianoRollsWidget = make_unique<FinalUIWidgets::MonotonicGrooves::MonotonicGrooveWidget>
         (MidiFXProcessorPointer_->GroovePianoRollWidget2GrooveThreadQues.get());
     {   // re-draw events if Editor reconstructed mid-session
         auto ptr_ = MidiFXProcessorPointer_->GrooveThread2GGroovePianoRollWidgetQue.get();
@@ -59,7 +59,7 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     resetAllButton.addListener (this);
 
     // initialize GrooveControlSliders
-    GrooveControlSliders = make_unique<UI::GrooveControlSliders> (&MidiFXProcessorPointer_->apvts);
+    GrooveControlSliders = make_unique<FinalUIWidgets::MonotonicGrooves::GrooveControlSliders> (&MidiFXProcessorPointer_->apvts);
     addAndMakeVisible (GrooveControlSliders.get());
 
     // Set window size

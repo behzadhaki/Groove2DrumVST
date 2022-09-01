@@ -1,8 +1,7 @@
 #pragma once
 
 #include "PluginProcessor.h"
-#include "gui/PianoRoll_GeneratedDrums.h"
-#include "gui/PianoRoll_InteractiveMonotonicGroove.h"
+#include "gui/PianoRollWidgets.h"
 
 using namespace std;
 
@@ -22,8 +21,8 @@ private:
     MidiFXProcessor* MidiFXProcessorPointer_;
 
     // gui widgets
-    unique_ptr<GeneratedDrumsWidget> DrumsPianoRollWidget;
-    unique_ptr<MonotonicGrooveWidget> MonotonicGroovePianoRollsWidget;
+    unique_ptr<FinalUIWidgets::GeneratedDrums::GeneratedDrumsWidget> DrumsPianoRollWidget;
+    unique_ptr<FinalUIWidgets::MonotonicGrooves::MonotonicGrooveWidget> MonotonicGroovePianoRollsWidget;
 
     // buttons for reseting groove or xyslider params
     juce::TextButton resetGrooveButton;
@@ -31,7 +30,7 @@ private:
     juce::TextButton resetAllButton;
 
     //  GrooveControlSliders
-    unique_ptr<UI::GrooveControlSliders> GrooveControlSliders;
+    unique_ptr<FinalUIWidgets::MonotonicGrooves::GrooveControlSliders> GrooveControlSliders;
 
     // playhead position progress bar
     double playhead_pos;
