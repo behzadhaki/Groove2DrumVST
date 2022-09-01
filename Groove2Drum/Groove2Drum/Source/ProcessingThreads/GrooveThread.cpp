@@ -142,7 +142,7 @@ void GrooveThread::run()
         {
             array<float, 4> newVelOffsetrange {};
 
-            while (GroovePianoRollWidget2GrooveThreadQues->newVelOffRanges.getNumReady() > 0
+            /*while (GroovePianoRollWidget2GrooveThreadQues->newVelOffRanges.getNumReady() > 0
                    and not this->threadShouldExit())
             {
                 // Step 1. get new vel/offset ranges received
@@ -157,7 +157,7 @@ void GrooveThread::run()
 
                 // activate sending flag
                 isNewGrooveAvailable = true;
-            }
+            }*/
         }
 
 

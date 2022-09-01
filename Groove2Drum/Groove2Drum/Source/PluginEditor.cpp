@@ -86,20 +86,20 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     maxOffsetLabel.setText ("Max Offset", juce::dontSendNotification);
     maxOffsetLabel.attachToComponent (&maxOffsetSlider, true);
 
-    array<float, 4> ranges;
-    DBG("NUM WRITES FOR RANGES " << MidiFXProcessorPointer_->GroovePianoRollWidget2GrooveThreadQues->newVelOffRanges.getNumberOfWrites());
+    /*array<float, 4> ranges;
+    *//*DBG("NUM WRITES FOR RANGES " << MidiFXProcessorPointer_->GroovePianoRollWidget2GrooveThreadQues->newVelOffRanges.getNumberOfWrites());
     if (MidiFXProcessorPointer_->GroovePianoRollWidget2GrooveThreadQues->newVelOffRanges.getNumberOfWrites() > 0)
     {
         ranges = MidiFXProcessorPointer_->GroovePianoRollWidget2GrooveThreadQues->newVelOffRanges.getLatestDataWithoutMovingFIFOHeads();
     }
-    else
+    else*//*
     {
         ranges = {HVO_params::_min_vel, HVO_params::_max_vel, HVO_params::_min_offset, HVO_params::_max_offset};
     }
     minVelSlider.setValue(ranges[0]);
     maxVelSlider.setValue(ranges[1]);
     minOffsetSlider.setValue(ranges[2]);
-    maxOffsetSlider.setValue(ranges[3]);
+    maxOffsetSlider.setValue(ranges[3]);*/
 
     // Set window size
     setResizable (true, true);
@@ -169,7 +169,7 @@ void MidiFXProcessorEditor::paint(juce::Graphics& g)
 
 void MidiFXProcessorEditor::sliderValueChanged (juce::Slider* slider)
 {
-    if (slider == &minVelSlider)
+    /*if (slider == &minVelSlider)
     {
         VelOffRanges[0] = (float) minVelSlider.getValue();
         maxVelSlider.setValue(-VelOffRanges[0]);
@@ -193,7 +193,7 @@ void MidiFXProcessorEditor::sliderValueChanged (juce::Slider* slider)
     MidiFXProcessorPointer_->GroovePianoRollWidget2GrooveThreadQues->newVelOffRanges.push(VelOffRanges);
 
     DBG("NUM WRITES FOR RANGES " << MidiFXProcessorPointer_->GroovePianoRollWidget2GrooveThreadQues->newVelOffRanges.getLatestDataWithoutMovingFIFOHeads()[0]);
-
+*/
 }
 
 void MidiFXProcessorEditor::timerCallback()

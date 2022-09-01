@@ -82,7 +82,7 @@ void ModelThread::run()
 
             for (size_t i=0; i<HVO_params::num_voices; i++)
             {
-                if (DrumPianoRollWidgetToModelThreadQues->new_sampling_thresholds[i].getNumReady() > 0)
+                /*if (DrumPianoRollWidgetToModelThreadQues->new_sampling_thresholds[i].getNumReady() > 0)
                 {
                     perVoiceSamplingThresholds[i] = DrumPianoRollWidgetToModelThreadQues->new_sampling_thresholds[i].getLatestOnly();
                     thresh_changed_flag_ = true;
@@ -91,7 +91,7 @@ void ModelThread::run()
                 {
                      perVoiceMaxNumVoicesAllowed[i] = DrumPianoRollWidgetToModelThreadQues->new_max_number_voices[i].getLatestOnly();
                      max_voice_count_changed_flag_ = true;
-                }
+                }*/
             }
             if (thresh_changed_flag_)
             {

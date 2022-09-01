@@ -31,6 +31,7 @@ namespace IntraProcessorFifos
  *  Lock-free Queues  for communicating data back and forth between
  *  the Processor threads and the GUI widgets
  */
+
 namespace GuiIOFifos
 {
 
@@ -61,7 +62,7 @@ namespace GuiIOFifos
 
     struct GroovePianoRollWidget2GrooveThreadQues
     {
-        LockFreeQueue<array<float, 4>, GeneralSettings::gui_io_queue_size> newVelOffRanges {};                 // todo To integrate in code
+        // LockFreeQueue<array<float, 4>, GeneralSettings::gui_io_queue_size> newVelOffRanges {};                 // todo To integrate in code
         // used for sending a manually drawn note in the MonotonicGroove Widget to GrooveThread
         LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size> manually_drawn_notes {};          // todo To integrate in code
     };
@@ -79,8 +80,8 @@ namespace GuiIOFifos
 
     struct DrumPianoRollWidgetToModelThreadQues
     {
-        std::array<LockFreeQueue<float, GeneralSettings::gui_io_queue_size>, HVO_params::num_voices> new_sampling_thresholds {};
-        std::array<LockFreeQueue<float, GeneralSettings::gui_io_queue_size>, HVO_params::num_voices> new_max_number_voices {};
+        // std::array<LockFreeQueue<float, GeneralSettings::gui_io_queue_size>, HVO_params::num_voices> new_sampling_thresholds {};
+        // std::array<LockFreeQueue<float, GeneralSettings::gui_io_queue_size>, HVO_params::num_voices> new_max_number_voices {};
     };
     // =================================================================================
 
