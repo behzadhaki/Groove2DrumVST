@@ -6,7 +6,7 @@
 #define JUCECMAKEREPO_GROOVETHREAD_H
 
 #include <shared_plugin_helpers/shared_plugin_helpers.h>
-#include "../Includes/CustomStructs.h"
+#include "../Includes/CustomStructsAndLockFreeQueue.h"
 #include "../InterThreadFifos.h"
 #include "../settings.h"
 
@@ -20,9 +20,9 @@ public:
     ~GrooveThread() override;
 
     // give access to resources needed to communicate with other threads
-    void startThreadUsingProvidedResources(IntraProcessorFifos::ProcessBlockToGrooveThreadQues* ProcessBlockToGrooveThreadQuesPntr,
-                                           IntraProcessorFifos::GrooveThreadToModelThreadQues* GrooveThreadToModelThreadQuesPntr,
-                                           GuiIOFifos::GrooveThread2GGroovePianoRollWidgetQues* GrooveThread2GGroovePianoRollWidgetQuesPntr,
+    void startThreadUsingProvidedResources(LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>* ProcessBlockToGrooveThreadQuePntr,
+                                           MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>* GrooveThreadToModelThreadQuePntr,
+                                           MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>* GrooveThread2GGroovePianoRollWidgetQuesPntr,
                                            GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQuesPntr);
 
     // run this in destructor destructing object
@@ -43,9 +43,11 @@ public:
 
 private:
 
-    IntraProcessorFifos::ProcessBlockToGrooveThreadQues* ProcessBlockToGrooveThreadQues;
-    IntraProcessorFifos::GrooveThreadToModelThreadQues* GrooveThreadToModelThreadQues;
-    GuiIOFifos::GrooveThread2GGroovePianoRollWidgetQues* GrooveThread2GGroovePianoRollWidgetQues;
+    LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>* ProcessBlockToGrooveThreadQue;
+    MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>* GrooveThreadToModelThreadQue;
+
+
+    MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>* GrooveThread2GGroovePianoRollWidgetQue;
     GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQues;
 
     //---- Control Parameters from GUI -------------------------------------

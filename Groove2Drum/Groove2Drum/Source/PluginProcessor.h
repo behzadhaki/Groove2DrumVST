@@ -29,11 +29,11 @@ public:
     unique_ptr<GuiIOFifos::ProcessorToTextEditorQues> ProcessorToTextEditorQues;
 
     // grooveThread i.o queues w/ GroovePianoRollWidget
-    unique_ptr<GuiIOFifos::GrooveThread2GGroovePianoRollWidgetQues> GrooveThread2GGroovePianoRollWidgetQues;
+    unique_ptr<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>> GrooveThread2GGroovePianoRollWidgetQue;
     unique_ptr<GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues> GroovePianoRollWidget2GrooveThreadQues;
 
     // modelThread i.o queues w/ DrumPianoRoll Widget
-    unique_ptr<GuiIOFifos::ModelThreadToDrumPianoRollWidgetQues> ModelThreadToDrumPianoRollWidgetQues;
+    unique_ptr<HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size>> ModelThreadToDrumPianoRollWidgetQue;
     unique_ptr<GuiIOFifos::DrumPianoRollWidgetToModelThreadQues> DrumPianoRollWidgetToModelThreadQues;
 
     // GUI THREADS HOSTED IN PROCESSOR
@@ -45,12 +45,14 @@ public:
     // getters
     float get_playhead_pos();
 
+    // APVTS
+    juce::AudioProcessorValueTreeState apvts;
 private:
+    // =========  Queues for communicating Between the main threads in processor  =============================================
+    unique_ptr<LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>> ProcessBlockToGrooveThreadQue;
+    unique_ptr<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>> GrooveThreadToModelThreadQue;
+    unique_ptr<GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>> ModelThreadToProcessBlockQue;
 
-    // Queues for communicating Between the main threads in processor
-    unique_ptr<IntraProcessorFifos::ProcessBlockToGrooveThreadQues> ProcessBlockToGrooveThreadQues;
-    unique_ptr<IntraProcessorFifos::GrooveThreadToModelThreadQues> GrooveThreadToModelThreadQues;
-    unique_ptr<IntraProcessorFifos::ModelThreadToProcessBlockQues> ModelThreadToProcessBlockQues;
 
     // holds the latest generations to loop over
     GeneratedData<HVO_params::time_steps, HVO_params::num_voices> latestGeneratedData;
@@ -63,6 +65,9 @@ private:
 
     //  midiBuffer to fill up with generated data
     juce::MidiBuffer tempBuffer;
+
+    // Parameter Layout for apvts
+    juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
 
 };

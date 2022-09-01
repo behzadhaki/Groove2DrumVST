@@ -22,7 +22,7 @@ private:
     MidiFXProcessor* MidiFXProcessorPointer_;
 
     // gui widgets
-    unique_ptr<PianoRoll_GeneratedDrums_AllVoices> DrumsPianoRollWidget;
+    unique_ptr<GeneratedDrumsWidget> DrumsPianoRollWidget;
     unique_ptr<MonotonicGrooveWidget> MonotonicGroovePianoRollsWidget;
 
     // buttons for reseting groove or xyslider params
@@ -41,13 +41,19 @@ private:
 
 private:
 
+    // sliders for groove manipulation
     juce::Slider minVelSlider;
     juce::Label  minVelLabel;
+    unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> minVelSliderAPVTSAttacher;
     juce::Slider maxVelSlider;
     juce::Label  maxVelLabel;
+    unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> maxVelSliderAPVTSAttacher;
     juce::Slider minOffsetSlider;
     juce::Label  minOffsetLabel;
     juce::Slider maxOffsetSlider;
     juce::Label  maxOffsetLabel;
+
+
+
 };
 

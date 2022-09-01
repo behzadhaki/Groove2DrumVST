@@ -4,40 +4,27 @@
 
 #pragma once
 #include "settings.h"
-#include "Includes/LockFreeQueueTemplate.h"
-#include "Includes/CustomStructs.h"
+#include "Includes/CustomStructsAndLockFreeQueue.h"
+/*
 
 // Lock-free Queues  for communicating data between main threads in the Processor
 namespace IntraProcessorFifos
 {
     // ========= processBlock() To GrooveThread =============================================
     // sends a received note from input to GrooveThread to update the input groove
-    struct ProcessBlockToGrooveThreadQues
-    {
-        LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size> new_notes {};
-    };
+    unique_ptr<LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>> ProcessBlockToGrooveThreadQue;
     // =================================================================================
 
 
 
     // ========= GrooveThread To Model Thread   =============================================
-    struct GrooveThreadToModelThreadQues
-    {
-        MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>
-            new_grooves {};
-    };
-
+    unique_ptr<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>> GrooveThreadToModelThreadQue;
 
 
     // ========= Model Thread  To ProcessBlock =============================================
-    struct ModelThreadToProcessBlockQues
-    {
-        GeneratedDataQueue<HVO_params::time_steps,
-                           HVO_params::num_voices,
-                           GeneralSettings::processor_io_queue_size>
-            new_generations {};
-    };
+    unique_ptr<GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>> ModelThreadToProcessBlockQue;
 }
+*/
 
 
 /**
@@ -68,8 +55,9 @@ namespace GuiIOFifos
     struct GrooveThread2GGroovePianoRollWidgetQues
     {
         // used for sending the scaled groove to  MonotonicGroove Widget to display
-        MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size> new_grooves {};       // todo To integrate in code
+        //        // todo To integrate in code
     };
+
 
     struct GroovePianoRollWidget2GrooveThreadQues
     {
@@ -86,7 +74,7 @@ namespace GuiIOFifos
     // used for receiving the latest perVoiceSamplingThresholds and maximum notes allowed from Generated Drums XYSliders
     struct ModelThreadToDrumPianoRollWidgetQues
     {
-        HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size> new_generated_data {};        // todo To integrate in code
+        //unique_ptr<HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size>> ModelThreadToDrumPianoRollWidgetQue {};        // todo To integrate in code
     };
 
     struct DrumPianoRollWidgetToModelThreadQues

@@ -14,18 +14,17 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     auto beats_perBar = HVO_params::num_beats_per_bar;
 
     // initialize widgets
-    DrumsPianoRollWidget = make_unique<PianoRoll_GeneratedDrums_AllVoices>(
+    DrumsPianoRollWidget = make_unique<GeneratedDrumsWidget>(
         num_steps, step_ppq_res, steps_perBeat, beats_perBar,
         nine_voice_kit_labels, nine_voice_kit_default_midi_numbers,
         MidiFXProcessorPointer.DrumPianoRollWidgetToModelThreadQues.get(),
         MidiFXProcessorPointer.modelThread.perVoiceSamplingThresholds, MidiFXProcessorPointer.modelThread.perVoiceMaxNumVoicesAllowed);
-
     {   // re-draw events if Editor reconstructed mid-session
-        auto ptr_ = MidiFXProcessorPointer_->ModelThreadToDrumPianoRollWidgetQues.get();
-        if (ptr_->new_generated_data.getNumberOfWrites() > 0)
+        auto ptr_ = MidiFXProcessorPointer_->ModelThreadToDrumPianoRollWidgetQue.get();
+        if (ptr_->getNumberOfWrites() > 0)
         {
             auto latest_score =
-                ptr_->new_generated_data.getLatestDataWithoutMovingFIFOHeads();
+                ptr_->getLatestDataWithoutMovingFIFOHeads();
             DrumsPianoRollWidget->updateWithNewScore(latest_score);
         }
     }
@@ -33,11 +32,11 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     MonotonicGroovePianoRollsWidget = make_unique<MonotonicGrooveWidget>
         (num_steps, step_ppq_res, steps_perBeat, beats_perBar, MidiFXProcessorPointer_->GroovePianoRollWidget2GrooveThreadQues.get());
     {   // re-draw events if Editor reconstructed mid-session
-        auto ptr_ = MidiFXProcessorPointer_->GrooveThread2GGroovePianoRollWidgetQues.get();
-        if (ptr_->new_grooves.getNumberOfWrites() > 0)
+        auto ptr_ = MidiFXProcessorPointer_->GrooveThread2GGroovePianoRollWidgetQue.get();
+        if (ptr_->getNumberOfWrites() > 0)
         {
             auto latest_groove =
-                ptr_->new_grooves.getLatestDataWithoutMovingFIFOHeads();
+                ptr_->getLatestDataWithoutMovingFIFOHeads();
             MonotonicGroovePianoRollsWidget->updateWithNewGroove(latest_groove);
         }
     }
@@ -69,6 +68,7 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     addAndMakeVisible (minVelLabel);
     minVelLabel.setText ("Min Vel", juce::dontSendNotification);
     minVelLabel.attachToComponent (&minVelSlider, true);
+    minVelSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(MidiFXProcessorPointer_->apvts, "MINIMUM_VELOCITY", minVelSlider);
 
     addAndMakeVisible (maxVelSlider);
     maxVelSlider.setRange (-2.0f, 2.0f);
@@ -150,7 +150,6 @@ void MidiFXProcessorEditor::resized()
     minOffsetSlider.setBounds(area.removeFromTop(height));
     maxOffsetSlider.setBounds(area.removeFromTop(height));
 
-
     // put buttons
     area = getLocalBounds();
     area.removeFromLeft(area.proportionOfWidth(1.0f - gui_settings::PianoRolls::space_reserved_right_side_of_gui_ratio_of_width));
@@ -178,6 +177,8 @@ void MidiFXProcessorEditor::sliderValueChanged (juce::Slider* slider)
     if (slider == &minVelSlider)
     {
         VelOffRanges[0] = (float) minVelSlider.getValue();
+        maxVelSlider.setValue(-VelOffRanges[0]);
+        VelOffRanges[1] = -VelOffRanges[1];
     }
     else if (slider == &maxVelSlider)
     {
@@ -186,6 +187,8 @@ void MidiFXProcessorEditor::sliderValueChanged (juce::Slider* slider)
     else if (slider == &minOffsetSlider)
     {
         VelOffRanges[2] = (float) minOffsetSlider.getValue();
+        maxOffsetSlider.setValue(-VelOffRanges[2]);
+        VelOffRanges[3] = -VelOffRanges[2];
     }
     else if (slider == &maxOffsetSlider)
     {
@@ -202,22 +205,22 @@ void MidiFXProcessorEditor::timerCallback()
 {
     // get Generations and probs from model thread to display on drum piano rolls
     {
-        auto ptr_ = MidiFXProcessorPointer_->ModelThreadToDrumPianoRollWidgetQues.get();
-        if (ptr_->new_generated_data.getNumReady() > 0)
+        auto ptr_ = MidiFXProcessorPointer_->ModelThreadToDrumPianoRollWidgetQue.get();
+        if (ptr_->getNumReady() > 0)
         {
             DrumsPianoRollWidget->updateWithNewScore(
-                ptr_->new_generated_data.getLatestOnly());
+                ptr_->getLatestOnly());
         }
     }
 
     // get Grooves from GrooveThread to display in Groove Piano Rolls
     {
-        auto ptr_ = MidiFXProcessorPointer_->GrooveThread2GGroovePianoRollWidgetQues.get();
+        auto ptr_ = MidiFXProcessorPointer_->GrooveThread2GGroovePianoRollWidgetQue.get();
 
-        if (ptr_->new_grooves.getNumReady() > 0)
+        if (ptr_->getNumReady() > 0)
         {
             MonotonicGroovePianoRollsWidget->updateWithNewGroove(
-                ptr_->new_grooves.getLatestOnly());
+                ptr_->getLatestOnly());
         }
 
     }
@@ -229,6 +232,7 @@ void MidiFXProcessorEditor::timerCallback()
 
 void MidiFXProcessorEditor::buttonClicked (juce::Button* button)  // [2]
 {
+
     if (button == &resetGrooveButton)
     {
         MidiFXProcessorPointer_->grooveThread.ForceResetGroove();

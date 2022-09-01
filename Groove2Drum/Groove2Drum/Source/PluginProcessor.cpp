@@ -7,41 +7,44 @@
 using namespace std;
 
 
-MidiFXProcessor::MidiFXProcessor(){
+MidiFXProcessor::MidiFXProcessor():
+    apvts(*this, nullptr, "PARAMETERS", createParameterLayout())
+{
 
     //////////////////////////////////////////////////////////////////
     //// Make_unique pointers for Queues
     //////////////////////////////////////////////////////////////////
     // GuiIOFifos
-    GrooveThread2GGroovePianoRollWidgetQues = make_unique<GuiIOFifos::GrooveThread2GGroovePianoRollWidgetQues>();
+    GrooveThread2GGroovePianoRollWidgetQue = make_unique<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>>();
     GroovePianoRollWidget2GrooveThreadQues = make_unique<GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues>();
-    ModelThreadToDrumPianoRollWidgetQues = make_unique<GuiIOFifos::ModelThreadToDrumPianoRollWidgetQues>();
+    ModelThreadToDrumPianoRollWidgetQue = make_unique<HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size>>();
     DrumPianoRollWidgetToModelThreadQues = make_unique<GuiIOFifos::DrumPianoRollWidgetToModelThreadQues>();
-    // IntraProcessorFifos
-    ProcessBlockToGrooveThreadQues = make_unique<IntraProcessorFifos::ProcessBlockToGrooveThreadQues>();
+
 
     //////////////////////////////////////////////////////////////////
     //// Make_unique pointers for Threads
     //////////////////////////////////////////////////////////////////
     // Intra Processor Threads
-    GrooveThreadToModelThreadQues = make_unique<IntraProcessorFifos::GrooveThreadToModelThreadQues>();
-    ModelThreadToProcessBlockQues = make_unique<IntraProcessorFifos::ModelThreadToProcessBlockQues>();
-    // Gui Threads
+    ProcessBlockToGrooveThreadQue = make_unique<LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>>();
+    GrooveThreadToModelThreadQue = make_unique<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>>();
+    ModelThreadToProcessBlockQue = make_unique<GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>>();
+
 
     /////////////////////////////////
     //// Start Threads
     /////////////////////////////////
 
     // give access to resources and run threads
-    modelThread.startThreadUsingProvidedResources(GrooveThreadToModelThreadQues.get(),
-                                                  ModelThreadToProcessBlockQues.get(),
-                                                  ModelThreadToDrumPianoRollWidgetQues.get(),
+    modelThread.startThreadUsingProvidedResources(GrooveThreadToModelThreadQue.get(),
+                                                  ModelThreadToProcessBlockQue.get(),
+                                                  ModelThreadToDrumPianoRollWidgetQue.get(),
                                                   DrumPianoRollWidgetToModelThreadQues.get());
 
-    grooveThread.startThreadUsingProvidedResources(ProcessBlockToGrooveThreadQues.get(),
-                                                   GrooveThreadToModelThreadQues.get(),
-                                                   GrooveThread2GGroovePianoRollWidgetQues.get(),
+    grooveThread.startThreadUsingProvidedResources(ProcessBlockToGrooveThreadQue.get(),
+                                                   GrooveThreadToModelThreadQue.get(),
+                                                   GrooveThread2GGroovePianoRollWidgetQue.get(),
                                                    GroovePianoRollWidget2GrooveThreadQues.get());
+
 }
 
 MidiFXProcessor::~MidiFXProcessor(){
@@ -72,11 +75,11 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
     // STEP 2
     // check if new pattern is generated and available for playback
-    if (ModelThreadToProcessBlockQues != nullptr)
+    if (ModelThreadToProcessBlockQue != nullptr)
     {
-        if (ModelThreadToProcessBlockQues->new_generations.getNumReady() > 0)
+        if (ModelThreadToProcessBlockQue->getNumReady() > 0)
         {
-            latestGeneratedData = ModelThreadToProcessBlockQues->new_generations.getLatestOnly();
+            latestGeneratedData = ModelThreadToProcessBlockQue->getLatestOnly();
         }
     }
 
@@ -119,7 +122,7 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     if (not midiMessages.isEmpty() /*and groove_thread_ready*/)
     {
         // send BasicNotes to the GrooveThread and also gui logger for notes
-        place_BasicNote_in_queue<GeneralSettings::processor_io_queue_size>(midiMessages, Pinfo, ProcessBlockToGrooveThreadQues.get(), fs);
+        place_BasicNote_in_queue<GeneralSettings::processor_io_queue_size>(midiMessages, Pinfo, ProcessBlockToGrooveThreadQue.get(), fs);
         // place_BasicNote_in_queue<GeneralSettings::gui_io_queue_size>(midiMessages, Pinfo, ProcessBlockToGrooveThreadQue, fs);
     }
 
@@ -144,4 +147,26 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 float MidiFXProcessor::get_playhead_pos()
 {
     return playhead_pos;
+}
+
+
+juce::AudioProcessorValueTreeState::ParameterLayout MidiFXProcessor::createParameterLayout()
+{
+    juce::AudioProcessorValueTreeState::ParameterLayout layout;
+
+    int version_hint = 1;
+
+    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("MINIMUM_VELOCITY", version_hint), "MINIMUM_VELOCITY", -2.0f, 2.0f, 0));
+    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("MAXIMUM_VELOCITY", version_hint), "MAXIMUM_VELOCITY", -2.0f, 2.0f, 1));
+
+    // these parameters are used with the xySliders for each individual voice
+    // Because xySliders are neither slider or button, we
+    for (size_t i=0; i < HVO_params::num_voices; i++)
+    {
+        auto voice_label = nine_voice_kit_labels[i];
+        layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID(voice_label+"_X", version_hint), voice_label+"_X", 0.f, HVO_params::time_steps, nine_voice_kit_default_max_voices_allowed[i])); // max num voices
+        layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID(voice_label+"_Y", version_hint), voice_label+"_Y", 0.f, 1.f, nine_voice_kit_default_sampling_thresholds[i]));                   // threshold level for sampling
+    }
+
+    return layout;
 }

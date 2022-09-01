@@ -8,9 +8,9 @@
 
 ModelThread::ModelThread(): juce::Thread("Model_Thread")
 {
-    GrooveThreadToModelThreadQues = nullptr;
-    ModelThreadToProcessBlockQues = nullptr;
-    ModelThreadToDrumPianoRollWidgetQues = nullptr;
+    GrooveThreadToModelThreadQue = nullptr;
+    ModelThreadToProcessBlockQue = nullptr;
+    ModelThreadToDrumPianoRollWidgetQue = nullptr;
     DrumPianoRollWidgetToModelThreadQues = nullptr;
 
     readyToStop = false;
@@ -26,14 +26,14 @@ ModelThread::~ModelThread()
 }
 
 
-void ModelThread::startThreadUsingProvidedResources(IntraProcessorFifos::GrooveThreadToModelThreadQues* GrooveThreadToModelThreadQuesPntr,
-                                                    IntraProcessorFifos::ModelThreadToProcessBlockQues* ModelThreadToProcessBlockQuesPntr,
-                                                    GuiIOFifos::ModelThreadToDrumPianoRollWidgetQues* ModelThreadToDrumPianoRollWidgetQuesPntr,
+void ModelThread::startThreadUsingProvidedResources(MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>* GrooveThreadToModelThreadQuesPntr,
+                                                    GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>*  ModelThreadToProcessBlockQuesPntr,
+                                                    HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size>* ModelThreadToDrumPianoRollWidgetQuesPntr,
                                                     GuiIOFifos::DrumPianoRollWidgetToModelThreadQues* DrumPianoRollWidgetToModelThreadQuesPntr)
 {
-    GrooveThreadToModelThreadQues = GrooveThreadToModelThreadQuesPntr;
-    ModelThreadToProcessBlockQues = ModelThreadToProcessBlockQuesPntr;
-    ModelThreadToDrumPianoRollWidgetQues = ModelThreadToDrumPianoRollWidgetQuesPntr;
+    GrooveThreadToModelThreadQue = GrooveThreadToModelThreadQuesPntr;
+    ModelThreadToProcessBlockQue = ModelThreadToProcessBlockQuesPntr;
+    ModelThreadToDrumPianoRollWidgetQue = ModelThreadToDrumPianoRollWidgetQuesPntr;
     DrumPianoRollWidgetToModelThreadQues = DrumPianoRollWidgetToModelThreadQuesPntr;
 
     // load model
@@ -108,13 +108,13 @@ void ModelThread::run()
             }
         }
 
-        if (GrooveThreadToModelThreadQues != nullptr)
+        if (GrooveThreadToModelThreadQue != nullptr)
         {
-            if (GrooveThreadToModelThreadQues->new_grooves.getNumReady() > 0
+            if (GrooveThreadToModelThreadQue->getNumReady() > 0
                    and not this->threadShouldExit())
             {
                 // read latest groove
-                scaled_groove = GrooveThreadToModelThreadQues->new_grooves.getLatestOnly();
+                scaled_groove = GrooveThreadToModelThreadQue->getLatestOnly();
 
                 // set flag to re-run model
                 newGrooveAvailable = true;
@@ -150,15 +150,15 @@ void ModelThread::run()
                 hits, modelAPI.get_hits_probabilities(), velocities, offsets);
 
 
-            if (ModelThreadToProcessBlockQues != nullptr)
+            if (ModelThreadToProcessBlockQue != nullptr)
             {
                 auto temp = generated_hvo.getModifiedGeneratedData();
-                ModelThreadToProcessBlockQues->new_generations.push(temp);
+                ModelThreadToProcessBlockQue->push(temp);
             }
 
-            if (ModelThreadToDrumPianoRollWidgetQues != nullptr)
+            if (ModelThreadToDrumPianoRollWidgetQue != nullptr)
             {
-                ModelThreadToDrumPianoRollWidgetQues->new_generated_data.push(
+                ModelThreadToDrumPianoRollWidgetQue->push(
                     pianoRollData);
 
             }

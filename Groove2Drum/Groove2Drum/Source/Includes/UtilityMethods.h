@@ -4,7 +4,7 @@
 
 #include "../settings.h"
 #include <torch/torch.h>
-#include "CustomStructs.h"
+#include "CustomStructsAndLockFreeQueue.h"
 
 // can be used in processor to pass the messages received in a MidiBuffer as is,
 // sequentially in a queue to be shared with other threads
@@ -84,7 +84,7 @@ template<int que_size>
 inline void place_BasicNote_in_queue(
     juce::MidiBuffer& midiMessages,
     juce::Optional<juce::AudioPlayHead::PositionInfo > pinfo,
-    IntraProcessorFifos::ProcessBlockToGrooveThreadQues* ProcessBlockToGrooveThreadQues,
+    LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>* ProcessBlockToGrooveThreadQue,
     double sample_rate)
 {
     double frameStartPpq;
@@ -120,7 +120,7 @@ inline void place_BasicNote_in_queue(
                 note.capturedInPlaying = isPlaying;
                 note.capturedInLoop = isLooping;
                 note.captureWithBpm = captureWithBpm;
-                ProcessBlockToGrooveThreadQues->new_notes.WriteTo(&note, 1);
+                ProcessBlockToGrooveThreadQue->WriteTo(&note, 1);
             }
         }
 
@@ -165,6 +165,21 @@ inline void showMessageinEditor(StringLockFreeQueue<GeneralSettings::gui_io_queu
 
 // converts a tensor to string to be used with DBG for debugging
 inline std::string tensor2string (torch::Tensor tensor)
+{
+    std::ostringstream stream;
+    stream << tensor;
+    std::string tensor_string = stream.str();
+    return tensor_string;
+}
+
+
+
+/**
+ * Converts a torch tensor to a string
+ * @param torch::tensor
+ * @return std::string
+ */
+inline std::string torch2string (const torch::Tensor& tensor)
 {
     std::ostringstream stream;
     stream << tensor;

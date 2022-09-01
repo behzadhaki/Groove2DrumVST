@@ -6,7 +6,7 @@
 #define JUCECMAKEREPO_MODELTHREAD_H
 
 #include <shared_plugin_helpers/shared_plugin_helpers.h>
-#include "../Includes/CustomStructs.h"
+#include "../Includes/CustomStructsAndLockFreeQueue.h"
 #include "../InterThreadFifos.h"
 #include "../settings.h"
 #include "../Model/ModelAPI.h"
@@ -31,9 +31,9 @@ public:
     vector<float> perVoiceMaxNumVoicesAllowed {nine_voice_kit_default_max_voices_allowed};
 
     void startThreadUsingProvidedResources(
-        IntraProcessorFifos::GrooveThreadToModelThreadQues* GrooveThreadToModelThreadQuesPntr,
-        IntraProcessorFifos::ModelThreadToProcessBlockQues* ModelThreadToProcessBlockQuesPntr,
-        GuiIOFifos::ModelThreadToDrumPianoRollWidgetQues* ModelThreadToDrumPianoRollWidgetQuesPntr,
+        MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>* GrooveThreadToModelThreadQuesPntr,
+        GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>*  ModelThreadToProcessBlockQuesPntr,
+        HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size>* ModelThreadToDrumPianoRollWidgetQuesPntr,
         GuiIOFifos::DrumPianoRollWidgetToModelThreadQues* DrumPianoRollWidgetToModelThreadQuesPntr);
 
 
@@ -57,11 +57,11 @@ public:
 private:
 
     // Intra Processor Queues
-    IntraProcessorFifos::GrooveThreadToModelThreadQues* GrooveThreadToModelThreadQues;
-    IntraProcessorFifos::ModelThreadToProcessBlockQues* ModelThreadToProcessBlockQues;
+    MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>* GrooveThreadToModelThreadQue;
+    GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>* ModelThreadToProcessBlockQue;
 
     // Inter GUI Processor Queues
-    GuiIOFifos::ModelThreadToDrumPianoRollWidgetQues* ModelThreadToDrumPianoRollWidgetQues;
+    HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size>* ModelThreadToDrumPianoRollWidgetQue;
     GuiIOFifos::DrumPianoRollWidgetToModelThreadQues* DrumPianoRollWidgetToModelThreadQues;
 
     // Model API for running the *.pt model

@@ -15,9 +15,9 @@ GrooveThread::GrooveThread():
     juce::Thread("Groove_Thread")
 {
 
-    ProcessBlockToGrooveThreadQues = nullptr;
-    GrooveThreadToModelThreadQues = nullptr;
-    GrooveThread2GGroovePianoRollWidgetQues = nullptr;
+    ProcessBlockToGrooveThreadQue = nullptr;
+    GrooveThreadToModelThreadQue = nullptr;
+    GrooveThread2GGroovePianoRollWidgetQue = nullptr;
     GroovePianoRollWidget2GrooveThreadQues = nullptr;
 
     readyToStop = false;
@@ -26,16 +26,16 @@ GrooveThread::GrooveThread():
     
 }
 
-void GrooveThread::startThreadUsingProvidedResources(IntraProcessorFifos::ProcessBlockToGrooveThreadQues* ProcessBlockToGrooveThreadQuesPntr,
-                                                     IntraProcessorFifos::GrooveThreadToModelThreadQues* GrooveThreadToModelThreadQuesPntr,
-                                                     GuiIOFifos::GrooveThread2GGroovePianoRollWidgetQues* GrooveThread2GGroovePianoRollWidgetQuesPntr,
+void GrooveThread::startThreadUsingProvidedResources(LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>* ProcessBlockToGrooveThreadQuePntr,
+                                                     MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>* GrooveThreadToModelThreadQuePntr,
+                                                     MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>* GrooveThread2GGroovePianoRollWidgetQuesPntr,
                                                      GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQuesPntr)
 {
     // get the pointer to queues and control parameters instantiated
     // in the main processor thread
-    ProcessBlockToGrooveThreadQues = ProcessBlockToGrooveThreadQuesPntr;
-    GrooveThreadToModelThreadQues = GrooveThreadToModelThreadQuesPntr;
-    GrooveThread2GGroovePianoRollWidgetQues = GrooveThread2GGroovePianoRollWidgetQuesPntr;
+    ProcessBlockToGrooveThreadQue = ProcessBlockToGrooveThreadQuePntr;
+    GrooveThreadToModelThreadQue = GrooveThreadToModelThreadQuePntr;
+    GrooveThread2GGroovePianoRollWidgetQue = GrooveThread2GGroovePianoRollWidgetQuesPntr;
     GroovePianoRollWidget2GrooveThreadQues = GroovePianoRollWidget2GrooveThreadQuesPntr;
     startThread();
 
@@ -86,7 +86,7 @@ void GrooveThread::run()
             isNewGrooveAvailable = true;
         }
 
-        if (ProcessBlockToGrooveThreadQues != nullptr)
+        if (ProcessBlockToGrooveThreadQue != nullptr)
         {
 
             // see if new BasicNotes received from gui by hand drawing dragging a note
@@ -110,11 +110,11 @@ void GrooveThread::run()
 
             // see if new BasicNotes received from main processblock
             BasicNote read_note;
-            while (ProcessBlockToGrooveThreadQues->new_notes.getNumReady() > 0 and not this->threadShouldExit())
+            while (ProcessBlockToGrooveThreadQue->getNumReady() > 0 and not this->threadShouldExit())
             {
 
                 // Step 1. get new note
-                ProcessBlockToGrooveThreadQues->new_notes.ReadFrom(&read_note, 1); // here cnt result is 3
+                ProcessBlockToGrooveThreadQue->ReadFrom(&read_note, 1); // here cnt result is 3
 
                 // groove should only be updated in playback mode
                 //if (read_note.capturedInPlaying) // todo uncomment
@@ -164,15 +164,15 @@ void GrooveThread::run()
         // Send groove to other threads if new one available
         if (isNewGrooveAvailable or isNewGrooveAvailableUsingHandDrawnNote)
         {
-            if (GrooveThreadToModelThreadQues != nullptr)
+            if (GrooveThreadToModelThreadQue != nullptr)
             {
                 // send to Model Thread to pass through the model
-                GrooveThreadToModelThreadQues->new_grooves.push(monotonic_groove);
+                GrooveThreadToModelThreadQue->push(monotonic_groove);
             }
-            if (GrooveThread2GGroovePianoRollWidgetQues != nullptr)
+            if (GrooveThread2GGroovePianoRollWidgetQue != nullptr)
             {
                 // send groove to be displayed on the interface
-                GrooveThread2GGroovePianoRollWidgetQues->new_grooves.push(monotonic_groove);
+                GrooveThread2GGroovePianoRollWidgetQue->push(monotonic_groove);
             }
 
         }

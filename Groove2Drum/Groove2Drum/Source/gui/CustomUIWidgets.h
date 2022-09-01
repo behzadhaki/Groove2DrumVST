@@ -7,9 +7,15 @@
 #include <shared_plugin_helpers/shared_plugin_helpers.h>
 #include "../InterThreadFifos.h"
 
+// ============================================================================================================
+// ==========           General User Interface Components such as basic XYPad  Implementation     =============
+// ========== https://forum.juce.com/t/how-to-draw-a-vertical-and-horizontal-line-of-the-mouse-position/31115/2
+// ==========
+// ============================================================================================================
+
 namespace UI
 {
-    class XYPlane : public juce::Component
+    class XYPad : public juce::Component
 {
 public:
     float x_min; float x_max; float x_default;
@@ -17,7 +23,7 @@ public:
     float x_ParameterValue; float y_ParameterValue; // actual values of x or y parameters within the min/max ranges specified (NOT in terms of pixels!)
 
 
-    XYPlane(float x_min_, float x_max_, float x_default_, float y_min_, float y_max_, float y_default_):
+    XYPad(float x_min_, float x_max_, float x_default_, float y_min_, float y_max_, float y_default_):
         x_min(x_min_), x_max(x_max_), x_default(x_default_),
         y_min(y_min_), y_max(y_max_), y_default(y_default_),
         x_ParameterValue(x_default_), y_ParameterValue(y_default_)
@@ -154,34 +160,27 @@ private:
 
 
 // ============================================================================================================
-// ==========                       The smallest component in each piano roll                     =============
+// ==========              Building Blocks of each of the time steps in the pianorolls            =============
 // ========== https://forum.juce.com/t/how-to-draw-a-vertical-and-horizontal-line-of-the-mouse-position/31115/2
+// ==========
 // ============================================================================================================
-
-
-// it should be inline because we don't have a separate cpp file
-// otherwise, linking errors
-// https://forum.juce.com/t/drawing-curve-with-3-points-or-help-with-quadratic-calculations/22330
-inline array<float, 4> getPathParams(float x1, float y1, float x2, float y2, bool concaveup)
-{
-    float amplitude = 100;
-
-    float mult;
-    if (concaveup)
-        mult = 1.0f;
-    else
-        mult = -1.0f;
-
-    float a = atan2f(mult * (y2-y1), x2-x1) + juce::float_Pi/2.0;
-    float midx = (x2-x1)/2 + cos(a)*amplitude;
-    //float midy = (y2-y1)/2 + y1 - sin(a)*amplitude;
-    float midy = (y2-y1)/2 + sin(a)*amplitude;
-    return {midx, midy, x2, y2};
-}
-
 namespace SingleStepPianoRollBlock
 {
-    class PianoRoll_InteractiveIndividualBlock : public juce::Component
+
+    /***
+     * (A) The smallest block to draw a drum event inside
+     * If interactive, notes can be created by double clicking, moved around by dragging ...
+     * Notes are drawn using offset values and velocity given a offset range (specified in settings.h)
+     * Velocity range is from 0 to 1
+     *
+     * (B) if a queue is provided (of type GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues, see InterThreadFifos.h),
+     * moving a note manually sends the new vel, hit, offset values to a receiving thread
+     * (in this case, GrooveThread in processor)
+     *
+     * (C) InteractiveInstance is used for Monotonic Groove Visualization only as generated drums are not
+     * manually modifiable
+     */
+    class InteractiveIndividualBlock : public juce::Component
     {
     public:
         bool isClickable;
@@ -196,7 +195,17 @@ namespace SingleStepPianoRollBlock
         float range_offset = hi_offset - low_offset;
         GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQues;
 
-        PianoRoll_InteractiveIndividualBlock(bool isClickable_, juce::Colour backgroundcolor_, int grid_index_, int voice_num_ = 0, GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQuesPntr = nullptr) {
+        /**
+         * Constructor
+         *
+         * @param isClickable_ (bool) True for interactive version
+         * @param backgroundcolor_  (juce::Colour type)
+         * @param grid_index_ (int) specifies which time step the block is used for
+         * @param voice_num_ (int) specifies which drum voice the block is used for
+         * @param GroovePianoRollWidget2GrooveThreadQuesPntr  (GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues, see InterThreadFifos.h) used to send data to a receiver via this queue if interactive and also queue is not nullptr
+         *
+         */
+        InteractiveIndividualBlock(bool isClickable_, juce::Colour backgroundcolor_, int grid_index_, int voice_num_ = 0, GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQuesPntr = nullptr) {
             grid_index = grid_index_;
             backgroundcolor = backgroundcolor_;
             isClickable = isClickable_;
@@ -225,7 +234,7 @@ namespace SingleStepPianoRollBlock
 
             if (hit == 1)
             {
-                // draw a mustart colored line for the note hit
+                // draw a colored line and a rectangle on the top end for the note hit
                 g.setColour(note_color);
 
                 auto x_pos = offsetToActualX();
@@ -244,6 +253,8 @@ namespace SingleStepPianoRollBlock
 
         }
 
+        // only sendDataToQueue() if instance is interactive
+        // only sends data when mouse key is released
         void mouseUp(const juce::MouseEvent& ev) override
         {
             if (isClickable)
@@ -252,23 +263,7 @@ namespace SingleStepPianoRollBlock
             }
         }
 
-        /*void mouseDown(const juce::MouseEvent& ev)
-        {
-            if (isClickable)
-            {
-                if (hit == 1)
-                {
-                    // if shift pressed moves only up or down
-                    if (!ev.mods.isShiftDown())
-                    {
-                        offset = actualXToOffset(ev.position.getX());
-                    }
-                    velocity = 1 - ev.position.getY() / (float) getHeight();
-                }
-                repaint();
-            }
-        }*/
-
+        // moves a note around the block on dragging and repaints
         void mouseDrag(const juce::MouseEvent& ev)
         {
             if (isClickable)
@@ -286,6 +281,7 @@ namespace SingleStepPianoRollBlock
             }
         }
 
+        // hides an already existing note or unhides if the block is empty
         void mouseDoubleClick(const juce::MouseEvent& ev) override
         {
             if (isClickable)
@@ -312,6 +308,7 @@ namespace SingleStepPianoRollBlock
             }
         }
 
+        // places a note in the block at the given locations
         void addEvent(int hit_, float velocity_, float offset_)
         {
             assert (hit == 0 or hit == 1);
@@ -323,6 +320,7 @@ namespace SingleStepPianoRollBlock
             repaint();
         }
 
+        // places a BasicNote in the queue to be received by another thread
         void sendDataToQueue()
         {
             if (hit == 1)
@@ -348,27 +346,33 @@ namespace SingleStepPianoRollBlock
             float ratioOfWidth = x_pixel / (float)getWidth();
             return (ratioOfWidth * range_offset + low_offset);
         }
-
-
-
     };
 
 
+    /**
+     *  The block in which probability levels are shown
+     *  if probabilities are over 0, a curved peak is drawn at the centre
+     *  with height corresponding to the specified probability level
+     */
     class ProbabilityLevelWidget: public juce::Component
     {
     public:
         juce::Colour backgroundcolor;
-        float line_thickness;
         float hit_prob = 0;
         float sampling_threshold = 0;
         int hit;
 
-        ProbabilityLevelWidget(juce:: Colour backgroundcolor_, int voice_number_, float line_thickness_=2)
+        /***
+         * Constructor
+         * @param backgroundcolor_ (juce:: Colour)
+
+         */
+        ProbabilityLevelWidget(juce:: Colour backgroundcolor_)
         {
             backgroundcolor = backgroundcolor_;
-            line_thickness = line_thickness_;
         }
 
+        // draws a path peaking at the probability level
         void paint(juce::Graphics& g) override
         {
             //background colour
@@ -383,19 +387,17 @@ namespace SingleStepPianoRollBlock
 
             juce::Path myPath1;
             float from_edge = 0.4f;
-            float control_rect_ratio = (1.0f - from_edge) * 0.5f; // ratio wise
             auto p = (float) proportionOfHeight(1.0f - hit_prob); // location of peak (ie probability)
             auto control_rect = juce::Rectangle<float> (juce::Point<float> ((float) proportionOfWidth(from_edge), h), juce::Point<float> ((float)proportionOfWidth(1.0f - from_edge), p));
 
             auto half_P = (float) proportionOfHeight(1.0f - hit_prob/2.0f);
-            // g.setColour (juce::Colours::darkkhaki);
             g.setColour(prob_color_non_hit);
             myPath1.startNewSubPath (0.0f, h);
 
             myPath1.lineTo(juce::Point<float> (w, h));
             g.strokePath (myPath1, juce::PathStrokeType (2.0f));
 
-
+            // draw a quadratic curve if probability is over 0
             if (hit_prob > 0)
             {
                 juce::Path myPath;
@@ -421,22 +423,20 @@ namespace SingleStepPianoRollBlock
             }
         }
 
-        /*void setProbability(float hit_prob_)
-        {
-            if (hit_prob-hit_prob_>0.01 )
-            {
-                hit_prob = hit_prob_;
-                repaint();
-            }
-        }*/
-
+        /** Specify probability state,
+         * i.e. what the probability level and sampling thresholds are
+         * and also whether the note will actually get played (if the note is
+         * one of the n_max most probable events with prob over threshold)
+         * @param hit_ (int) if 1, then the color for peak will be darker
+         * @param hit_prob_  (float) probability level
+         * @param sampling_thresh (float) line level used for sampling threshold
+         */
         void setProbability(int hit_, float hit_prob_, float sampling_thresh)
         {
             hit = hit_;
             hit_prob = hit_prob_;
             sampling_threshold = sampling_thresh;
             repaint();
-
         }
 
         void setSamplingThreshold(float thresh)
@@ -449,21 +449,23 @@ namespace SingleStepPianoRollBlock
     };
 
 
-    class PianoRoll_InteractiveIndividualBlockWithProbability : public juce::Component
+    /**
+     * Wraps a PianoRoll_InteractiveIndividualBlock and ProbabilityLevelWidget together into one component
+     */
+    class InteractiveIndividualBlockWithProbability : public juce::Component
     {
 
     public:
-        unique_ptr<PianoRoll_InteractiveIndividualBlock> pianoRollBlockWidgetPntr;  // unique_ptr so as to allow for initialization in the constructor
+        unique_ptr<InteractiveIndividualBlock> pianoRollBlockWidgetPntr;  // unique_ptr so as to allow for initialization in the constructor
         unique_ptr<ProbabilityLevelWidget> probabilityCurveWidgetPntr;         // component instance within which we'll draw the probability curve
 
-
-        PianoRoll_InteractiveIndividualBlockWithProbability(bool isClickable_, juce::Colour backgroundcolor_, int grid_index_, int voice_num_, GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQues=nullptr)
+        InteractiveIndividualBlockWithProbability(bool isClickable_, juce::Colour backgroundcolor_, int grid_index_, int voice_num_, GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQues=nullptr)
         {
-            pianoRollBlockWidgetPntr = make_unique<PianoRoll_InteractiveIndividualBlock>(isClickable_, backgroundcolor_, grid_index_, voice_num_, GroovePianoRollWidget2GrooveThreadQues);
+            pianoRollBlockWidgetPntr = make_unique<InteractiveIndividualBlock>(isClickable_, backgroundcolor_, grid_index_, voice_num_, GroovePianoRollWidget2GrooveThreadQues);
             addAndMakeVisible(pianoRollBlockWidgetPntr.get());
 
 
-            probabilityCurveWidgetPntr = make_unique<ProbabilityLevelWidget>(juce::Colours::black /*backgroundcolor_*/, voice_num_);
+            probabilityCurveWidgetPntr = make_unique<ProbabilityLevelWidget>(juce::Colours::black);
             addAndMakeVisible(probabilityCurveWidgetPntr.get());
         }
 
@@ -490,49 +492,71 @@ namespace SingleStepPianoRollBlock
         }
     };
 
-
-    class XYPlaneWithtListeners : public UI::XYPlane
+    /** A child component of UI::XYPad explicitely used in drum piano rolls.
+     * The pad can automaticly update the horizontal threshold lines in
+     * PianoRoll_InteractiveIndividualBlockWithProbability widgets for a given voice
+     *
+     */
+    class XYPadWithtListeners : public UI::XYPad
     {
     public:
-        vector<PianoRoll_InteractiveIndividualBlockWithProbability*> ListenerWidgets;
+        vector<InteractiveIndividualBlockWithProbability*> ListenerWidgets;
         LockFreeQueue<float, GeneralSettings::gui_io_queue_size>* max_num_to_modelThread_que;
         LockFreeQueue<float, GeneralSettings::gui_io_queue_size>* sample_thresh_to_modelThread_que;
 
-        XYPlaneWithtListeners(float x_min_, float x_max_, float x_default_, float y_min_, float y_max_, float y_default_,
+        /**
+         *
+         * @param x_min_ min number of hits allowed
+         * @param x_max_ max number of hits allowed
+         * @param x_default_ default number of hits allowed
+         * @param y_min_ lowest sampling thresh
+         * @param y_max_ highest sampling thresh
+         * @param y_default_ default sampling thresh
+         * @param max_num_to_modelThread_quePntr (LockFreeQueue<float, GeneralSettings::gui_io_queue_size>) queue to send x value to  ModelThread for updating sampling conditions from model
+         * @param sample_thresh_to_modelThread_quePntr (LockFreeQueue<float, GeneralSettings::gui_io_queue_size>) queue to send y value to  ModelThread for updating sampling conditions from model
+         */
+        XYPadWithtListeners(float x_min_, float x_max_, float x_default_, float y_min_, float y_max_, float y_default_,
                               LockFreeQueue<float, GeneralSettings::gui_io_queue_size>* max_num_to_modelThread_quePntr,
                               LockFreeQueue<float, GeneralSettings::gui_io_queue_size>* sample_thresh_to_modelThread_quePntr):
-            XYPlane(x_min_, x_max_, x_default_, y_min_, y_max_, y_default)
+            XYPad(x_min_, x_max_, x_default_, y_min_, y_max_, y_default)
         {
             max_num_to_modelThread_que = max_num_to_modelThread_quePntr;
             sample_thresh_to_modelThread_que =  sample_thresh_to_modelThread_quePntr;
         }
 
-        void addWidget(PianoRoll_InteractiveIndividualBlockWithProbability* widget)
+        /**
+         * Adds PianoRoll_InteractiveIndividualBlockWithProbability instances to an internal vector.
+         * THis way sampling thresholds in the "listener" widgets can be automatically updated
+         * @param widget
+         */
+        void addWidget(InteractiveIndividualBlockWithProbability* widget)
         {
             ListenerWidgets.push_back(widget);
         }
 
-        /*void mouseDown(const juce::MouseEvent& ev) override
-        {
-            XYPlane::mouseDown(ev);
-            BroadCastAllInfo();
-        }*/
-
+        // double clicking hides/unhides the xy location)
         void mouseDoubleClick(const juce::MouseEvent& ev) override
         {
-            XYPlane::mouseDoubleClick(ev);
+            XYPad::mouseDoubleClick(ev);
             BroadCastAllInfo();
         }
 
+        // dragging moves the xy location
         void mouseDrag(const juce::MouseEvent& ev) override
         {
-            XYPlane::mouseDrag(ev);
+            XYPad::mouseDrag(ev);
             BroadCastAllInfo();
         }
 
+        // sends sampling thresholds to listener widgets
         void BroadCastThresholds()
         {
-            auto thresh = XYPlane::getYValue();
+            // at least one widget should have been added using
+            // addWidget(). If no listeners, you should use the basic
+            // UI::XYPad component
+            assert (ListenerWidgets.size()>0);
+
+            auto thresh = XYPad::getYValue();
             max_num_to_modelThread_que->push(getXValue());
             sample_thresh_to_modelThread_que->push(thresh);
 
@@ -542,6 +566,7 @@ namespace SingleStepPianoRollBlock
             }
         }
 
+        // sends all info to listeners
         void BroadCastAllInfo()
         {
             vector<float> probabilities {};
@@ -564,18 +589,52 @@ namespace SingleStepPianoRollBlock
             BroadCastThresholds();
         }
 
+        // moves the xy location without mouse interaction
         void ForceMoveToActualValues(float x_ParameterValue_, float y_ParameterValue_)
         {
-            XYPlane::moveUsingActualValues(x_ParameterValue_, y_ParameterValue_);
+            XYPad::moveUsingActualValues(x_ParameterValue_, y_ParameterValue_);
 
             BroadCastAllInfo();
         }
 
+        // changes default values
         void updateDefaultValues(float default_x_, float default_y_)
         {
-            XYPlane::updateDefaultValues(default_x_, default_y_);
+            XYPad::updateDefaultValues(default_x_, default_y_);
             ForceMoveToActualValues(default_x_, default_y_);
             BroadCastAllInfo();
         }
     };
 }
+
+
+
+/*
+
+// it should be inline because we don't have a separate cpp file
+// otherwise, linking errors
+// https://forum.juce.com/t/drawing-curve-with-3-points-or-help-with-quadratic-calculations/22330
+*/
+/**
+ *  creates a concave up or down curve from (x1, y1) to (x2, y2)
+ *  Used in SingleStepPianoRollBlock::ProbabilityLevelWidget
+ * @param concaveup (true for concave up and false for concave down)
+ * @return
+ *//*
+
+inline array<float, 4> getPathParams(float x1, float y1, float x2, float y2, bool concaveup)
+{
+    float amplitude = 100;
+
+    float mult;
+    if (concaveup)
+        mult = 1.0f;
+    else
+        mult = -1.0f;
+
+    float a = atan2f(mult * (y2-y1), x2-x1) + juce::float_Pi/2.0;
+    float midx = (x2-x1)/2 + cos(a)*amplitude;
+    //float midy = (y2-y1)/2 + y1 - sin(a)*amplitude;
+    float midy = (y2-y1)/2 + sin(a)*amplitude;
+    return {midx, midy, x2, y2};
+}*/

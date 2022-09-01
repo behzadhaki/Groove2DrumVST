@@ -104,7 +104,7 @@ namespace gui_settings{
         constexpr float space_reserved_right_side_of_gui_ratio_of_width {0.3f};
 
         constexpr float total_pianoRoll_ratio_of_width {timestep_ratio_of_width * HVO_params::time_steps};
-        constexpr float XYPlane_ratio_of_width {1.0f - (label_ratio_of_width + total_pianoRoll_ratio_of_width)};
+        constexpr float XYPad_ratio_of_width {1.0f - (label_ratio_of_width + total_pianoRoll_ratio_of_width)};
 
         constexpr float completePianoRollHeight {0.85f};
         constexpr float completeMonotonicGrooveHeight {0.9f};

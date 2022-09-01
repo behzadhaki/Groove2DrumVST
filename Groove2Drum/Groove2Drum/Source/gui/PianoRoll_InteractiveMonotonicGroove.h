@@ -7,18 +7,23 @@
 
 using namespace std;
 
+/***
+ * a number of SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlockWithProbability placed together in a single
+ * row to represent either the piano roll for the unmodified (interactive) OR the modified (non-interactive) sections of
+ * of the piano roll for the Input Groove.
+ */
 class PianoRoll_InteractiveMonotonicGroove :public juce::Component
 {
 public:
 
-    vector<shared_ptr<SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlock>> interactivePRollBlocks;
+    vector<shared_ptr<SingleStepPianoRollBlock::InteractiveIndividualBlock>> interactivePRollBlocks;
     juce::Colour def_c {juce::Colour::fromFloatRGBA(1.0f,1.0f,1.0f,0.8f)};
     juce::Colour beat_c { juce::Colour::fromFloatRGBA(.75f,.75f,.75f, 0.5f)};
     juce::Colour bar_c {  juce::Colour::fromFloatRGBA(.6f,.6f,.6f, 0.5f) };
     int num_gridlines;
     float step_ppq;
     juce::Label label;
-    unique_ptr<XYPlane> xySlider;
+    unique_ptr<XYPad> xySlider;
 
 
     PianoRoll_InteractiveMonotonicGroove(bool isInteractive,int num_gridlines_, float step_ppq_, int n_steps_per_beat, int n_beats_per_bar, string label_text,
@@ -40,15 +45,15 @@ public:
         {
             if (fmod(i, n_steps_per_beat*n_beats_per_bar) == 0)      // bar position
             {
-                interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlock>(isInteractive, bar_c, i, 0, GroovePianoRollWidget2GrooveThreadQues));
+                interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::InteractiveIndividualBlock>(isInteractive, bar_c, i, 0, GroovePianoRollWidget2GrooveThreadQues));
             }
             else if(fmod(i, n_steps_per_beat) == 0)                  // beat position
             {
-                interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlock>(isInteractive, beat_c, i, 0, GroovePianoRollWidget2GrooveThreadQues));
+                interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::InteractiveIndividualBlock>(isInteractive, beat_c, i, 0, GroovePianoRollWidget2GrooveThreadQues));
             }
             else                                                    // every other position
             {
-                interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlock>(isInteractive, def_c, i, 0,  GroovePianoRollWidget2GrooveThreadQues));
+                interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::InteractiveIndividualBlock>(isInteractive, def_c, i, 0,  GroovePianoRollWidget2GrooveThreadQues));
             }
 
             addAndMakeVisible(interactivePRollBlocks[i].get());
@@ -77,7 +82,11 @@ public:
 
 };
 
-
+/**
+ * wraps two instances of PianoRoll_InteractiveMonotonicGroove together on top of each other.
+ * Bottom one is unModified groove (interactive) and top one is Modified groove (non-interactive)
+ * pianorolls.
+ */
 class MonotonicGrooveWidget:public juce::Component
 {
 public:
