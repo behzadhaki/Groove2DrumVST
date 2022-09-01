@@ -15,10 +15,7 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
 
     // initialize widgets
     DrumsPianoRollWidget = make_unique<GeneratedDrumsWidget>(
-        num_steps, step_ppq_res, steps_perBeat, beats_perBar,
-        nine_voice_kit_labels, nine_voice_kit_default_midi_numbers,
-        MidiFXProcessorPointer.DrumPianoRollWidgetToModelThreadQues.get(),
-        MidiFXProcessorPointer.modelThread.perVoiceSamplingThresholds, MidiFXProcessorPointer.modelThread.perVoiceMaxNumVoicesAllowed);
+        &MidiFXProcessorPointer_->apvts);
     {   // re-draw events if Editor reconstructed mid-session
         auto ptr_ = MidiFXProcessorPointer_->ModelThreadToDrumPianoRollWidgetQue.get();
         if (ptr_->getNumberOfWrites() > 0)
@@ -30,7 +27,7 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     }
 
     MonotonicGroovePianoRollsWidget = make_unique<MonotonicGrooveWidget>
-        (num_steps, step_ppq_res, steps_perBeat, beats_perBar, MidiFXProcessorPointer_->GroovePianoRollWidget2GrooveThreadQues.get());
+        (MidiFXProcessorPointer_->GroovePianoRollWidget2GrooveThreadQues.get());
     {   // re-draw events if Editor reconstructed mid-session
         auto ptr_ = MidiFXProcessorPointer_->GrooveThread2GGroovePianoRollWidgetQue.get();
         if (ptr_->getNumberOfWrites() > 0)
@@ -63,7 +60,6 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
 
     // sliders for vel offset ranges
     addAndMakeVisible (minVelSlider);
-    minVelSlider.setRange (-2.0f, 2.0f);
     minVelSlider.addListener (this);
     addAndMakeVisible (minVelLabel);
     minVelLabel.setText ("Min Vel", juce::dontSendNotification);
@@ -71,7 +67,6 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     minVelSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(MidiFXProcessorPointer_->apvts, "MINIMUM_VELOCITY", minVelSlider);
 
     addAndMakeVisible (maxVelSlider);
-    maxVelSlider.setRange (-2.0f, 2.0f);
     maxVelSlider.addListener (this);
     addAndMakeVisible (maxVelLabel);
     maxVelLabel.setText ("Max Vel", juce::dontSendNotification);
@@ -138,7 +133,7 @@ void MidiFXProcessorEditor::resized()
     // layout Playhead Progress Bar
     area.removeFromLeft(area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width));
     // area.removeFromRight(area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width*1.2f));
-    PlayheadProgressBar.setBounds(area.removeFromLeft(DrumsPianoRollWidget->PianoRoll[0]->getPianoRollSectionWidth()));
+    PlayheadProgressBar.setBounds(area.removeFromLeft(DrumsPianoRollWidget->PianoRolls[0]->getPianoRollSectionWidth()));
 
     // put vel offset range sliders
     area = getLocalBounds();

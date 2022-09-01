@@ -6,6 +6,7 @@
 
 #include <shared_plugin_helpers/shared_plugin_helpers.h>
 #include "../InterThreadFifos.h"
+/*
 
 // ============================================================================================================
 // ==========           General User Interface Components such as basic XYPad  Implementation     =============
@@ -15,7 +16,8 @@
 
 namespace UI
 {
-    class XYPad : public juce::Component
+
+class XYPad : public juce::Component
 {
 public:
     float x_min; float x_max; float x_default;
@@ -94,11 +96,13 @@ public:
         shareParameter();
     }
 
-    /*void mouseDown(const juce::MouseEvent& ev) override
+    */
+/*void mouseDown(const juce::MouseEvent& ev) override
     {
         m_mousepos = ev.position;
         moveToCoordinate(m_mousepos);
-    }*/
+    }*//*
+
 
     void mouseDoubleClick(const juce::MouseEvent& ev) override
     {
@@ -154,9 +158,12 @@ public:
 private:
     juce::Point<float> m_mousepos;
 };
+
+
 }
 
 
+*/
 
 
 // ============================================================================================================
@@ -189,7 +196,6 @@ namespace SingleStepPianoRollBlock
         float offset;
         juce::Colour backgroundcolor;
         int grid_index; // time step corresponding to the block
-        int voice_num;
         float low_offset = min(HVO_params::_min_offset, HVO_params::_max_offset); // min func just incase min and max offsets are wrongly defined
         float hi_offset = max(HVO_params::_min_offset, HVO_params::_max_offset); // max func just incase min and max offsets are wrongly defined
         float range_offset = hi_offset - low_offset;
@@ -201,11 +207,10 @@ namespace SingleStepPianoRollBlock
          * @param isClickable_ (bool) True for interactive version
          * @param backgroundcolor_  (juce::Colour type)
          * @param grid_index_ (int) specifies which time step the block is used for
-         * @param voice_num_ (int) specifies which drum voice the block is used for
          * @param GroovePianoRollWidget2GrooveThreadQuesPntr  (GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues, see InterThreadFifos.h) used to send data to a receiver via this queue if interactive and also queue is not nullptr
          *
          */
-        InteractiveIndividualBlock(bool isClickable_, juce::Colour backgroundcolor_, int grid_index_, int voice_num_ = 0, GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQuesPntr = nullptr) {
+        InteractiveIndividualBlock(bool isClickable_, juce::Colour backgroundcolor_, int grid_index_, GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQuesPntr = nullptr) {
             grid_index = grid_index_;
             backgroundcolor = backgroundcolor_;
             isClickable = isClickable_;
@@ -213,7 +218,6 @@ namespace SingleStepPianoRollBlock
             hit = 0;
             velocity = 0;
             offset = 0;
-            voice_num = voice_num_;
         }
 
         void paint(juce::Graphics& g) override
@@ -325,11 +329,11 @@ namespace SingleStepPianoRollBlock
         {
             if (hit == 1)
             {
-                GroovePianoRollWidget2GrooveThreadQues->manually_drawn_notes.push(BasicNote(voice_num, velocity, grid_index, offset));
+                GroovePianoRollWidget2GrooveThreadQues->manually_drawn_notes.push(BasicNote(100, velocity, grid_index, offset));
             }
             else
             {
-                GroovePianoRollWidget2GrooveThreadQues->manually_drawn_notes.push(BasicNote(voice_num, 0, grid_index, 0));
+                GroovePianoRollWidget2GrooveThreadQues->manually_drawn_notes.push(BasicNote(100, 0, grid_index, 0));
             }
         }
 
@@ -459,9 +463,9 @@ namespace SingleStepPianoRollBlock
         unique_ptr<InteractiveIndividualBlock> pianoRollBlockWidgetPntr;  // unique_ptr so as to allow for initialization in the constructor
         unique_ptr<ProbabilityLevelWidget> probabilityCurveWidgetPntr;         // component instance within which we'll draw the probability curve
 
-        InteractiveIndividualBlockWithProbability(bool isClickable_, juce::Colour backgroundcolor_, int grid_index_, int voice_num_, GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQues=nullptr)
+        InteractiveIndividualBlockWithProbability(bool isClickable_, juce::Colour backgroundcolor_, int grid_index_, GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQues=nullptr)
         {
-            pianoRollBlockWidgetPntr = make_unique<InteractiveIndividualBlock>(isClickable_, backgroundcolor_, grid_index_, voice_num_, GroovePianoRollWidget2GrooveThreadQues);
+            pianoRollBlockWidgetPntr = make_unique<InteractiveIndividualBlock>(isClickable_, backgroundcolor_, grid_index_, GroovePianoRollWidget2GrooveThreadQues);
             addAndMakeVisible(pianoRollBlockWidgetPntr.get());
 
 
@@ -492,36 +496,91 @@ namespace SingleStepPianoRollBlock
         }
     };
 
-    /** A child component of UI::XYPad explicitely used in drum piano rolls.
-     * The pad can automaticly update the horizontal threshold lines in
-     * PianoRoll_InteractiveIndividualBlockWithProbability widgets for a given voice
-     *
-     */
-    class XYPadWithtListeners : public UI::XYPad
+
+
+    class XYPadAutomatableWithSliders: public juce::Component, public juce::Slider::Listener
     {
     public:
         vector<InteractiveIndividualBlockWithProbability*> ListenerWidgets;
-        LockFreeQueue<float, GeneralSettings::gui_io_queue_size>* max_num_to_modelThread_que;
-        LockFreeQueue<float, GeneralSettings::gui_io_queue_size>* sample_thresh_to_modelThread_que;
 
-        /**
-         *
-         * @param x_min_ min number of hits allowed
-         * @param x_max_ max number of hits allowed
-         * @param x_default_ default number of hits allowed
-         * @param y_min_ lowest sampling thresh
-         * @param y_max_ highest sampling thresh
-         * @param y_default_ default sampling thresh
-         * @param max_num_to_modelThread_quePntr (LockFreeQueue<float, GeneralSettings::gui_io_queue_size>) queue to send x value to  ModelThread for updating sampling conditions from model
-         * @param sample_thresh_to_modelThread_quePntr (LockFreeQueue<float, GeneralSettings::gui_io_queue_size>) queue to send y value to  ModelThread for updating sampling conditions from model
-         */
-        XYPadWithtListeners(float x_min_, float x_max_, float x_default_, float y_min_, float y_max_, float y_default_,
-                              LockFreeQueue<float, GeneralSettings::gui_io_queue_size>* max_num_to_modelThread_quePntr,
-                              LockFreeQueue<float, GeneralSettings::gui_io_queue_size>* sample_thresh_to_modelThread_quePntr):
-            XYPad(x_min_, x_max_, x_default_, y_min_, y_max_, y_default)
+        juce::Slider xSlider;
+        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> xSliderAttachement;
+        juce::Slider ySlider;
+        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> ySliderAttachement;
+        juce::AudioProcessorValueTreeState* apvts;
+
+        float latest_x = 0;
+        float latest_y = 0;
+
+        XYPadAutomatableWithSliders(juce::AudioProcessorValueTreeState* apvtsPntr,
+                                    juce::String xParameterID, juce::String yParameterID)
         {
-            max_num_to_modelThread_que = max_num_to_modelThread_quePntr;
-            sample_thresh_to_modelThread_que =  sample_thresh_to_modelThread_quePntr;
+            apvts = apvtsPntr;
+            xSliderAttachement = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvts, xParameterID, xSlider);
+            ySliderAttachement = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvts, yParameterID, ySlider);
+        }
+
+        void sliderValueChanged (juce::Slider* slider) override
+        {
+            if (slider == &xSlider or slider == &ySlider)
+            {
+                repaint();
+            }
+        }
+
+        void paint(juce::Graphics& g) override
+        {
+            g.fillAll(juce::Colours::black);
+            g.fillAll(juce::Colours::black);
+            g.setColour(juce::Colours::white);
+
+            auto w = float(getWidth());
+            auto h = float(getHeight());
+
+            auto x_ = round(max(min(float(xSlider.getValue() - xSlider.getMinimum()) * w / float(xSlider.getMaximum() - xSlider.getMinimum()), w), 0.0f));
+            auto y_ = max(min(float(1.0f - (ySlider.getValue() - ySlider.getMinimum()) / float(ySlider.getMaximum() - ySlider.getMinimum())) * h, h), 0.0f);
+
+
+            // g.setColour(juce::Colours::beige);
+            g.setColour(prob_color_hit);
+            juce::Point<float> p1 {0, 0};
+            juce::Point<float> p2 {x_, y_};
+            juce::Rectangle<float> rect {p1, p2};
+            g.fillRect(rect);
+            g.drawRect(rect, 0.2f);
+            g.setColour(juce::Colours::white);
+            g.drawLine(0.0f, y_, x_, y_, 2);
+            g.drawLine(x_, 0, x_, y_, 2);
+
+        }
+
+        void mouseDoubleClick(const juce::MouseEvent& ev) override
+        {
+            // more than 2 clicks goes back to default
+            if (xSlider.getValue() == 0 and ySlider.getValue() == 1)
+            {
+                xSlider.setValue(latest_x);
+                ySlider.setValue(latest_y);
+            }
+            else // regular double click sets area to 0 --> no possible hits
+            {
+                latest_x = (float) xSlider.getValue();
+                latest_y = (float) ySlider.getValue();
+                xSlider.setValue(0.0f);
+                ySlider.setValue(1.0f);
+            }
+            repaint();
+            BroadCastThresholds();
+        }
+
+
+        void mouseDrag(const juce::MouseEvent& ev) override
+        {
+            m_mousepos = ev.position;
+            xSlider.setValue(m_mousepos.getX()/float(getWidth()) * (xSlider.getMaximum() - xSlider.getMinimum())+ xSlider.getMinimum());
+            ySlider.setValue((1.0f - m_mousepos.getY()/float(getHeight())) * (ySlider.getMaximum() - ySlider.getMinimum())+ ySlider.getMinimum());
+            repaint();
+            BroadCastThresholds();
         }
 
         /**
@@ -532,20 +591,7 @@ namespace SingleStepPianoRollBlock
         void addWidget(InteractiveIndividualBlockWithProbability* widget)
         {
             ListenerWidgets.push_back(widget);
-        }
-
-        // double clicking hides/unhides the xy location)
-        void mouseDoubleClick(const juce::MouseEvent& ev) override
-        {
-            XYPad::mouseDoubleClick(ev);
-            BroadCastAllInfo();
-        }
-
-        // dragging moves the xy location
-        void mouseDrag(const juce::MouseEvent& ev) override
-        {
-            XYPad::mouseDrag(ev);
-            BroadCastAllInfo();
+            BroadCastThresholds();
         }
 
         // sends sampling thresholds to listener widgets
@@ -554,56 +600,22 @@ namespace SingleStepPianoRollBlock
             // at least one widget should have been added using
             // addWidget(). If no listeners, you should use the basic
             // UI::XYPad component
-            assert (ListenerWidgets.size()>0);
-
-            auto thresh = XYPad::getYValue();
-            max_num_to_modelThread_que->push(getXValue());
-            sample_thresh_to_modelThread_que->push(thresh);
-
-            for (int i=0; i<ListenerWidgets.size(); i++)
+            if (ListenerWidgets.size()>0)
             {
-                ListenerWidgets[i]->probabilityCurveWidgetPntr->setSamplingThreshold(thresh);
-            }
-        }
+                auto thresh = ySlider.getValue();
 
-        // sends all info to listeners
-        void BroadCastAllInfo()
-        {
-            vector<float> probabilities {};
-            vector<float> probs_for_widgets_idx {};
-
-            int current_widget_idx = 0;
-            for (auto & ListenerWidget : ListenerWidgets)
-            {
-                auto hit_prob_ = ListenerWidget->probabilityCurveWidgetPntr->hit_prob;
-                if (hit_prob_ > 0)
-
-                    if (getYValue() <= hit_prob_)
-                    {
-                        probabilities.push_back(hit_prob_);
-                        probs_for_widgets_idx.push_back(current_widget_idx);
-                    }
-                current_widget_idx++;
+                for (int i=0; i<ListenerWidgets.size(); i++)
+                {
+                    ListenerWidgets[i]->probabilityCurveWidgetPntr->setSamplingThreshold(thresh);
+                }
             }
 
-            BroadCastThresholds();
         }
 
-        // moves the xy location without mouse interaction
-        void ForceMoveToActualValues(float x_ParameterValue_, float y_ParameterValue_)
-        {
-            XYPad::moveUsingActualValues(x_ParameterValue_, y_ParameterValue_);
 
-            BroadCastAllInfo();
-        }
+    private:
+        juce::Point<float> m_mousepos;
 
-        // changes default values
-        void updateDefaultValues(float default_x_, float default_y_)
-        {
-            XYPad::updateDefaultValues(default_x_, default_y_);
-            ForceMoveToActualValues(default_x_, default_y_);
-            BroadCastAllInfo();
-        }
     };
 }
 

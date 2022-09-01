@@ -9,7 +9,6 @@
 #include "../Includes/CustomStructsAndLockFreeQueue.h"
 
 using namespace std;
-using namespace UI;
 
 /***
  * a number of SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlockWithProbability placed together in a single
@@ -21,18 +20,13 @@ class PianoRoll_GeneratedDrums_SingleVoice :public juce::Component
 public:
 
     vector<shared_ptr<SingleStepPianoRollBlock::InteractiveIndividualBlockWithProbability>> interactivePRollBlocks;
-    shared_ptr<SingleStepPianoRollBlock::XYPadWithtListeners> MaxCount_Prob_XYPad; // x axis will be Max count (0 to time_steps), y axis is threshold 0 to 1
+    shared_ptr<SingleStepPianoRollBlock::XYPadAutomatableWithSliders> MaxCount_Prob_XYPad; // x axis will be Max count (0 to time_steps), y axis is threshold 0 to 1
     juce::Label label;
     int pianoRollSectionWidth {0};
 
-    int num_gridlines ;
 
-    PianoRoll_GeneratedDrums_SingleVoice(LockFreeQueue<float, GeneralSettings::gui_io_queue_size>* max_num_to_modelThread_que,
-                                         LockFreeQueue<float, GeneralSettings::gui_io_queue_size>* sample_thresh_to_modelThread_que,
-                                         int num_gridlines_, float step_ppq_, int n_steps_per_beat, int n_beats_per_bar, string label_text, int voice_number_=0)
+    PianoRoll_GeneratedDrums_SingleVoice(juce::AudioProcessorValueTreeState* apvtsPntr, string label_text, string maxCountParamID, string threshParamID)
     {
-        num_gridlines = num_gridlines_;
-
 
         // Set Modified Label
         label.setText(label_text, juce::dontSendNotification);
@@ -40,39 +34,32 @@ public:
         label.setJustificationType (juce::Justification::centredRight);
         addAndMakeVisible(label);
 
-        // xy slider broadcaster
-        MaxCount_Prob_XYPad = make_shared<SingleStepPianoRollBlock::XYPadWithtListeners>(0, num_gridlines_, num_gridlines_/2, 0, 1, 0.5, max_num_to_modelThread_que, sample_thresh_to_modelThread_que);
+        // xy slider
+        MaxCount_Prob_XYPad = make_shared<SingleStepPianoRollBlock::XYPadAutomatableWithSliders>(apvtsPntr, maxCountParamID, threshParamID);
         addAndMakeVisible(MaxCount_Prob_XYPad.get());
 
         // Draw up piano roll
-        /*auto w_per_block = (int) size_width/num_gridlines;*/
-
         for (unsigned long i=0; i<HVO_params::time_steps; i++)
         {
-            if (fmod(i, n_steps_per_beat*n_beats_per_bar) == 0)      // bar position
+            if (fmod(i, HVO_params::num_steps_per_beat*HVO_params::num_beats_per_bar) == 0)      // bar position
             {
                 interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::
-                                    InteractiveIndividualBlockWithProbability>(false, bar_backg_color, i, voice_number_));
+                                    InteractiveIndividualBlockWithProbability>(false, bar_backg_color, i));
             }
-            else if(fmod(i, n_steps_per_beat) == 0)                  // beat position
+            else if(fmod(i, HVO_params::num_steps_per_beat) == 0)                  // beat position
             {
                 interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::
-                                    InteractiveIndividualBlockWithProbability>(false, beat_backg_color, i, voice_number_));
+                                    InteractiveIndividualBlockWithProbability>(false, beat_backg_color, i));
             }
             else                                                    // every other position
             {
                 interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::
-                                    InteractiveIndividualBlockWithProbability>(false, rest_backg_color, i, voice_number_));
+                                    InteractiveIndividualBlockWithProbability>(false, rest_backg_color, i));
             }
 
-            auto prob_widget_listener = interactivePRollBlocks[i]->probabilityCurveWidgetPntr.get(); // allow slider to update line in the probability widgets
-            prob_widget_listener->setSamplingThreshold(MaxCount_Prob_XYPad->getYValue());         // synchronize thresh line with the defaul in Slider
             MaxCount_Prob_XYPad->addWidget(interactivePRollBlocks[i].get());
             addAndMakeVisible(interactivePRollBlocks[i].get());
         }
-
-        // set initial defaul values of XYPad (MUST BE AFTER DEFINING AND ATTACHING THE PER STEP WIDGETS
-        MaxCount_Prob_XYPad->updateDefaultValues(8, 0.5f);
 
     }
 
@@ -88,7 +75,7 @@ public:
 
     void addEventToTimeStep(int time_step_ix, int hit_, float velocity_, float offset_, float probability_)
     {
-        interactivePRollBlocks[time_step_ix]->addEvent(hit_, velocity_, offset_, probability_, MaxCount_Prob_XYPad->getYValue());
+        interactivePRollBlocks[time_step_ix]->addEvent(hit_, velocity_, offset_, probability_, MaxCount_Prob_XYPad->ySlider.getValue());
     }
 
     void resized() override {
@@ -96,7 +83,7 @@ public:
         label.setBounds(area.removeFromLeft((int) area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width)));
         auto grid_width = area.proportionOfWidth(gui_settings::PianoRolls::timestep_ratio_of_width);
         pianoRollSectionWidth = 0;
-        for (int i = 0; i<num_gridlines; i++)
+        for (int i = 0; i<HVO_params::time_steps; i++)
         {
             interactivePRollBlocks[i]->setBounds (area.removeFromLeft(grid_width));
             pianoRollSectionWidth += interactivePRollBlocks[i]->getWidth();
@@ -113,46 +100,38 @@ public:
 class GeneratedDrumsWidget :public juce::Component
 {
 public:
-    vector<unique_ptr<PianoRoll_GeneratedDrums_SingleVoice>> PianoRoll;
-    int num_voices;
-    float step_ppq_duration;
+    vector<unique_ptr<PianoRoll_GeneratedDrums_SingleVoice>> PianoRolls;
 
-    GeneratedDrumsWidget(int num_gridlines_, float step_ppq_duration_, int n_steps_per_beat_, int n_beats_per_bar_,
-                                       vector<string> DrumVoiceNames_, vector<int> DrumVoiceMidiNumbers_,
-                                       GuiIOFifos::DrumPianoRollWidgetToModelThreadQues* DrumPianoRollWidgetToModelThreadQuesPntr,
-                                       std::vector<float> sampling_thresholds, std::vector<float> max_voices_allowed)
+    GeneratedDrumsWidget(juce::AudioProcessorValueTreeState* apvtsPntr)
     {
-        assert (DrumVoiceNames_.size()==DrumVoiceMidiNumbers_.size());
+        auto DrumVoiceNames_ = nine_voice_kit_labels;
+        auto DrumVoiceMidiNumbers_ = nine_voice_kit_default_midi_numbers;
 
-        num_voices = int(DrumVoiceMidiNumbers_.size());
-        step_ppq_duration = step_ppq_duration_;
-
-        for (size_t voice_i=0; voice_i<num_voices; voice_i++)
+        for (size_t voice_i=0; voice_i<HVO_params::num_voices; voice_i++)
         {
-            auto label_txt = DrumVoiceNames_[voice_i] + "\n[Midi "+to_string(DrumVoiceMidiNumbers_[voice_i])+"]";
+            auto voice_label = DrumVoiceNames_[voice_i];
+            auto label_txt = voice_label + "\n[Midi "+to_string(DrumVoiceMidiNumbers_[voice_i])+"]";
 
-            PianoRoll.push_back(make_unique<PianoRoll_GeneratedDrums_SingleVoice>(
-                &DrumPianoRollWidgetToModelThreadQuesPntr->new_max_number_voices[voice_i],
-                &DrumPianoRollWidgetToModelThreadQuesPntr->new_sampling_thresholds[voice_i],
-                num_gridlines_, step_ppq_duration, n_steps_per_beat_, n_beats_per_bar_, label_txt, voice_i));
-            PianoRoll[voice_i]->MaxCount_Prob_XYPad->updateDefaultValues(max_voices_allowed[voice_i], sampling_thresholds[voice_i]);
-            addAndMakeVisible(PianoRoll[voice_i].get());
+            PianoRolls.push_back(make_unique<PianoRoll_GeneratedDrums_SingleVoice>(
+                apvtsPntr, label_txt, voice_label+"_X", voice_label+"_Y"));
+
+            addAndMakeVisible(PianoRolls[voice_i].get());
         }
     }
 
     void resized() override {
         auto area = getLocalBounds();
-        int PRollheight = (int((float) area.getHeight() )) / num_voices;
-        for (int voice_i=0; voice_i<num_voices; voice_i++)
+        int PRollheight = (int((float) area.getHeight() )) / HVO_params::num_voices;
+        for (int voice_i=0; voice_i<HVO_params::num_voices; voice_i++)
         {
-            PianoRoll[voice_i]->setBounds(area.removeFromBottom(PRollheight));
+            PianoRolls[voice_i]->setBounds(area.removeFromBottom(PRollheight));
         }
     }
 
     void addEventToVoice(int voice_number, int timestep_idx, int hit_, float velocity_, float offset, float probability_)
     {
         // add note
-        PianoRoll[voice_number]->addEventToTimeStep(timestep_idx, hit_, velocity_, offset, probability_);
+        PianoRolls[voice_number]->addEventToTimeStep(timestep_idx, hit_, velocity_, offset, probability_);
 
     }
 
@@ -186,8 +165,8 @@ public:
 
     void paint(juce::Graphics& g) override
     {
-        auto w = PianoRoll[0]->getPianoRollSectionWidth();
-        auto x0 = PianoRoll[0]->getPianoRollLeftBound();
+        auto w = PianoRolls[0]->getPianoRollSectionWidth();
+        auto x0 = PianoRolls[0]->getPianoRollLeftBound();
         auto x = w * playhead_percentage + x0;
         g.setColour(playback_progressbar_color);
         g.drawLine(x, 0, x, getHeight());
