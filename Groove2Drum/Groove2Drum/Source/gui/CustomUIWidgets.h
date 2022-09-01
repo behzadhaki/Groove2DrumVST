@@ -620,6 +620,69 @@ namespace SingleStepPianoRollBlock
 }
 
 
+namespace UI {
+class GrooveControlSliders: public juce::Component
+{
+public:
+    GrooveControlSliders(juce::AudioProcessorValueTreeState* apvtsPntr)
+    {
+        // sliders for vel offset ranges
+        addAndMakeVisible (minVelSlider);
+        addAndMakeVisible (minVelLabel);
+        minVelLabel.setText ("Min Vel", juce::dontSendNotification);
+        minVelLabel.attachToComponent (&minVelSlider, true);
+        minVelSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "MIN_VELOCITY", minVelSlider);
+
+        addAndMakeVisible (maxVelSlider);
+        addAndMakeVisible (maxVelLabel);
+        maxVelLabel.setText ("Max Vel", juce::dontSendNotification);
+        maxVelLabel.attachToComponent (&maxVelSlider, true);
+        maxVelSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "MAX_VELOCITY", maxVelSlider);
+
+        addAndMakeVisible (minOffsetSlider);
+        minOffsetSlider.setRange (HVO_params::_min_offset, HVO_params::_max_offset);
+        addAndMakeVisible (minOffsetLabel);
+        minOffsetLabel.setText ("Min Offset", juce::dontSendNotification);
+        minOffsetLabel.attachToComponent (&minOffsetSlider, true);
+        minOffsetSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "MIN_OFFSET", minOffsetSlider);
+
+
+        addAndMakeVisible (maxOffsetSlider);
+        maxOffsetSlider.setRange (HVO_params::_min_offset, HVO_params::_max_offset);
+        addAndMakeVisible (maxOffsetLabel);
+        maxOffsetLabel.setText ("Max Offset", juce::dontSendNotification);
+        maxOffsetLabel.attachToComponent (&maxOffsetSlider, true);
+        maxOffsetSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "MAX_OFFSET", maxOffsetSlider);
+    }
+
+    void resized() override
+    {
+        // put vel offset range sliders
+        auto area = getLocalBounds();
+        auto height = area.proportionOfHeight(0.25f);
+        minVelSlider.setBounds(area.removeFromTop(height));
+        maxVelSlider.setBounds(area.removeFromTop(height));
+        minOffsetSlider.setBounds(area.removeFromTop(height));
+        maxOffsetSlider.setBounds(area.removeFromTop(height));
+    }
+
+private:
+    // sliders for groove manipulation
+    juce::Slider minVelSlider;
+    juce::Label  minVelLabel;
+    unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> minVelSliderAPVTSAttacher;
+    juce::Slider maxVelSlider;
+    juce::Label  maxVelLabel;
+    unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> maxVelSliderAPVTSAttacher;
+    juce::Slider minOffsetSlider;
+    juce::Label  minOffsetLabel;
+    unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> minOffsetSliderAPVTSAttacher;
+    juce::Slider maxOffsetSlider;
+    juce::Label  maxOffsetLabel;
+    unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> maxOffsetSliderAPVTSAttacher;
+
+};
+}
 
 /*
 

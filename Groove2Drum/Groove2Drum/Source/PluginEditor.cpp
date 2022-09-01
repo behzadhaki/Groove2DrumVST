@@ -58,48 +58,9 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     resetAllButton.setButtonText ("Reset All");
     resetAllButton.addListener (this);
 
-    // sliders for vel offset ranges
-    addAndMakeVisible (minVelSlider);
-    minVelSlider.addListener (this);
-    addAndMakeVisible (minVelLabel);
-    minVelLabel.setText ("Min Vel", juce::dontSendNotification);
-    minVelLabel.attachToComponent (&minVelSlider, true);
-    minVelSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(MidiFXProcessorPointer_->apvts, "MINIMUM_VELOCITY", minVelSlider);
-
-    addAndMakeVisible (maxVelSlider);
-    maxVelSlider.addListener (this);
-    addAndMakeVisible (maxVelLabel);
-    maxVelLabel.setText ("Max Vel", juce::dontSendNotification);
-    maxVelLabel.attachToComponent (&maxVelSlider, true);
-
-    addAndMakeVisible (minOffsetSlider);
-    minOffsetSlider.setRange (HVO_params::_min_offset, HVO_params::_max_offset);
-    minOffsetSlider.addListener (this);
-    addAndMakeVisible (minOffsetLabel);
-    minOffsetLabel.setText ("Min Offset", juce::dontSendNotification);
-    minOffsetLabel.attachToComponent (&minOffsetSlider, true);
-
-    addAndMakeVisible (maxOffsetSlider);
-    maxOffsetSlider.setRange (HVO_params::_min_offset, HVO_params::_max_offset);
-    maxOffsetSlider.addListener (this);
-    addAndMakeVisible (maxOffsetLabel);
-    maxOffsetLabel.setText ("Max Offset", juce::dontSendNotification);
-    maxOffsetLabel.attachToComponent (&maxOffsetSlider, true);
-
-    /*array<float, 4> ranges;
-    *//*DBG("NUM WRITES FOR RANGES " << MidiFXProcessorPointer_->GroovePianoRollWidget2GrooveThreadQues->newVelOffRanges.getNumberOfWrites());
-    if (MidiFXProcessorPointer_->GroovePianoRollWidget2GrooveThreadQues->newVelOffRanges.getNumberOfWrites() > 0)
-    {
-        ranges = MidiFXProcessorPointer_->GroovePianoRollWidget2GrooveThreadQues->newVelOffRanges.getLatestDataWithoutMovingFIFOHeads();
-    }
-    else*//*
-    {
-        ranges = {HVO_params::_min_vel, HVO_params::_max_vel, HVO_params::_min_offset, HVO_params::_max_offset};
-    }
-    minVelSlider.setValue(ranges[0]);
-    maxVelSlider.setValue(ranges[1]);
-    minOffsetSlider.setValue(ranges[2]);
-    maxOffsetSlider.setValue(ranges[3]);*/
+    // initialize GrooveControlSliders
+    GrooveControlSliders = make_unique<UI::GrooveControlSliders> (&MidiFXProcessorPointer_->apvts);
+    addAndMakeVisible (GrooveControlSliders.get());
 
     // Set window size
     setResizable (true, true);
@@ -132,18 +93,13 @@ void MidiFXProcessorEditor::resized()
 
     // layout Playhead Progress Bar
     area.removeFromLeft(area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width));
-    // area.removeFromRight(area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width*1.2f));
     PlayheadProgressBar.setBounds(area.removeFromLeft(DrumsPianoRollWidget->PianoRolls[0]->getPianoRollSectionWidth()));
 
-    // put vel offset range sliders
+    // GrooveControlSliders
     area = getLocalBounds();
     area.removeFromLeft(area.proportionOfWidth(1.0f - gui_settings::PianoRolls::space_reserved_right_side_of_gui_ratio_of_width));
     area.removeFromTop(area.proportionOfHeight(0.9));
-    auto height = area.proportionOfHeight(0.25f);
-    minVelSlider.setBounds(area.removeFromTop(height));
-    maxVelSlider.setBounds(area.removeFromTop(height));
-    minOffsetSlider.setBounds(area.removeFromTop(height));
-    maxOffsetSlider.setBounds(area.removeFromTop(height));
+    GrooveControlSliders->setBounds(area);
 
     // put buttons
     area = getLocalBounds();

@@ -30,6 +30,9 @@ private:
     juce::TextButton resetSamplingParametersButton;
     juce::TextButton resetAllButton;
 
+    //  GrooveControlSliders
+    unique_ptr<UI::GrooveControlSliders> GrooveControlSliders;
+
     // playhead position progress bar
     double playhead_pos;
     juce::ProgressBar PlayheadProgressBar {playhead_pos};
@@ -39,19 +42,7 @@ private:
 
     void sliderValueChanged (juce::Slider* slider) override;
 
-private:
 
-    // sliders for groove manipulation
-    juce::Slider minVelSlider;
-    juce::Label  minVelLabel;
-    unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> minVelSliderAPVTSAttacher;
-    juce::Slider maxVelSlider;
-    juce::Label  maxVelLabel;
-    unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> maxVelSliderAPVTSAttacher;
-    juce::Slider minOffsetSlider;
-    juce::Label  minOffsetLabel;
-    juce::Slider maxOffsetSlider;
-    juce::Label  maxOffsetLabel;
 
 
 

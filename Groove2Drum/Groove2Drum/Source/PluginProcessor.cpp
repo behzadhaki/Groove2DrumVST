@@ -156,8 +156,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout MidiFXProcessor::createParam
 
     int version_hint = 1;
 
-    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("MINIMUM_VELOCITY", version_hint), "MINIMUM_VELOCITY", -2.0f, 2.0f, 0));
-    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("MAXIMUM_VELOCITY", version_hint), "MAXIMUM_VELOCITY", -2.0f, 2.0f, 1));
+    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("MIN_VELOCITY", version_hint), "MIN_VELOCITY", -2.0f, 2.0f, 0));
+    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("MAX_VELOCITY", version_hint), "MAX_VELOCITY", -2.0f, 2.0f, 1));
+    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("MIN_OFFSET", version_hint), "MIN_OFFSET", -0.49f, 0.49f, -.49f));
+    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("MAX_OFFSET", version_hint), "MAX_OFFSET", -0.49f, 0.49, .49f));
 
     // these parameters are used with the xySliders for each individual voice
     // Because xySliders are neither slider or button, we
