@@ -101,7 +101,7 @@ namespace SingleStepPianoRollBlock
 
         // only sendDataToQueue() if instance is interactive
         // only sends data when mouse key is released
-        void mouseUp(const juce::MouseEvent& ev) override
+        void mouseUp(const juce::MouseEvent& ) override
         {
             if (isClickable)
             {
@@ -110,7 +110,7 @@ namespace SingleStepPianoRollBlock
         }
 
         // moves a note around the block on dragging and repaints
-        void mouseDrag(const juce::MouseEvent& ev)
+        void mouseDrag(const juce::MouseEvent& ev) override
         {
             if (isClickable)
             {
@@ -167,7 +167,7 @@ namespace SingleStepPianoRollBlock
         }
 
         // places a BasicNote in the queue to be received by another thread
-        void sendDataToQueue()
+        void sendDataToQueue() const
         {
             if (hit == 1)
             {
@@ -206,7 +206,7 @@ namespace SingleStepPianoRollBlock
         juce::Colour backgroundcolor;
         float hit_prob = 0;
         float sampling_threshold = 0;
-        int hit;
+        int hit = 0;
 
         /***
          * Constructor
@@ -302,7 +302,7 @@ namespace SingleStepPianoRollBlock
     {
 
     public:
-        unique_ptr<InteractiveIndividualBlock> pianoRollBlockWidgetPntr;  // unique_ptr so as to allow for initialization in the constructor
+        unique_ptr<InteractiveIndividualBlock> pianoRollBlockWidgetPntr;  // unique_ptr to allow for initialization in the constructor
         unique_ptr<ProbabilityLevelWidget> probabilityCurveWidgetPntr;         // component instance within which we'll draw the probability curve
 
         InteractiveIndividualBlockWithProbability(bool isClickable_, juce::Colour backgroundcolor_, int grid_index_, GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQues=nullptr)
@@ -315,7 +315,7 @@ namespace SingleStepPianoRollBlock
             addAndMakeVisible(probabilityCurveWidgetPntr.get());
         }
 
-        void addEvent(int hit_, float velocity_, float offset, float hit_prob_, float sampling_threshold)
+        void addEvent(int hit_, float velocity_, float offset, float hit_prob_, float sampling_threshold) const
         {
             if (pianoRollBlockWidgetPntr->hit != hit_ or pianoRollBlockWidgetPntr->velocity != velocity_ or
                 pianoRollBlockWidgetPntr->offset != offset)
@@ -331,7 +331,6 @@ namespace SingleStepPianoRollBlock
         {
             auto area = getLocalBounds();
             auto prob_to_pianoRoll_Ratio = 0.4f;
-            auto w = (float) area.getWidth();
             auto h = (float) area.getHeight();
             pianoRollBlockWidgetPntr->setBounds (area.removeFromTop(int((1-prob_to_pianoRoll_Ratio)*h)));
             probabilityCurveWidgetPntr->setBounds (area.removeFromBottom(int(h*prob_to_pianoRoll_Ratio)));
@@ -355,7 +354,7 @@ namespace SingleStepPianoRollBlock
         float latest_y = 0;
 
         XYPadAutomatableWithSliders(juce::AudioProcessorValueTreeState* apvtsPntr,
-                                    juce::String xParameterID, juce::String yParameterID)
+                                    const juce::String xParameterID , const juce::String yParameterID)
         {
             apvts = apvtsPntr;
             xSliderAttachement = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvts, xParameterID, xSlider);
@@ -396,7 +395,7 @@ namespace SingleStepPianoRollBlock
 
         }
 
-        void mouseDoubleClick(const juce::MouseEvent& ev) override
+        void mouseDoubleClick(const juce::MouseEvent&) override
         {
             // more than 2 clicks goes back to default
             if (xSlider.getValue() == 0 and ySlider.getValue() == 1)
@@ -442,13 +441,13 @@ namespace SingleStepPianoRollBlock
             // at least one widget should have been added using
             // addWidget(). If no listeners, you should use the basic
             // UI::XYPad component
-            if (ListenerWidgets.size()>0)
+            if (!ListenerWidgets.empty())
             {
                 auto thresh = ySlider.getValue();
 
-                for (int i=0; i<ListenerWidgets.size(); i++)
+                for (size_t i=0; i<ListenerWidgets.size(); i++)
                 {
-                    ListenerWidgets[i]->probabilityCurveWidgetPntr->setSamplingThreshold(thresh);
+                    ListenerWidgets[i]->probabilityCurveWidgetPntr->setSamplingThreshold(float(thresh));
                 }
             }
 
@@ -481,11 +480,11 @@ namespace FinalUIWidgets {
         public:
 
             vector<shared_ptr<SingleStepPianoRollBlock::InteractiveIndividualBlockWithProbability>> interactivePRollBlocks;
-            shared_ptr<SingleStepPianoRollBlock::XYPadAutomatableWithSliders> MaxCount_Prob_XYPad; // x axis will be Max count (0 to time_steps), y axis is threshold 0 to 1
+            shared_ptr<SingleStepPianoRollBlock::XYPadAutomatableWithSliders> MaxCount_Prob_XYPad; // x-axis will be Max count (0 to time_steps), y-axis is threshold 0 to 1
             juce::Label label;
             int pianoRollSectionWidth {0};
 
-            GeneratedDrums_SingleVoice(juce::AudioProcessorValueTreeState* apvtsPntr, string label_text, string maxCountParamID, string threshParamID)
+            GeneratedDrums_SingleVoice(juce::AudioProcessorValueTreeState* apvtsPntr, const string label_text, const string maxCountParamID, const string threshParamID)
             {
 
                 // Set Modified Label
@@ -535,7 +534,7 @@ namespace FinalUIWidgets {
 
             void addEventToTimeStep(int time_step_ix, int hit_, float velocity_, float offset_, float probability_)
             {
-                interactivePRollBlocks[time_step_ix]->addEvent(hit_, velocity_, offset_, probability_, MaxCount_Prob_XYPad->ySlider.getValue());
+                interactivePRollBlocks[(size_t)time_step_ix]->addEvent(hit_, velocity_, offset_, probability_, (float)MaxCount_Prob_XYPad->ySlider.getValue());
             }
 
             void resized() override {
@@ -543,7 +542,7 @@ namespace FinalUIWidgets {
                 label.setBounds(area.removeFromLeft((int) area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width)));
                 auto grid_width = area.proportionOfWidth(gui_settings::PianoRolls::timestep_ratio_of_width);
                 pianoRollSectionWidth = 0;
-                for (int i = 0; i<HVO_params::time_steps; i++)
+                for (size_t i = 0; i<HVO_params::time_steps; i++)
                 {
                     interactivePRollBlocks[i]->setBounds (area.removeFromLeft(grid_width));
                     pianoRollSectionWidth += interactivePRollBlocks[i]->getWidth();
@@ -581,7 +580,7 @@ namespace FinalUIWidgets {
             void resized() override {
                 auto area = getLocalBounds();
                 int PRollheight = (int((float) area.getHeight() )) / HVO_params::num_voices;
-                for (int voice_i=0; voice_i<HVO_params::num_voices; voice_i++)
+                for (size_t voice_i=0; voice_i<HVO_params::num_voices; voice_i++)
                 {
                     PianoRolls[voice_i]->setBounds(area.removeFromBottom(PRollheight));
                 }
@@ -590,11 +589,11 @@ namespace FinalUIWidgets {
             void addEventToVoice(int voice_number, int timestep_idx, int hit_, float velocity_, float offset, float probability_)
             {
                 // add note
-                PianoRolls[voice_number]->addEventToTimeStep(timestep_idx, hit_, velocity_, offset, probability_);
+                PianoRolls[(size_t) voice_number]->addEventToTimeStep(timestep_idx, hit_, velocity_, offset, probability_);
 
             }
 
-            void updateWithNewScore(HVOLight <HVO_params::time_steps, HVO_params::num_voices> latest_generated_data)
+            void updateWithNewScore(const HVOLight <HVO_params::time_steps, HVO_params::num_voices> latest_generated_data)
             {
 
                 for (int vn_= 0; vn_ < latest_generated_data.num_voices; vn_++)
@@ -626,9 +625,9 @@ namespace FinalUIWidgets {
             {
                 auto w = PianoRolls[0]->getPianoRollSectionWidth();
                 auto x0 = PianoRolls[0]->getPianoRollLeftBound();
-                auto x = w * playhead_percentage + x0;
+                auto x = float (w * playhead_percentage + x0);
                 g.setColour(playback_progressbar_color);
-                g.drawLine(x, 0, x, getHeight());
+                g.drawLine(x, 0, x, float(getHeight()));
             }
         private:
             HVOLight <HVO_params::time_steps, HVO_params::num_voices> old_generated_data{};
@@ -654,7 +653,7 @@ namespace FinalUIWidgets {
             juce::Colour bar_c {  juce::Colour::fromFloatRGBA(.6f,.6f,.6f, 0.5f) };
             juce::Label label;
 
-            InteractiveMonotonicGrooveSingleRow(bool isInteractive, string label_text,
+            InteractiveMonotonicGrooveSingleRow(bool isInteractive, const string label_text,
                                                 GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQues = nullptr)
             {
 
@@ -691,7 +690,7 @@ namespace FinalUIWidgets {
             // location must be between 0 or 1
             void addEventToStep(int idx, int hit_, float velocity_, float offset_)
             {
-                interactivePRollBlocks[idx]->addEvent(hit_, velocity_, offset_);
+                interactivePRollBlocks[(size_t) idx]->addEvent(hit_, velocity_, offset_);
             }
 
 
@@ -699,7 +698,7 @@ namespace FinalUIWidgets {
                 auto area = getLocalBounds();
                 label.setBounds(area.removeFromLeft((int) area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width)));
                 auto grid_width = area.proportionOfWidth(gui_settings::PianoRolls::timestep_ratio_of_width);
-                for (int i = 0; i<HVO_params::time_steps; i++)
+                for (size_t i = 0; i<HVO_params::time_steps; i++)
                 {
                     interactivePRollBlocks[i]->setBounds (area.removeFromLeft(grid_width));
                 }

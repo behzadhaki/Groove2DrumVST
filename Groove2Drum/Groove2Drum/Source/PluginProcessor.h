@@ -5,8 +5,8 @@
 #include "InterThreadFifos.h"
 #include <torch/torch.h>
 
-#include "ProcessingThreads/GrooveThread.h"
-#include "ProcessingThreads/ModelThread.h"
+#include "ProcessorThreads/GrooveThread.h"
+#include "ProcessorThreads/ModelThread.h"
 
 // #include "gui/CustomGuiTextEditors.h"
 

@@ -1,8 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "Includes/UtilityMethods.h"
-#include "ProcessingThreads/GrooveThread.h"
-#include <cstdlib> // for sleep()
 
 using namespace std;
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "PluginProcessor.h"
-#include "gui/PianoRollWidgets.h"
+#include "gui/CustomUIWidgets.h"
 
 using namespace std;
 

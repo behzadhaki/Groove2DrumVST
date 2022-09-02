@@ -7,11 +7,6 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
 {
     MidiFXProcessorPointer_ = &MidiFXProcessorPointer;
 
-    // get settings from HVO_params struct in Settings.h
-    auto num_steps = HVO_params::time_steps;
-    auto step_ppq_res = HVO_params::_16_note_ppq;
-    auto steps_perBeat = HVO_params::num_steps_per_beat;
-    auto beats_perBar = HVO_params::num_beats_per_bar;
 
     // initialize widgets
     DrumsPianoRollWidget = make_unique<FinalUIWidgets::GeneratedDrums::GeneratedDrumsWidget>(
@@ -183,7 +178,6 @@ void MidiFXProcessorEditor::timerCallback()
 
 void MidiFXProcessorEditor::buttonClicked (juce::Button* button)  // [2]
 {
-
     if (button == &resetGrooveButton)
     {
         MidiFXProcessorPointer_->grooveThread.ForceResetGroove();
