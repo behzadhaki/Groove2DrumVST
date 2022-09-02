@@ -9,8 +9,12 @@
 using namespace torch::indexing;
 
 
-
-
+// ============================================================================================================
+// ===          Preparing Thread for Running
+// ============================================================================================================
+// ------------------------------------------------------------------------------------------------------------
+// ---         Step 1 . Construct
+// ------------------------------------------------------------------------------------------------------------
 GrooveThread::GrooveThread():
     juce::Thread("Groove_Thread")
 {
@@ -18,44 +22,38 @@ GrooveThread::GrooveThread():
     ProcessBlockToGrooveThreadQue = nullptr;
     GrooveThreadToModelThreadQue = nullptr;
     GrooveThread2GGroovePianoRollWidgetQue = nullptr;
-    GroovePianoRollWidget2GrooveThreadQues = nullptr;
+    GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue = nullptr;
+    APVTS2GrooveThread_groove_vel_offset_ranges_Que = nullptr;
 
     readyToStop = false;
 
     monotonic_groove = MonotonicGroove<HVO_params::time_steps>();
     
 }
-
+// ------------------------------------------------------------------------------------------------------------
+// ---         Step 2 . give access to resources needed to communicate with other threads
+// ------------------------------------------------------------------------------------------------------------
 void GrooveThread::startThreadUsingProvidedResources(LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>* ProcessBlockToGrooveThreadQuePntr,
                                                      MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>* GrooveThreadToModelThreadQuePntr,
                                                      MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>* GrooveThread2GGroovePianoRollWidgetQuesPntr,
-                                                     GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQuesPntr)
+                                                     LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>* GroovePianoRollWidget2GrooveThread_manually_drawn_noteQuePntr,
+                                                     LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_vel_offset_ranges_QuePntr)
 {
     // get the pointer to queues and control parameters instantiated
     // in the main processor thread
     ProcessBlockToGrooveThreadQue = ProcessBlockToGrooveThreadQuePntr;
     GrooveThreadToModelThreadQue = GrooveThreadToModelThreadQuePntr;
     GrooveThread2GGroovePianoRollWidgetQue = GrooveThread2GGroovePianoRollWidgetQuesPntr;
-    GroovePianoRollWidget2GrooveThreadQues = GroovePianoRollWidget2GrooveThreadQuesPntr;
+    GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue = GroovePianoRollWidget2GrooveThread_manually_drawn_noteQuePntr;
+    APVTS2GrooveThread_groove_vel_offset_ranges_Que = APVTS2GrooveThread_groove_vel_offset_ranges_QuePntr;
     startThread();
 
 }
-
-GrooveThread::~GrooveThread()
-{
-    if (not readyToStop)
-    {
-        prepareToStop();
-    }
-
-}
-
-void GrooveThread::ForceResetGroove()
-{
-    DBG("RESETTING GROOVE IN GROOVE THREAD _-> to be implemented");
-    shouldResetGroove = true;
-}
-
+// ------------------------------------------------------------------------------------------------------------
+// ---         Step 3 . start run() thread by calling startThread().
+// ---                  !!DO NOT!! Call run() directly. startThread() internally makes a call to run().
+// ---                  (Implement what the thread does inside the run() method
+// ------------------------------------------------------------------------------------------------------------
 void GrooveThread::run()
 {
     // notify if the thread is still running
@@ -90,13 +88,12 @@ void GrooveThread::run()
         {
 
             // see if new BasicNotes received from gui by hand drawing dragging a note
-            while (GroovePianoRollWidget2GrooveThreadQues->manually_drawn_notes.getNumReady() > 0)
+            while (GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue->getNumReady() > 0)
             {
                 // Step 1. get new note
-                auto handDrawnNote = GroovePianoRollWidget2GrooveThreadQues->manually_drawn_notes.pop(); // here cnt result is 3
+                auto handDrawnNote = GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue->pop(); // here cnt result is 3
 
                 {
-                    DBG("RECEIVED");
                     // step 2. add to groove
                     bool grooveUpdated = monotonic_groove.overdubWithNote(handDrawnNote, true);
 
@@ -136,17 +133,17 @@ void GrooveThread::run()
                 monotonic_groove.hvo.compressAll();
             }
         }
-        
+
         // see if new control params received from the gui
-        if (GroovePianoRollWidget2GrooveThreadQues != nullptr)
+        if (APVTS2GrooveThread_groove_vel_offset_ranges_Que != nullptr)
         {
             array<float, 4> newVelOffsetrange {};
 
-            /*while (GroovePianoRollWidget2GrooveThreadQues->newVelOffRanges.getNumReady() > 0
+            while (APVTS2GrooveThread_groove_vel_offset_ranges_Que->getNumReady() > 0
                    and not this->threadShouldExit())
             {
                 // Step 1. get new vel/offset ranges received
-                GroovePianoRollWidget2GrooveThreadQues->newVelOffRanges.ReadFrom(&newVelOffsetrange, 1);
+                APVTS2GrooveThread_groove_vel_offset_ranges_Que->ReadFrom(&newVelOffsetrange, 1);
 
                 // update local range values
                 vel_range = {newVelOffsetrange[0], newVelOffsetrange[1]};
@@ -157,7 +154,7 @@ void GrooveThread::run()
 
                 // activate sending flag
                 isNewGrooveAvailable = true;
-            }*/
+            }
         }
 
 
@@ -184,12 +181,34 @@ void GrooveThread::run()
 
 }
 
+// ============================================================================================================
+// ===          Preparing Thread for Stopping
+// ============================================================================================================
+
 void GrooveThread::prepareToStop()
 {
     //Need to wait enough so as to ensure the run() method is over before killing thread
     this->stopThread(thread_settings::GrooveThread::waitTimeBtnIters*2);
     readyToStop = true;
 }
+
+
+
+GrooveThread::~GrooveThread()
+{
+    if (not readyToStop)
+    {
+        prepareToStop();
+    }
+
+}
+
+void GrooveThread::ForceResetGroove()
+{
+    shouldResetGroove = true;
+}
+
+
 
 
 

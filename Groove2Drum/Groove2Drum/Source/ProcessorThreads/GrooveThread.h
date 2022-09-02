@@ -13,76 +13,80 @@
 class GrooveThread:public juce::Thread, public juce::ChangeBroadcaster
 {
 public:
-    // constructor
+    // ============================================================================================================
+    // ===          Preparing Thread for Running
+    // ============================================================================================================
+    // ------------------------------------------------------------------------------------------------------------
+    // ---         Step 1 . Construct
+    // ------------------------------------------------------------------------------------------------------------
     GrooveThread();
-
-    // destructor
-    ~GrooveThread() override;
-
-    // give access to resources needed to communicate with other threads
+    // ------------------------------------------------------------------------------------------------------------
+    // ---         Step 2 . give access to resources needed to communicate with other threads
+    // ------------------------------------------------------------------------------------------------------------
     void startThreadUsingProvidedResources(LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>* ProcessBlockToGrooveThreadQuePntr,
                                            MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>* GrooveThreadToModelThreadQuePntr,
                                            MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>* GrooveThread2GGroovePianoRollWidgetQuesPntr,
-                                           GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQuesPntr);
-
-    // run this in destructor destructing object
-    void prepareToStop();
-
-    // don't call this from the parent thread
-    // instead, use startThread() from which
-    // run() is explicitly called
+                                           LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>* GroovePianoRollWidget2GrooveThread_manually_drawn_noteQuePntr,
+                                           LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_vel_offset_ranges_QuePntr);
+    // ------------------------------------------------------------------------------------------------------------
+    // ---         Step 3 . start run() thread by calling startThread().
+    // ---                  !!DO NOT!! Call run() directly. startThread() internally makes a call to run().
+    // ---                  (Implement what the thread does inside the run() method
+    // ------------------------------------------------------------------------------------------------------------
     void run() override;
+    // ============================================================================================================
 
-    // reset Groove if requested
-    void ForceResetGroove();
 
-    // Used to check if thread is ready to be stopped
-    // used to check if a parent thread has externally
-    // requested the thread to stop
-    bool readyToStop;
+    // ============================================================================================================
+    // ===          Preparing Thread for Stopping
+    // ============================================================================================================
+    void prepareToStop();     // run this in destructor destructing object
+    ~GrooveThread() override;
+    // ============================================================================================================
+
+
+    // ============================================================================================================
+    // ===          Utility Methods and Parameters
+    // ============================================================================================================
+    void ForceResetGroove();        // reset Groove if requested
+    bool readyToStop; // Used to check if thread is ready to be stopped or externally stopped from a parent thread
+    // ============================================================================================================
+
 
 private:
 
-    LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>* ProcessBlockToGrooveThreadQue;
-    MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>* GrooveThreadToModelThreadQue;
-
-
+    // ============================================================================================================
+    // ===          I/O Queues for Receiving/Sending Data
+    // ============================================================================================================
+    // ------------------------------------------------------------------------------------------------------------
+    // ---          Output Queues
+    // ------------------------------------------------------------------------------------------------------------
     MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>* GrooveThread2GGroovePianoRollWidgetQue;
-    GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQues;
+    MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>* GrooveThreadToModelThreadQue;
+    // ------------------------------------------------------------------------------------------------------------
+    // ---          Input Queues
+    // ------------------------------------------------------------------------------------------------------------
+    LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>* ProcessBlockToGrooveThreadQue;
+    LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>* GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue;
+    LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_vel_offset_ranges_Que;
 
-    //---- Control Parameters from GUI -------------------------------------
-    // LockFreeQueue<array<float, 4>, GeneralSettings::gui_io_queue_size>* veloff_fromGui_que{};
+    // ============================================================================================================
+
+
+    // ============================================================================================================
+    // ===          Parameters Locally Used for Calculations
+    // ============================================================================================================
+    // ------------------------------------------------------------------------------------------------------------
+    // ---          Velocity and Offset Ranges for Groove Manipulation / Compression
+    // ------------------------------------------------------------------------------------------------------------
     array<float, 2> vel_range;
     array<float, 2> offset_range;
-
-    // ---- sends data to gui -----------------------------------------------
-    // the queue for sending the updated groove to the next thread
-    // MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>* groove_toGui_que{};
-
-
-    // ;
-    //----------------------------------------------------------------------
-
-    // ---- Locally Used for calculations ----------------------------------
-
-    // an internal HVO instance of size {time_steps, 1 voice)
-    // for tracking the unscaled groove
+    // ------------------------------------------------------------------------------------------------------------
+    // ---          Groove Parameters
+    // ------------------------------------------------------------------------------------------------------------
     MonotonicGroove<HVO_params::time_steps> monotonic_groove;
-
-    // torch::Tensor unscaled_groove_overdubbed;
-
-    // an internal tensor of size { time_steps , 1}
-    // for tracking the actual onset time of registered
-    // notes in the groove_overdubbed tensor
-    // torch::Tensor onset_ppqs_in_groove;
-
-
-    // int find_nearest_gridline(float ppq);
-    // bool shouldReplace(BasicNote latest_Note);
-
-    // Flag to see if reseting the groove has been requested
     bool shouldResetGroove {false};
-    //----------------------------------------------------------------------
+    // ============================================================================================================
 
 };
 

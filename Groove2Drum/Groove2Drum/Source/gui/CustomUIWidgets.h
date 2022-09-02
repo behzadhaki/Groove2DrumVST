@@ -22,7 +22,7 @@ namespace SingleStepPianoRollBlock
      * Notes are drawn using offset values and velocity given a offset range (specified in settings.h)
      * Velocity range is from 0 to 1
      *
-     * (B) if a queue is provided (of type GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues, see InterThreadFifos.h),
+     * (B) if a queue is provided (of type LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>),
      * moving a note manually sends the new vel, hit, offset values to a receiving thread
      * (in this case, GrooveThread in processor)
      *
@@ -41,7 +41,7 @@ namespace SingleStepPianoRollBlock
         float low_offset = min(HVO_params::_min_offset, HVO_params::_max_offset); // min func just incase min and max offsets are wrongly defined
         float hi_offset = max(HVO_params::_min_offset, HVO_params::_max_offset); // max func just incase min and max offsets are wrongly defined
         float range_offset = hi_offset - low_offset;
-        GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQues;
+        LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>* GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue;
 
         /**
          * Constructor
@@ -49,14 +49,15 @@ namespace SingleStepPianoRollBlock
          * @param isClickable_ (bool) True for interactive version
          * @param backgroundcolor_  (juce::Colour type)
          * @param grid_index_ (int) specifies which time step the block is used for
-         * @param GroovePianoRollWidget2GrooveThreadQuesPntr  (GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues, see InterThreadFifos.h) used to send data to a receiver via this queue if interactive and also queue is not nullptr
+         * @param GroovePianoRollWidget2GrooveThread_manually_drawn_noteQuePntr  (LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>*) used to send data to a receiver via this queue if interactive and also queue is not nullptr
          *
          */
-        InteractiveIndividualBlock(bool isClickable_, juce::Colour backgroundcolor_, int grid_index_, GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQuesPntr = nullptr) {
+        InteractiveIndividualBlock(bool isClickable_, juce::Colour backgroundcolor_, int grid_index_,
+                                   LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>* GroovePianoRollWidget2GrooveThread_manually_drawn_noteQuePntr = nullptr) {
             grid_index = grid_index_;
             backgroundcolor = backgroundcolor_;
             isClickable = isClickable_;
-            GroovePianoRollWidget2GrooveThreadQues = GroovePianoRollWidget2GrooveThreadQuesPntr;
+            GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue = GroovePianoRollWidget2GrooveThread_manually_drawn_noteQuePntr;
             hit = 0;
             velocity = 0;
             offset = 0;
@@ -171,11 +172,11 @@ namespace SingleStepPianoRollBlock
         {
             if (hit == 1)
             {
-                GroovePianoRollWidget2GrooveThreadQues->manually_drawn_notes.push(BasicNote(100, velocity, grid_index, offset));
+                GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue->push(BasicNote(100, velocity, grid_index, offset));
             }
             else
             {
-                GroovePianoRollWidget2GrooveThreadQues->manually_drawn_notes.push(BasicNote(100, 0, grid_index, 0));
+                GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue->push(BasicNote(100, 0, grid_index, 0));
             }
         }
 
@@ -305,9 +306,10 @@ namespace SingleStepPianoRollBlock
         unique_ptr<InteractiveIndividualBlock> pianoRollBlockWidgetPntr;  // unique_ptr to allow for initialization in the constructor
         unique_ptr<ProbabilityLevelWidget> probabilityCurveWidgetPntr;         // component instance within which we'll draw the probability curve
 
-        InteractiveIndividualBlockWithProbability(bool isClickable_, juce::Colour backgroundcolor_, int grid_index_, GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQues=nullptr)
+        InteractiveIndividualBlockWithProbability(bool isClickable_, juce::Colour backgroundcolor_, int grid_index_,
+                                                  LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>* GroovePianoRollWidget2GrooveThread_manually_drawn_noteQues=nullptr)
         {
-            pianoRollBlockWidgetPntr = make_unique<InteractiveIndividualBlock>(isClickable_, backgroundcolor_, grid_index_, GroovePianoRollWidget2GrooveThreadQues);
+            pianoRollBlockWidgetPntr = make_unique<InteractiveIndividualBlock>(isClickable_, backgroundcolor_, grid_index_, GroovePianoRollWidget2GrooveThread_manually_drawn_noteQues);
             addAndMakeVisible(pianoRollBlockWidgetPntr.get());
 
 
@@ -654,7 +656,7 @@ namespace FinalUIWidgets {
             juce::Label label;
 
             InteractiveMonotonicGrooveSingleRow(bool isInteractive, const string label_text,
-                                                GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQues = nullptr)
+                                                LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>* GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue = nullptr)
             {
 
                 // Set Modified Label
@@ -670,15 +672,15 @@ namespace FinalUIWidgets {
                 {
                     if (fmod(i, HVO_params::num_steps_per_beat*HVO_params::num_beats_per_bar) == 0)      // bar position
                     {
-                        interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::InteractiveIndividualBlock>(isInteractive, bar_c, i, GroovePianoRollWidget2GrooveThreadQues));
+                        interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::InteractiveIndividualBlock>(isInteractive, bar_c, i, GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue));
                     }
                     else if(fmod(i, HVO_params::num_steps_per_beat) == 0)                  // beat position
                     {
-                        interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::InteractiveIndividualBlock>(isInteractive, beat_c, i, GroovePianoRollWidget2GrooveThreadQues));
+                        interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::InteractiveIndividualBlock>(isInteractive, beat_c, i, GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue));
                     }
                     else                                                    // every other position
                     {
-                        interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::InteractiveIndividualBlock>(isInteractive, def_c, i, GroovePianoRollWidget2GrooveThreadQues));
+                        interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::InteractiveIndividualBlock>(isInteractive, def_c, i, GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue));
                     }
 
                     addAndMakeVisible(interactivePRollBlocks[i].get());
@@ -718,10 +720,10 @@ namespace FinalUIWidgets {
             unique_ptr<InteractiveMonotonicGrooveSingleRow> unModifiedGrooveGui;
             unique_ptr<InteractiveMonotonicGrooveSingleRow> ModifiedGrooveGui;
 
-            MonotonicGrooveWidget(GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues* GroovePianoRollWidget2GrooveThreadQues = nullptr)
+            MonotonicGrooveWidget(LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>* GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue = nullptr)
             {
                 // Create Unmodified Piano ROll
-                unModifiedGrooveGui = make_unique<InteractiveMonotonicGrooveSingleRow>(true, "Unmodified Groove", GroovePianoRollWidget2GrooveThreadQues);
+                unModifiedGrooveGui = make_unique<InteractiveMonotonicGrooveSingleRow>(true, "Unmodified Groove", GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue);
                 addAndMakeVisible(unModifiedGrooveGui.get());
                 // Create Unmodified Piano ROll
                 ModifiedGrooveGui = make_unique<InteractiveMonotonicGrooveSingleRow>(false, "Adjusted Groove");

@@ -14,9 +14,7 @@ MidiFXProcessor::MidiFXProcessor():
     //////////////////////////////////////////////////////////////////
     // GuiIOFifos
     GrooveThread2GGroovePianoRollWidgetQue = make_unique<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>>();
-    GroovePianoRollWidget2GrooveThreadQues = make_unique<GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues>();
     ModelThreadToDrumPianoRollWidgetQue = make_unique<HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size>>();
-    DrumPianoRollWidgetToModelThreadQues = make_unique<GuiIOFifos::DrumPianoRollWidgetToModelThreadQues>();
 
 
     //////////////////////////////////////////////////////////////////
@@ -26,7 +24,10 @@ MidiFXProcessor::MidiFXProcessor():
     ProcessBlockToGrooveThreadQue = make_unique<LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>>();
     GrooveThreadToModelThreadQue = make_unique<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>>();
     ModelThreadToProcessBlockQue = make_unique<GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>>();
-
+    APVTS2GrooveThread_groove_vel_offset_ranges_Que = make_unique<LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>>();
+    APVTS2ModelThread_max_num_hits_Que = make_unique<LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>>();
+    APVTS2ModelThread_sampling_thresholds_Que = make_unique<LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>>();
+    GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue = make_unique<LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>>();
 
     /////////////////////////////////
     //// Start Threads
@@ -36,12 +37,19 @@ MidiFXProcessor::MidiFXProcessor():
     modelThread.startThreadUsingProvidedResources(GrooveThreadToModelThreadQue.get(),
                                                   ModelThreadToProcessBlockQue.get(),
                                                   ModelThreadToDrumPianoRollWidgetQue.get(),
-                                                  DrumPianoRollWidgetToModelThreadQues.get());
+                                                  APVTS2ModelThread_max_num_hits_Que.get(),
+                                                  APVTS2ModelThread_sampling_thresholds_Que.get());
 
     grooveThread.startThreadUsingProvidedResources(ProcessBlockToGrooveThreadQue.get(),
                                                    GrooveThreadToModelThreadQue.get(),
                                                    GrooveThread2GGroovePianoRollWidgetQue.get(),
-                                                   GroovePianoRollWidget2GrooveThreadQues.get());
+                                                   GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue.get(),
+                                                   APVTS2GrooveThread_groove_vel_offset_ranges_Que.get());
+
+    apvtsMediatorThread.startThreadUsingProvidedResources(&apvts,
+                                                          APVTS2GrooveThread_groove_vel_offset_ranges_Que.get(),
+                                                          APVTS2ModelThread_max_num_hits_Que.get(),
+                                                          APVTS2ModelThread_sampling_thresholds_Que.get());
 
 }
 
@@ -54,6 +62,11 @@ MidiFXProcessor::~MidiFXProcessor(){
     if (!grooveThread.readyToStop)
     {
         grooveThread.prepareToStop();
+    }
+
+    if (!apvtsMediatorThread.readyToStop)
+    {
+        apvtsMediatorThread.prepareToStop();
     }
 
 }
@@ -96,7 +109,7 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         startPpq = *Pinfo->getPpqPosition();
         auto qpm = *Pinfo->getBpm();
         auto start_ = fmod(startPpq, HVO_params::time_steps/4); // start_ should be always between 0 and 8
-        playhead_pos = fmod(startPpq + HVO_params::_32_note_ppq, HVO_params::time_steps/4) / (HVO_params::time_steps/4.0f);
+        playhead_pos = fmod(float(startPpq + HVO_params::_32_note_ppq), float(HVO_params::time_steps/4.0f)) / (HVO_params::time_steps/4.0f);
         //juce::MidiMessage msg = juce::MidiMessage::noteOn((int)1, (int)36, (float)100.0);
         if (latestGeneratedData.numberOfGenerations() > 0)
         {
@@ -169,4 +182,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout MidiFXProcessor::createParam
     }
 
     return layout;
+}
+LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>* MidiFXProcessor::
+    get_pointer_GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue()
+{
+    return GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue.get();
 }

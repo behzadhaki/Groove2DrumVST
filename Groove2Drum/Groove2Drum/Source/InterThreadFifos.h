@@ -1,3 +1,4 @@
+/*
 //
 // Created by Behzad Haki on 2022-08-21.
 //
@@ -5,6 +6,7 @@
 #pragma once
 #include "settings.h"
 #include "Includes/CustomStructsAndLockFreeQueue.h"
+*/
 /*
 
 // Lock-free Queues  for communicating data between main threads in the Processor
@@ -24,13 +26,16 @@ namespace IntraProcessorFifos
     // ========= Model Thread  To ProcessBlock =============================================
     unique_ptr<GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>> ModelThreadToProcessBlockQue;
 }
+*//*
+
+
+
 */
-
-
 /**
  *  Lock-free Queues  for communicating data back and forth between
  *  the Processor threads and the GUI widgets
- */
+ *//*
+
 
 namespace GuiIOFifos
 {
@@ -60,13 +65,15 @@ namespace GuiIOFifos
     };
 
 
-    struct GroovePianoRollWidget2GrooveThreadQues
+    */
+/*struct GroovePianoRollWidget2GrooveThreadQues
     {
         // LockFreeQueue<array<float, 4>, GeneralSettings::gui_io_queue_size> newVelOffRanges {};                 // todo To integrate in code
         // used for sending a manually drawn note in the MonotonicGroove Widget to GrooveThread
         LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size> manually_drawn_notes {};          // todo To integrate in code
-    };
+    };*//*
 
+     //LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size> GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue
     // =================================================================================
 
 
@@ -86,3 +93,4 @@ namespace GuiIOFifos
     // =================================================================================
 
 }
+*/

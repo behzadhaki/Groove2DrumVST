@@ -5,36 +5,40 @@
 #include "ModelThread.h"
 #include "../Includes/UtilityMethods.h"
 
-
+// ============================================================================================================
+// ===          Preparing Thread for Running
+// ============================================================================================================
+// ------------------------------------------------------------------------------------------------------------
+// ---         Step 1 . Construct
+// ------------------------------------------------------------------------------------------------------------
 ModelThread::ModelThread(): juce::Thread("Model_Thread")
 {
     GrooveThreadToModelThreadQue = nullptr;
     ModelThreadToProcessBlockQue = nullptr;
     ModelThreadToDrumPianoRollWidgetQue = nullptr;
-    DrumPianoRollWidgetToModelThreadQues = nullptr;
-
+    APVTS2ModelThread_max_num_hits_Que = nullptr;
+    APVTS2ModelThread_sampling_thresholds_Que = nullptr;
     readyToStop = false;
 }
 
-
-ModelThread::~ModelThread()
-{
-    if (not readyToStop)
-    {
-        prepareToStop();
-    }
-}
-
-
-void ModelThread::startThreadUsingProvidedResources(MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>* GrooveThreadToModelThreadQuesPntr,
-                                                    GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>*  ModelThreadToProcessBlockQuesPntr,
-                                                    HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size>* ModelThreadToDrumPianoRollWidgetQuesPntr,
-                                                    GuiIOFifos::DrumPianoRollWidgetToModelThreadQues* DrumPianoRollWidgetToModelThreadQuesPntr)
+// ------------------------------------------------------------------------------------------------------------
+// ---         Step 2 . give access to resources needed to communicate with other threads
+// ------------------------------------------------------------------------------------------------------------
+void ModelThread::startThreadUsingProvidedResources(
+    MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>*
+        GrooveThreadToModelThreadQuesPntr,
+    GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>*
+        ModelThreadToProcessBlockQuesPntr,
+    HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size>*
+        ModelThreadToDrumPianoRollWidgetQuesPntr,
+    LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_max_num_hits_QuePntr,
+    LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_sampling_thresholds_QuePntr)
 {
     GrooveThreadToModelThreadQue = GrooveThreadToModelThreadQuesPntr;
     ModelThreadToProcessBlockQue = ModelThreadToProcessBlockQuesPntr;
     ModelThreadToDrumPianoRollWidgetQue = ModelThreadToDrumPianoRollWidgetQuesPntr;
-    DrumPianoRollWidgetToModelThreadQues = DrumPianoRollWidgetToModelThreadQuesPntr;
+    APVTS2ModelThread_max_num_hits_Que = APVTS2ModelThread_max_num_hits_QuePntr;
+    APVTS2ModelThread_sampling_thresholds_Que = APVTS2ModelThread_sampling_thresholds_QuePntr;
 
     // load model
     modelAPI = MonotonicGrooveTransformerV1();
@@ -57,7 +61,11 @@ void ModelThread::startThreadUsingProvidedResources(MonotonicGrooveQueue<HVO_par
     startThread();
 }
 
-
+// ------------------------------------------------------------------------------------------------------------
+// ---         Step 3 . start run() thread by calling startThread().
+// ---                  !!DO NOT!! Call run() directly. startThread() internally makes a call to run().
+// ---                  (Implement what the thread does inside the run() method
+// ------------------------------------------------------------------------------------------------------------
 void ModelThread::run()
 {
     // notify if the thread is still running
@@ -75,38 +83,28 @@ void ModelThread::run()
         shouldResample = false;
         newGrooveAvailable = false;
 
-        if (DrumPianoRollWidgetToModelThreadQues != nullptr)
+        if (APVTS2ModelThread_max_num_hits_Que != nullptr)
         {
-            auto thresh_changed_flag_ = false;
-            auto max_voice_count_changed_flag_ = false;
-
-            for (size_t i=0; i<HVO_params::num_voices; i++)
+            if (APVTS2ModelThread_max_num_hits_Que->getNumReady()>0)
             {
-                /*if (DrumPianoRollWidgetToModelThreadQues->new_sampling_thresholds[i].getNumReady() > 0)
-                {
-                    perVoiceSamplingThresholds[i] = DrumPianoRollWidgetToModelThreadQues->new_sampling_thresholds[i].getLatestOnly();
-                    thresh_changed_flag_ = true;
-                }
-                if (DrumPianoRollWidgetToModelThreadQues->new_max_number_voices[i].getNumReady() > 0)
-                {
-                     perVoiceMaxNumVoicesAllowed[i] = DrumPianoRollWidgetToModelThreadQues->new_max_number_voices[i].getLatestOnly();
-                     max_voice_count_changed_flag_ = true;
-                }*/
-            }
-            if (thresh_changed_flag_)
-            {
-                /*std::vector<float> thresh_vec(std::begin(perVoiceSamplingThresholds),
-                                              std::end(perVoiceSamplingThresholds));*/
-                modelAPI.set_sampling_thresholds(perVoiceSamplingThresholds);
+                auto new_counts_array = APVTS2ModelThread_max_num_hits_Que->getLatestOnly();
+                perVoiceMaxNumVoicesAllowed = vector<float> {begin(new_counts_array), end(new_counts_array)};
                 shouldResample = true;
             }
 
-            if (max_voice_count_changed_flag_)
+        }
+
+        if (APVTS2ModelThread_sampling_thresholds_Que != nullptr)
+        {
+            if (APVTS2ModelThread_sampling_thresholds_Que->getNumReady()>0)
             {
-                modelAPI.set_max_count_per_voice_limits(perVoiceMaxNumVoicesAllowed);
+                auto new_thresh_array = APVTS2ModelThread_sampling_thresholds_Que->getLatestOnly();
+                vector<float> new_thresh_vect(begin(new_thresh_array), end(new_thresh_array));
+                modelAPI.set_sampling_thresholds(new_thresh_vect);
                 shouldResample = true;
             }
         }
+
 
         if (GrooveThreadToModelThreadQue != nullptr)
         {
@@ -170,8 +168,12 @@ void ModelThread::run()
         // sleep (thread_settings::ModelThread::waitTimeBtnIters);
     }
 }
+// ============================================================================================================
 
 
+// ============================================================================================================
+// ===          Preparing Thread for Stopping
+// ============================================================================================================
 void ModelThread::prepareToStop()
 {
     //Need to wait enough so as to ensure the run() method is over before killing thread
@@ -179,3 +181,11 @@ void ModelThread::prepareToStop()
     readyToStop = true;
 }
 
+ModelThread::~ModelThread()
+{
+    if (not readyToStop)
+    {
+        prepareToStop();
+    }
+}
+// ============================================================================================================

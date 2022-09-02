@@ -22,7 +22,7 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     }
 
     MonotonicGroovePianoRollsWidget = make_unique<FinalUIWidgets::MonotonicGrooves::MonotonicGrooveWidget>
-        (MidiFXProcessorPointer_->GroovePianoRollWidget2GrooveThreadQues.get());
+        (MidiFXProcessorPointer_->get_pointer_GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue());
     {   // re-draw events if Editor reconstructed mid-session
         auto ptr_ = MidiFXProcessorPointer_->GrooveThread2GGroovePianoRollWidgetQue.get();
         if (ptr_->getNumberOfWrites() > 0)
