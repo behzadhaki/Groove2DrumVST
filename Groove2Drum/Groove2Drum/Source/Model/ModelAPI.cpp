@@ -79,7 +79,7 @@ bool MonotonicGrooveTransformerV1::loadModel(std::string model_path_, int time_s
         velocities = torch::zeros({time_steps_, num_voices_});
         offsets = torch::zeros({time_steps_, num_voices_});
         per_voice_sampling_thresholds = vector2tensor(nine_voice_kit_default_sampling_thresholds);
-        /*per_voice_max_count_allowed = vector2tensor(nine_voice_kit_default_max_voices_allowed);*/
+        per_voice_max_count_allowed = nine_voice_kit_default_max_voices_allowed;
         return true;
     }
 
@@ -101,14 +101,13 @@ void MonotonicGrooveTransformerV1::set_sampling_thresholds(vector<float> per_voi
     per_voice_sampling_thresholds = vector2tensor(per_voice_thresholds);
 }
 
-/*void MonotonicGrooveTransformerV1::set_max_count_per_voice_limits(vector<float> perVoiceMaxNumVoicesAllowed)
+void MonotonicGrooveTransformerV1::set_max_count_per_voice_limits(vector<float> perVoiceMaxNumVoicesAllowed)
 {
     assert(perVoiceMaxNumVoicesAllowed.size()==num_voices &&
            "thresholds dim [num_voices]");
 
-    per_voice_max_count_allowed = vector2tensor(perVoiceMaxNumVoicesAllowed);
-    DBG(string("per_voice_max_count_allowed 0 ") + to_string(per_voice_max_count_allowed[0].item().toFloat()));
-}*/
+    per_voice_max_count_allowed = perVoiceMaxNumVoicesAllowed;
+}
 
 // Passes input through the model and updates logits, vels and offsets
 void MonotonicGrooveTransformerV1::forward_pass(torch::Tensor monotonicGrooveInput)
@@ -148,42 +147,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> MonotonicGrooveTransform
             // Get probabilities of voice hits at all timesteps
             auto voice_hit_probs = hits_probabilities.index(
                 {row_indices, voice_i});
-            // Find locations exceeding threshold and set to 1 (hit)
-            auto active_time_indices = voice_hit_probs>=thres_voice_i;
-            hits.index_put_({active_time_indices, voice_i}, 1);
-        }
-    }
-
-    // Set non-hit vel and offset values to 0 (don't do this, otherwise, changing thresh doesn't work properly at times!)
-    // velocities = velocities * hits;
-    // offsets = offsets * hits;
-
-    // DBG(tensor2string(hits));
-
-    return {hits, velocities, offsets};
-}
-
-std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> MonotonicGrooveTransformerV1::
-    sample(std::string sample_mode, vector<float> perVoiceMaxNumVoicesAllowed)
-{
-    assert (sample_mode=="Threshold" or sample_mode=="SampleProbability");
-
-    hits = torch::zeros({time_steps, num_voices});
-
-    auto row_indices = torch::arange(0, time_steps);
-    if (sample_mode=="Threshold")
-    {
-        // read CPU accessors in  https://pytorch.org/cppdocs/notes/tensor_basics.html
-        // asserts accessed part of tensor is 2-dimensional and holds floats.
-        //auto hits_probabilities_a = hits_probabilities.accessor<float,2>();
-
-        for (int voice_i=0; voice_i < num_voices; voice_i++){
-            // Get voice threshold value
-            auto thres_voice_i  = per_voice_sampling_thresholds[voice_i];
-            // Get probabilities of voice hits at all timesteps
-            auto voice_hit_probs = hits_probabilities.index(
-                {row_indices, voice_i});
-            auto tup = voice_hit_probs.topk((int) perVoiceMaxNumVoicesAllowed[size_t(voice_i)]);
+            auto tup = voice_hit_probs.topk((int) per_voice_max_count_allowed[size_t(voice_i)]);
             auto candidate_probs = std::get<0>(tup);
             auto candidate_prob_indices = std::get<1>(tup);
 
@@ -204,6 +168,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> MonotonicGrooveTransform
 
     return {hits, velocities, offsets};
 }
+
 // ------------------------------------------------------------
 // -------------------UTILS------------------------------------
 // ------------------------------------------------------------

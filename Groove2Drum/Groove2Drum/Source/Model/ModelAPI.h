@@ -32,15 +32,13 @@ public:
 
     // setters
     void set_sampling_thresholds(vector<float> per_voice_thresholds);
-    /*void set_max_count_per_voice_limits(vector<float> perVoiceMaxNumVoicesAllowed);*/
+    void set_max_count_per_voice_limits(vector<float> perVoiceMaxNumVoicesAllowed);
 
     // Step 1. Passes input through the model and updates logits, vels and offsets
     void forward_pass(torch::Tensor monotonicGrooveInput);
     // Step 2. Sample hvo after the forward pass
     std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sample(
         std::string sample_mode = "Threshold");
-    std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sample(
-        std::string sample_mode, vector<float> perVoiceMaxNumVoicesAllowed);
 
     // store path locally
     std::string model_path;
@@ -56,7 +54,7 @@ private:
     torch::Tensor velocities;
     torch::Tensor offsets;
     torch::Tensor per_voice_sampling_thresholds;            // per voice thresholds for sampling
-    // torch::Tensor per_voice_max_count_allowed;            // per voice Maximum limit of hits
+    vector<float> per_voice_max_count_allowed;            // per voice Maximum limit of hits
 
 
 

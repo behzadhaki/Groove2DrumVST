@@ -88,7 +88,7 @@ void ModelThread::run()
             if (APVTS2ModelThread_max_num_hits_Que->getNumReady()>0)
             {
                 auto new_counts_array = APVTS2ModelThread_max_num_hits_Que->getLatestOnly();
-                perVoiceMaxNumVoicesAllowed = vector<float> {begin(new_counts_array), end(new_counts_array)};
+                modelAPI.set_max_count_per_voice_limits(vector<float> {begin(new_counts_array), end(new_counts_array)});
                 shouldResample = true;
             }
 
@@ -141,7 +141,7 @@ void ModelThread::run()
         // should resample output if, input new groove received
         if (shouldResample)
         {
-            auto [hits, velocities, offsets] = modelAPI.sample("Threshold", perVoiceMaxNumVoicesAllowed);
+            auto [hits, velocities, offsets] = modelAPI.sample("Threshold");
             generated_hvo = HVO<HVO_params::time_steps, HVO_params::num_voices>(
                 hits, velocities, offsets);
             auto pianoRollData = HVOLight<HVO_params::time_steps, HVO_params::num_voices>(
