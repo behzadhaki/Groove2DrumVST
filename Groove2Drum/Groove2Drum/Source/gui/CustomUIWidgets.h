@@ -467,7 +467,6 @@ namespace SingleStepPianoRollBlock
 // ==========              UI WIDGETS PLACED ON FINAL EDITOR GUI                                  =============
 // ==========
 // ============================================================================================================
-
 namespace FinalUIWidgets {
 
     namespace GeneratedDrums
@@ -483,17 +482,23 @@ namespace FinalUIWidgets {
 
             vector<shared_ptr<SingleStepPianoRollBlock::InteractiveIndividualBlockWithProbability>> interactivePRollBlocks;
             shared_ptr<SingleStepPianoRollBlock::XYPadAutomatableWithSliders> MaxCount_Prob_XYPad; // x-axis will be Max count (0 to time_steps), y-axis is threshold 0 to 1
+            juce::Slider midiNumberSlider;
+            unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>  midiNumberSliderAttachment;
             juce::Label label;
             int pianoRollSectionWidth {0};
 
-            GeneratedDrums_SingleVoice(juce::AudioProcessorValueTreeState* apvtsPntr, const string label_text, const string maxCountParamID, const string threshParamID)
+            GeneratedDrums_SingleVoice(juce::AudioProcessorValueTreeState* apvtsPntr, const string label_text, const string maxCountParamID, const string threshParamID, const string midiNumberParamID)
             {
+                // attach midiNumberSlider to apvts
+                midiNumberSliderAttachment = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, midiNumberParamID, midiNumberSlider);
+                addAndMakeVisible(midiNumberSlider);
 
                 // Set Modified Label
                 label.setText(label_text, juce::dontSendNotification);
                 label.setColour(juce::Label::textColourId, juce::Colours::white);
                 label.setJustificationType (juce::Justification::centredRight);
                 addAndMakeVisible(label);
+
 
                 // xy slider
                 MaxCount_Prob_XYPad = make_shared<SingleStepPianoRollBlock::XYPadAutomatableWithSliders>(apvtsPntr, maxCountParamID, threshParamID);
@@ -541,7 +546,15 @@ namespace FinalUIWidgets {
 
             void resized() override {
                 auto area = getLocalBounds();
-                label.setBounds(area.removeFromLeft((int) area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width)));
+                area.removeFromRight(area.getWidth() - (int) area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width));
+                label.setBounds(area.removeFromTop(area.proportionOfHeight(0.5f)));
+                auto h = area.getHeight();
+                midiNumberSlider.setBounds(area);
+                midiNumberSlider.setTextBoxStyle(juce::Slider::TextEntryBoxPosition::TextBoxBelow, false, midiNumberSlider.getWidth()/4, int(h/3.0));
+
+                // place pianorolls for each step
+                area = getLocalBounds();
+                area.removeFromLeft((int) area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width));
                 auto grid_width = area.proportionOfWidth(gui_settings::PianoRolls::timestep_ratio_of_width);
                 pianoRollSectionWidth = 0;
                 for (size_t i = 0; i<HVO_params::time_steps; i++)
@@ -570,10 +583,10 @@ namespace FinalUIWidgets {
                 for (size_t voice_i=0; voice_i<HVO_params::num_voices; voice_i++)
                 {
                     auto voice_label = DrumVoiceNames_[voice_i];
-                    auto label_txt = voice_label + "\n[Midi "+to_string(DrumVoiceMidiNumbers_[voice_i])+"]";
+                    auto label_txt = voice_label;
 
                     PianoRolls.push_back(make_unique<GeneratedDrums_SingleVoice>(
-                        apvtsPntr, label_txt, voice_label+"_X", voice_label+"_Y"));
+                        apvtsPntr, label_txt, voice_label+"_X", voice_label+"_Y", voice_label+"_MIDI"));
 
                     addAndMakeVisible(PianoRolls[voice_i].get());
                 }
@@ -834,8 +847,7 @@ namespace FinalUIWidgets {
     {
 
     }
-
-
-
 }
+
+
 

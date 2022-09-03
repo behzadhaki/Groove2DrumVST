@@ -310,7 +310,7 @@ struct BasicNote{
 
     // constructor for placing notes generated
     BasicNote(int voice_index, float velocity_Value, int grid_line, double offset,
-         std::vector<int> voice_to_midi_map = nine_voice_kit_default_midi_numbers):
+         std::array<int, HVO_params::num_voices> voice_to_midi_map = nine_voice_kit_default_midi_numbers):
         note(voice_to_midi_map[(unsigned long)voice_index]),
         velocity(velocity_Value), time(grid_line, offset) {}
 
@@ -619,7 +619,7 @@ template <int time_steps_, int num_voices_> struct HVO
         offsets_modified = offsets_unmodified * hits;
     }
 
-    vector<BasicNote> getUnmodifiedNotes(std::vector<int> voice_to_midi_map = nine_voice_kit_default_midi_numbers)
+    vector<BasicNote> getUnmodifiedNotes(std::array<int, HVO_params::num_voices> voice_to_midi_map = nine_voice_kit_default_midi_numbers)
     {
 
         // get hit locations
@@ -646,7 +646,7 @@ template <int time_steps_, int num_voices_> struct HVO
         return Notes;
     }
 
-    vector<BasicNote> getModifiedNotes(std::vector<int> voice_to_midi_map = nine_voice_kit_default_midi_numbers)
+    vector<BasicNote> getModifiedNotes(std::array<int, HVO_params::num_voices>  voice_to_midi_map = nine_voice_kit_default_midi_numbers)
     {
 
         // get hit locations
@@ -673,7 +673,7 @@ template <int time_steps_, int num_voices_> struct HVO
         return Notes;
     }
 
-    GeneratedData<time_steps_, num_voices_> getUnmodifiedGeneratedData(std::vector<int> voice_to_midi_map = nine_voice_kit_default_midi_numbers)
+    GeneratedData<time_steps_, num_voices_> getUnmodifiedGeneratedData(std::array<int, HVO_params::num_voices> voice_to_midi_map = nine_voice_kit_default_midi_numbers)
     {
         GeneratedData<time_steps_, num_voices_> generatedData;
 
@@ -686,7 +686,7 @@ template <int time_steps_, int num_voices_> struct HVO
         return generatedData;
     }
 
-    GeneratedData<time_steps_, num_voices_> getModifiedGeneratedData(std::vector<int> voice_to_midi_map = nine_voice_kit_default_midi_numbers)
+    GeneratedData<time_steps_, num_voices_> getModifiedGeneratedData(std::array<int, HVO_params::num_voices>  voice_to_midi_map = nine_voice_kit_default_midi_numbers)
     {
         GeneratedData<time_steps_, num_voices_> generatedData;
 

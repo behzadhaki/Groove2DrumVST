@@ -18,6 +18,7 @@ ModelThread::ModelThread(): juce::Thread("Model_Thread")
     ModelThreadToDrumPianoRollWidgetQue = nullptr;
     APVTS2ModelThread_max_num_hits_Que = nullptr;
     APVTS2ModelThread_sampling_thresholds_Que = nullptr;
+    APVTS2ModelThread_midi_mappings_Que = nullptr;
     readyToStop = false;
 }
 
@@ -32,18 +33,23 @@ void ModelThread::startThreadUsingProvidedResources(
     HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size>*
         ModelThreadToDrumPianoRollWidgetQuesPntr,
     LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_max_num_hits_QuePntr,
-    LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_sampling_thresholds_QuePntr)
+    LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_sampling_thresholds_QuePntr,
+    LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_midi_mappings_QuePntr)
 {
     GrooveThreadToModelThreadQue = GrooveThreadToModelThreadQuesPntr;
     ModelThreadToProcessBlockQue = ModelThreadToProcessBlockQuesPntr;
     ModelThreadToDrumPianoRollWidgetQue = ModelThreadToDrumPianoRollWidgetQuesPntr;
     APVTS2ModelThread_max_num_hits_Que = APVTS2ModelThread_max_num_hits_QuePntr;
     APVTS2ModelThread_sampling_thresholds_Que = APVTS2ModelThread_sampling_thresholds_QuePntr;
+    APVTS2ModelThread_midi_mappings_Que = APVTS2ModelThread_midi_mappings_QuePntr;
 
     // load model
     modelAPI = MonotonicGrooveTransformerV1();
     bool isLoaded = modelAPI.loadModel(
         GeneralSettings::default_model_path, HVO_params::time_steps, HVO_params::num_voices);
+
+    // initialize midi mappings
+    drum_kit_midi_map = nine_voice_kit_default_midi_numbers;
 
     // check if model loaded successfully
     if (isLoaded)
@@ -105,6 +111,14 @@ void ModelThread::run()
             }
         }
 
+        if (APVTS2ModelThread_midi_mappings_Que != nullptr)
+        {
+            if (APVTS2ModelThread_midi_mappings_Que->getNumReady()>0)
+            {
+                drum_kit_midi_map = APVTS2ModelThread_midi_mappings_Que->getLatestOnly();
+                shouldResample = true;
+            }
+        }
 
         if (GrooveThreadToModelThreadQue != nullptr)
         {
@@ -150,7 +164,7 @@ void ModelThread::run()
 
             if (ModelThreadToProcessBlockQue != nullptr)
             {
-                auto temp = generated_hvo.getModifiedGeneratedData();
+                auto temp = generated_hvo.getModifiedGeneratedData(drum_kit_midi_map);
                 ModelThreadToProcessBlockQue->push(temp);
             }
 

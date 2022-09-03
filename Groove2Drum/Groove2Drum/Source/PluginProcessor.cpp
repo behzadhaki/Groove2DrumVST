@@ -28,6 +28,7 @@ MidiFXProcessor::MidiFXProcessor():
     APVTS2ModelThread_max_num_hits_Que = make_unique<LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>>();
     APVTS2ModelThread_sampling_thresholds_Que = make_unique<LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>>();
     GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue = make_unique<LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>>();
+    APVTS2ModelThread_midi_mappings_Que = make_unique<LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>>();
 
     /////////////////////////////////
     //// Start Threads
@@ -38,7 +39,8 @@ MidiFXProcessor::MidiFXProcessor():
                                                   ModelThreadToProcessBlockQue.get(),
                                                   ModelThreadToDrumPianoRollWidgetQue.get(),
                                                   APVTS2ModelThread_max_num_hits_Que.get(),
-                                                  APVTS2ModelThread_sampling_thresholds_Que.get());
+                                                  APVTS2ModelThread_sampling_thresholds_Que.get(),
+                                                  APVTS2ModelThread_midi_mappings_Que.get());
 
     grooveThread.startThreadUsingProvidedResources(ProcessBlockToGrooveThreadQue.get(),
                                                    GrooveThreadToModelThreadQue.get(),
@@ -49,7 +51,8 @@ MidiFXProcessor::MidiFXProcessor():
     apvtsMediatorThread.startThreadUsingProvidedResources(&apvts,
                                                           APVTS2GrooveThread_groove_vel_offset_ranges_Que.get(),
                                                           APVTS2ModelThread_max_num_hits_Que.get(),
-                                                          APVTS2ModelThread_sampling_thresholds_Que.get());
+                                                          APVTS2ModelThread_sampling_thresholds_Que.get(),
+                                                          APVTS2ModelThread_midi_mappings_Que.get());
 
 }
 
@@ -179,6 +182,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout MidiFXProcessor::createParam
         auto voice_label = nine_voice_kit_labels[i];
         layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID(voice_label+"_X", version_hint), voice_label+"_X", 0.f, HVO_params::time_steps, nine_voice_kit_default_max_voices_allowed[i])); // max num voices
         layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID(voice_label+"_Y", version_hint), voice_label+"_Y", 0.f, 1.f, nine_voice_kit_default_sampling_thresholds[i]));                   // threshold level for sampling
+    }
+
+    for (size_t i=0; i < HVO_params::num_voices; i++)
+    {
+        auto voice_label = nine_voice_kit_labels[i];
+        layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID(voice_label+"_MIDI", version_hint), voice_label+"_MIDI", 0, 127, (int) nine_voice_kit_default_midi_numbers[i])); // drum voice midi numbers
     }
 
     return layout;

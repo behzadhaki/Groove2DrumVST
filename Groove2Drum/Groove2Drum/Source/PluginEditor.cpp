@@ -59,7 +59,7 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
 
     // Set window size
     setResizable (true, true);
-    setSize (800, 400);
+    setSize (1400, 1000);
 
     startTimer(50);
 

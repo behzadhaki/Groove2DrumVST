@@ -47,13 +47,15 @@ public:
         juce::AudioProcessorValueTreeState* APVTSPntr,
         LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_vel_offset_ranges_QuePntr,
         LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_max_num_hits_QuePntr,
-        LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_sampling_thresholds_QuePntr
+        LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_sampling_thresholds_QuePntr,
+        LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_midi_mappings_QuePntr
         )
     {
         APVTS = APVTSPntr;
         APVTS2GrooveThread_groove_vel_offset_ranges_Que = APVTS2GrooveThread_groove_vel_offset_ranges_QuePntr;
         APVTS2ModelThread_max_num_hits_Que = APVTS2ModelThread_max_num_hits_QuePntr;
         APVTS2ModelThread_sampling_thresholds_Que = APVTS2ModelThread_sampling_thresholds_QuePntr;
+        APVTS2ModelThread_midi_mappings_Que = APVTS2ModelThread_midi_mappings_QuePntr;
 
         startThread();
     }
@@ -68,31 +70,43 @@ public:
         // notify if the thread is still running
         bool bExit = threadShouldExit();
 
-        auto groove_vel_offset_ranges = get_groove_vel_offset_ranges();
-        auto max_num_hits = get_max_num_hits();
-        auto sampling_thresholds = get_sampling_thresholds();
-
+        auto current_groove_vel_offset_ranges = get_groove_vel_offset_ranges();
+        auto current_max_num_hits = get_max_num_hits();
+        auto current_sampling_thresholds = get_sampling_thresholds();
+        auto current_per_voice_midi_numbers = get_per_voice_midi_numbers();
         while (!bExit)
         {
+            auto new_groove_vel_offset_ranges = get_groove_vel_offset_ranges();
             // check if vel/offset values changed
-            if (groove_vel_offset_ranges != get_groove_vel_offset_ranges())
+            if (current_groove_vel_offset_ranges != new_groove_vel_offset_ranges)
             {
-                groove_vel_offset_ranges = get_groove_vel_offset_ranges();
-                APVTS2GrooveThread_groove_vel_offset_ranges_Que->push(groove_vel_offset_ranges);
+                current_groove_vel_offset_ranges = new_groove_vel_offset_ranges;
+                APVTS2GrooveThread_groove_vel_offset_ranges_Que->push(
+                    new_groove_vel_offset_ranges);
             }
 
             // check if per voice allowed maximum number of hits has changed
-            if (max_num_hits != get_max_num_hits())
+            auto new_max_num_hits = get_max_num_hits();
+            if (current_max_num_hits != new_max_num_hits)
             {
-                max_num_hits = get_max_num_hits();
-                APVTS2ModelThread_max_num_hits_Que->push(max_num_hits);
+                current_max_num_hits = new_max_num_hits;
+                APVTS2ModelThread_max_num_hits_Que->push(new_max_num_hits);
             }
 
             // check if per voice allowed sampling thresholds have changed
-            if (sampling_thresholds != get_sampling_thresholds())
+            auto new_sampling_thresholds =  get_sampling_thresholds();
+            if (current_sampling_thresholds != new_sampling_thresholds)
             {
-                sampling_thresholds = get_sampling_thresholds();
-                APVTS2ModelThread_sampling_thresholds_Que->push(sampling_thresholds);
+                current_sampling_thresholds = new_sampling_thresholds;
+                APVTS2ModelThread_sampling_thresholds_Que->push(new_sampling_thresholds);
+            }
+
+            // check if per voice midi numbers have changed
+            auto new_per_voice_midi_numbers = get_per_voice_midi_numbers();
+            if (current_per_voice_midi_numbers != get_per_voice_midi_numbers())
+            {
+                current_per_voice_midi_numbers = new_per_voice_midi_numbers;
+                APVTS2ModelThread_midi_mappings_Que->push(new_per_voice_midi_numbers);
             }
 
             bExit = threadShouldExit();
@@ -133,7 +147,7 @@ public:
     
     std::array<float, HVO_params::num_voices> get_max_num_hits()
     {
-        std::array<float, HVO_params::num_voices> max_num_hits;
+        std::array<float, HVO_params::num_voices> max_num_hits {};
         for (size_t i=0; i<HVO_params::num_voices; i++)
         {
             auto voice_label = nine_voice_kit_labels[i];
@@ -144,7 +158,7 @@ public:
 
     std::array<float, HVO_params::num_voices> get_sampling_thresholds()
     {
-        std::array<float, HVO_params::num_voices> sampling_thresholds;
+        std::array<float, HVO_params::num_voices> sampling_thresholds {};
         for (size_t i=0; i<HVO_params::num_voices; i++)
         {
             auto voice_label = nine_voice_kit_labels[i];
@@ -153,6 +167,16 @@ public:
         return sampling_thresholds;
     }
 
+    std::array<int, HVO_params::num_voices> get_per_voice_midi_numbers()
+    {
+        std::array<int, HVO_params::num_voices> midiNumbers {};
+        for (size_t i=0; i<HVO_params::num_voices; i++)
+        {
+            auto voice_label = nine_voice_kit_labels[i];
+            midiNumbers[i] = int(*APVTS->getRawParameterValue(voice_label + "_MIDI"));
+        }
+        return midiNumbers;
+    }
 private:
     // ============================================================================================================
     // ===          Pointer to APVTS hosted in the Main Processor
@@ -165,6 +189,7 @@ private:
     LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_vel_offset_ranges_Que {nullptr};
     LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_max_num_hits_Que {nullptr};
     LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_sampling_thresholds_Que {nullptr};
+    LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_midi_mappings_Que {nullptr};
 
 
 };
