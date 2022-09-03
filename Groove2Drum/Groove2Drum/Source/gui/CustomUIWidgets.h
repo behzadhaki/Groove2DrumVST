@@ -771,7 +771,7 @@ namespace FinalUIWidgets {
         };
 
 
-        class GrooveControlSliders: public juce::Component
+        class GlobalControlSliders : public juce::Component
         {
         public:
             // sliders for groove manipulation
@@ -788,8 +788,11 @@ namespace FinalUIWidgets {
             juce::Label  maxOffsetLabel;
             unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> maxOffsetSliderAPVTSAttacher;
 
+            juce::Slider temperatureSlider;
+            juce::Label  temperatureLabel;
+            unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> temperatureSliderAPVTSAttacher;
 
-            GrooveControlSliders(juce::AudioProcessorValueTreeState* apvtsPntr)
+            GlobalControlSliders(juce::AudioProcessorValueTreeState* apvtsPntr)
             {
                 // sliders for vel offset ranges
                 addAndMakeVisible (minVelSlider);
@@ -803,17 +806,20 @@ namespace FinalUIWidgets {
                 maxVelSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "MAX_VELOCITY", maxVelSlider);
 
                 addAndMakeVisible (minOffsetSlider);
-                minOffsetSlider.setRange (HVO_params::_min_offset, HVO_params::_max_offset);
                 addAndMakeVisible (minOffsetLabel);
                 minOffsetLabel.setText ("Min Offset", juce::dontSendNotification);
                 minOffsetSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "MIN_OFFSET", minOffsetSlider);
 
 
                 addAndMakeVisible (maxOffsetSlider);
-                maxOffsetSlider.setRange (HVO_params::_min_offset, HVO_params::_max_offset);
                 addAndMakeVisible (maxOffsetLabel);
                 maxOffsetLabel.setText ("Max Offset", juce::dontSendNotification);
                 maxOffsetSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "MAX_OFFSET", maxOffsetSlider);
+
+                addAndMakeVisible (temperatureSlider);
+                addAndMakeVisible (temperatureLabel);
+                temperatureLabel.setText ("Temperature", juce::dontSendNotification);
+                temperatureSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "Temperature", temperatureSlider);
             }
 
             void resized() override
@@ -822,21 +828,24 @@ namespace FinalUIWidgets {
                 {
                     auto area = getLocalBounds();
                     area.removeFromLeft(area.proportionOfWidth(0.7f));
-                    auto height = area.proportionOfHeight(0.25f);
+                    auto height = area.proportionOfHeight(0.2f);
                     minVelLabel.setBounds(area.removeFromTop(height));
                     maxVelLabel.setBounds(area.removeFromTop(height));
                     minOffsetLabel.setBounds(area.removeFromTop(height));
                     maxOffsetLabel.setBounds(area.removeFromTop(height));
+                    temperatureLabel.setBounds(area.removeFromTop(height));
                 }
 
                 {
                     auto area = getLocalBounds();
                     area.removeFromRight(area.proportionOfWidth(0.3f));
-                    auto height = area.proportionOfHeight(0.25f);
+                    auto height = area.proportionOfHeight(0.2f);
                     minVelSlider.setBounds(area.removeFromTop(height));
                     maxVelSlider.setBounds(area.removeFromTop(height));
                     minOffsetSlider.setBounds(area.removeFromTop(height));
                     maxOffsetSlider.setBounds(area.removeFromTop(height));
+                    temperatureSlider.setBounds(area.removeFromTop(height));
+
                 }
             }
 

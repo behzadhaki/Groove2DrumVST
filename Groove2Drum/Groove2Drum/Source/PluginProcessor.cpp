@@ -26,7 +26,7 @@ MidiFXProcessor::MidiFXProcessor():
     ModelThreadToProcessBlockQue = make_unique<GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>>();
     APVTS2GrooveThread_groove_vel_offset_ranges_Que = make_unique<LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>>();
     APVTS2ModelThread_max_num_hits_Que = make_unique<LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>>();
-    APVTS2ModelThread_sampling_thresholds_Que = make_unique<LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>>();
+    APVTS2ModelThread_sampling_thresholds_and_temperature_Que = make_unique<LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>>();
     GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue = make_unique<LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>>();
     APVTS2ModelThread_midi_mappings_Que = make_unique<LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>>();
 
@@ -39,7 +39,7 @@ MidiFXProcessor::MidiFXProcessor():
                                                   ModelThreadToProcessBlockQue.get(),
                                                   ModelThreadToDrumPianoRollWidgetQue.get(),
                                                   APVTS2ModelThread_max_num_hits_Que.get(),
-                                                  APVTS2ModelThread_sampling_thresholds_Que.get(),
+                                                  APVTS2ModelThread_sampling_thresholds_and_temperature_Que.get(),
                                                   APVTS2ModelThread_midi_mappings_Que.get());
 
     grooveThread.startThreadUsingProvidedResources(ProcessBlockToGrooveThreadQue.get(),
@@ -51,7 +51,7 @@ MidiFXProcessor::MidiFXProcessor():
     apvtsMediatorThread.startThreadUsingProvidedResources(&apvts,
                                                           APVTS2GrooveThread_groove_vel_offset_ranges_Que.get(),
                                                           APVTS2ModelThread_max_num_hits_Que.get(),
-                                                          APVTS2ModelThread_sampling_thresholds_Que.get(),
+                                                          APVTS2ModelThread_sampling_thresholds_and_temperature_Que.get(),
                                                           APVTS2ModelThread_midi_mappings_Que.get());
 
 }
@@ -174,6 +174,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout MidiFXProcessor::createParam
     layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("MAX_VELOCITY", version_hint), "MAX_VELOCITY", -2.0f, 2.0f, 1));
     layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("MIN_OFFSET", version_hint), "MIN_OFFSET", -0.49f, 0.49f, -.49f));
     layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("MAX_OFFSET", version_hint), "MAX_OFFSET", -0.49f, 0.49, .49f));
+    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("Temperature", version_hint), "Temperature", 0.00001f, 2.0f, 1.0f));
 
     // these parameters are used with the xySliders for each individual voice
     // Because xySliders are neither slider or button, we

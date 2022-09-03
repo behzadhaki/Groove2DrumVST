@@ -17,7 +17,7 @@ ModelThread::ModelThread(): juce::Thread("Model_Thread")
     ModelThreadToProcessBlockQue = nullptr;
     ModelThreadToDrumPianoRollWidgetQue = nullptr;
     APVTS2ModelThread_max_num_hits_Que = nullptr;
-    APVTS2ModelThread_sampling_thresholds_Que = nullptr;
+    APVTS2ModelThread_sampling_thresholds_and_temperature_Que = nullptr;
     APVTS2ModelThread_midi_mappings_Que = nullptr;
     readyToStop = false;
 }
@@ -33,14 +33,14 @@ void ModelThread::startThreadUsingProvidedResources(
     HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size>*
         ModelThreadToDrumPianoRollWidgetQuesPntr,
     LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_max_num_hits_QuePntr,
-    LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_sampling_thresholds_QuePntr,
+    LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_sampling_thresholds_and_temperature_QuePntr,
     LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_midi_mappings_QuePntr)
 {
     GrooveThreadToModelThreadQue = GrooveThreadToModelThreadQuesPntr;
     ModelThreadToProcessBlockQue = ModelThreadToProcessBlockQuesPntr;
     ModelThreadToDrumPianoRollWidgetQue = ModelThreadToDrumPianoRollWidgetQuesPntr;
     APVTS2ModelThread_max_num_hits_Que = APVTS2ModelThread_max_num_hits_QuePntr;
-    APVTS2ModelThread_sampling_thresholds_Que = APVTS2ModelThread_sampling_thresholds_QuePntr;
+    APVTS2ModelThread_sampling_thresholds_and_temperature_Que = APVTS2ModelThread_sampling_thresholds_and_temperature_QuePntr;
     APVTS2ModelThread_midi_mappings_Que = APVTS2ModelThread_midi_mappings_QuePntr;
 
     // load model
@@ -80,7 +80,7 @@ void ModelThread::run()
     // flag to check if sampling thresholds are changed or new groove is received
     bool shouldResample;
     bool newGrooveAvailable;
-
+    bool newTemperatureAvailable;
 
 
     while (!bExit)
@@ -88,6 +88,7 @@ void ModelThread::run()
         // reset flags
         shouldResample = false;
         newGrooveAvailable = false;
+        newTemperatureAvailable = false;
 
         if (APVTS2ModelThread_max_num_hits_Que != nullptr)
         {
@@ -100,13 +101,14 @@ void ModelThread::run()
 
         }
 
-        if (APVTS2ModelThread_sampling_thresholds_Que != nullptr)
+        if (APVTS2ModelThread_sampling_thresholds_and_temperature_Que != nullptr)
         {
-            if (APVTS2ModelThread_sampling_thresholds_Que->getNumReady()>0)
+            if (APVTS2ModelThread_sampling_thresholds_and_temperature_Que->getNumReady()>0)
             {
-                auto new_thresh_array = APVTS2ModelThread_sampling_thresholds_Que->getLatestOnly();
-                vector<float> new_thresh_vect(begin(new_thresh_array), end(new_thresh_array));
+                auto new_thresh_with_temperature_array = APVTS2ModelThread_sampling_thresholds_and_temperature_Que->getLatestOnly();
+                vector<float> new_thresh_vect(begin(new_thresh_with_temperature_array), end(new_thresh_with_temperature_array)-1);
                 modelAPI.set_sampling_thresholds(new_thresh_vect);
+                newTemperatureAvailable = modelAPI.set_sampling_temperature(new_thresh_with_temperature_array[HVO_params::num_voices]);
                 shouldResample = true;
             }
         }
@@ -133,7 +135,7 @@ void ModelThread::run()
 
             }
 
-           if (newGrooveAvailable)
+           if (newGrooveAvailable or newTemperatureAvailable)
             {
                 // pass scaled version mapped to closed hats to input
                 // !!!! dont't forget to use the scaled tensor (with modified vel/offsets)

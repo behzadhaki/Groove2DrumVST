@@ -47,14 +47,14 @@ public:
         juce::AudioProcessorValueTreeState* APVTSPntr,
         LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_vel_offset_ranges_QuePntr,
         LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_max_num_hits_QuePntr,
-        LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_sampling_thresholds_QuePntr,
+        LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_sampling_thresholds_and_temperature_QuePntr,
         LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_midi_mappings_QuePntr
         )
     {
         APVTS = APVTSPntr;
         APVTS2GrooveThread_groove_vel_offset_ranges_Que = APVTS2GrooveThread_groove_vel_offset_ranges_QuePntr;
         APVTS2ModelThread_max_num_hits_Que = APVTS2ModelThread_max_num_hits_QuePntr;
-        APVTS2ModelThread_sampling_thresholds_Que = APVTS2ModelThread_sampling_thresholds_QuePntr;
+        APVTS2ModelThread_sampling_thresholds_and_temperature_Que = APVTS2ModelThread_sampling_thresholds_and_temperature_QuePntr;
         APVTS2ModelThread_midi_mappings_Que = APVTS2ModelThread_midi_mappings_QuePntr;
 
         startThread();
@@ -72,7 +72,7 @@ public:
 
         auto current_groove_vel_offset_ranges = get_groove_vel_offset_ranges();
         auto current_max_num_hits = get_max_num_hits();
-        auto current_sampling_thresholds = get_sampling_thresholds();
+        auto current_sampling_thresholds_with_temperature = get_sampling_thresholds_with_temperature();
         auto current_per_voice_midi_numbers = get_per_voice_midi_numbers();
         while (!bExit)
         {
@@ -94,11 +94,15 @@ public:
             }
 
             // check if per voice allowed sampling thresholds have changed
-            auto new_sampling_thresholds =  get_sampling_thresholds();
-            if (current_sampling_thresholds != new_sampling_thresholds)
+            auto new_sampling_thresholds_with_temperature = get_sampling_thresholds_with_temperature();
+
+            if (current_sampling_thresholds_with_temperature
+                != new_sampling_thresholds_with_temperature)
             {
-                current_sampling_thresholds = new_sampling_thresholds;
-                APVTS2ModelThread_sampling_thresholds_Que->push(new_sampling_thresholds);
+                current_sampling_thresholds_with_temperature =
+                    new_sampling_thresholds_with_temperature;
+                APVTS2ModelThread_sampling_thresholds_and_temperature_Que->push(
+                    new_sampling_thresholds_with_temperature);
             }
 
             // check if per voice midi numbers have changed
@@ -156,15 +160,16 @@ public:
         return max_num_hits;
     }
 
-    std::array<float, HVO_params::num_voices> get_sampling_thresholds()
+    std::array<float, HVO_params::num_voices+1> get_sampling_thresholds_with_temperature()
     {
-        std::array<float, HVO_params::num_voices> sampling_thresholds {};
+        std::array<float, HVO_params::num_voices+1> sampling_thresholds_with_temperature {};
         for (size_t i=0; i<HVO_params::num_voices; i++)
         {
             auto voice_label = nine_voice_kit_labels[i];
-            sampling_thresholds[i] = *APVTS->getRawParameterValue(voice_label+"_Y");
+            sampling_thresholds_with_temperature[i] = *APVTS->getRawParameterValue(voice_label+"_Y");
         }
-        return sampling_thresholds;
+        sampling_thresholds_with_temperature[HVO_params::num_voices] = *APVTS->getRawParameterValue("Temperature");
+        return sampling_thresholds_with_temperature;
     }
 
     std::array<int, HVO_params::num_voices> get_per_voice_midi_numbers()
@@ -188,7 +193,7 @@ private:
     // ============================================================================================================
     LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_vel_offset_ranges_Que {nullptr};
     LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_max_num_hits_Que {nullptr};
-    LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_sampling_thresholds_Que {nullptr};
+    LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_sampling_thresholds_and_temperature_Que {nullptr};
     LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_midi_mappings_Que {nullptr};
 
 

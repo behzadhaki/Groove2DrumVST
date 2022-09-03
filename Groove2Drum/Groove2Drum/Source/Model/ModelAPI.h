@@ -33,6 +33,7 @@ public:
     // setters
     void set_sampling_thresholds(vector<float> per_voice_thresholds);
     void set_max_count_per_voice_limits(vector<float> perVoiceMaxNumVoicesAllowed);
+    bool set_sampling_temperature(float temperature);
 
     // Step 1. Passes input through the model and updates logits, vels and offsets
     void forward_pass(torch::Tensor monotonicGrooveInput);
@@ -55,7 +56,7 @@ private:
     torch::Tensor offsets;
     torch::Tensor per_voice_sampling_thresholds;            // per voice thresholds for sampling
     vector<float> per_voice_max_count_allowed;            // per voice Maximum limit of hits
-
+    float sampling_temperature {1.0f};
 
 
 

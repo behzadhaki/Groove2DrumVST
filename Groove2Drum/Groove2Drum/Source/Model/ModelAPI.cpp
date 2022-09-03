@@ -109,6 +109,18 @@ void MonotonicGrooveTransformerV1::set_max_count_per_voice_limits(vector<float> 
     per_voice_max_count_allowed = perVoiceMaxNumVoicesAllowed;
 }
 
+// returns true if temperature has changed
+bool MonotonicGrooveTransformerV1::set_sampling_temperature(float temperature)
+{
+    if (sampling_temperature == temperature)
+    {
+        return false;
+    }
+    sampling_temperature = temperature;
+    DBG("TEMPERATURE UPDATED to " << sampling_temperature);
+    return true;
+}
+
 // Passes input through the model and updates logits, vels and offsets
 void MonotonicGrooveTransformerV1::forward_pass(torch::Tensor monotonicGrooveInput)
 {
@@ -122,7 +134,7 @@ void MonotonicGrooveTransformerV1::forward_pass(torch::Tensor monotonicGrooveInp
     auto outputs = model.forward(inputs);
     auto hLogit_v_o_tuples = outputs.toTuple();
     hits_logits = hLogit_v_o_tuples->elements()[0].toTensor().view({time_steps, num_voices});
-    hits_probabilities = torch::sigmoid(hits_logits).view({time_steps, num_voices});
+    hits_probabilities = torch::sigmoid(hits_logits/sampling_temperature).view({time_steps, num_voices});
     velocities = hLogit_v_o_tuples->elements()[1].toTensor().view({time_steps, num_voices});
     offsets = hLogit_v_o_tuples->elements()[2].toTensor().view({time_steps, num_voices});
 }
