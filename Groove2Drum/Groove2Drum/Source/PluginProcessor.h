@@ -48,6 +48,9 @@ public:
 
     LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>* get_pointer_GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue();
 
+    void getStateInformation (juce::MemoryBlock& destData) override;
+    void setStateInformation (const void* data, int sizeInBytes) override;
+
 private:
     // =========  Queues for communicating Between the main threads in processor  =============================================
     unique_ptr<LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>> ProcessBlockToGrooveThreadQue;

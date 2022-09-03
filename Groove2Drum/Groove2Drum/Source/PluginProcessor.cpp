@@ -188,3 +188,18 @@ LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>* MidiFXProcessor::
 {
     return GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue.get();
 }
+
+void MidiFXProcessor::getStateInformation (juce::MemoryBlock& destData)
+{
+    auto state = apvts.copyState();
+    std::unique_ptr<juce::XmlElement> xml (state.createXml());
+    copyXmlToBinary (*xml, destData);
+}
+void MidiFXProcessor::setStateInformation (const void* data, int sizeInBytes)
+{
+    std::unique_ptr<juce::XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
+
+    if (xmlState.get() != nullptr)
+        if (xmlState->hasTagName (apvts.state.getType()))
+            apvts.replaceState (juce::ValueTree::fromXml (*xmlState));
+}
