@@ -178,16 +178,28 @@ void MidiFXProcessorEditor::timerCallback()
 
 void MidiFXProcessorEditor::buttonClicked (juce::Button* button)  // [2]
 {
-    if (button == &resetGrooveButton)
+    if (button == &resetGrooveButton or button == &resetAllButton)
     {
         MidiFXProcessorPointer_->grooveThread.ForceResetGroove();
     }
-    if (button == &resetSamplingParametersButton)
+    if (button == &resetSamplingParametersButton  or button == &resetAllButton)
     {
-        DBG("RESETING SamplingParams");
-    }
-    if (button == &resetAllButton)
-    {
-        DBG("RESETING ALL");
+        // reset parameters to default
+        for(const string &ParamID : {"MIN_VELOCITY", "MAX_VELOCITY", "MIN_OFFSET", "MAX_OFFSET"})
+        {
+            auto param = MidiFXProcessorPointer_->apvts.getParameter(ParamID);
+            param->setValueNotifyingHost(param->getDefaultValue());
+        }
+
+        for (size_t i=0; i < HVO_params::num_voices; i++)
+        {
+            auto ParamID = nine_voice_kit_labels[i];
+            auto param = MidiFXProcessorPointer_->apvts.getParameter(ParamID+"_X");
+            param->setValueNotifyingHost(param->getDefaultValue());
+            param = MidiFXProcessorPointer_->apvts.getParameter(ParamID+"_Y");
+            param->setValueNotifyingHost(param->getDefaultValue());
+            param = MidiFXProcessorPointer_->apvts.getParameter(ParamID+"_MIDI");
+            param->setValueNotifyingHost(param->getDefaultValue());
+        }
     }
 }
