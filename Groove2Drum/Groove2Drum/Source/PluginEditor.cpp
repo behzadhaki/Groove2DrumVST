@@ -118,35 +118,6 @@ void MidiFXProcessorEditor::paint(juce::Graphics& g)
 
 }
 
-void MidiFXProcessorEditor::sliderValueChanged (juce::Slider* slider)
-{
-    /*if (slider == &minVelSlider)
-    {
-        VelOffRanges[0] = (float) minVelSlider.getValue();
-        maxVelSlider.setValue(-VelOffRanges[0]);
-        VelOffRanges[1] = -VelOffRanges[1];
-    }
-    else if (slider == &maxVelSlider)
-    {
-        VelOffRanges[1] = (float) maxVelSlider.getValue();
-    }
-    else if (slider == &minOffsetSlider)
-    {
-        VelOffRanges[2] = (float) minOffsetSlider.getValue();
-        maxOffsetSlider.setValue(-VelOffRanges[2]);
-        VelOffRanges[3] = -VelOffRanges[2];
-    }
-    else if (slider == &maxOffsetSlider)
-    {
-        VelOffRanges[3] = (float) maxOffsetSlider.getValue();
-    }
-
-    MidiFXProcessorPointer_->GroovePianoRollWidget2GrooveThreadQues->newVelOffRanges.push(VelOffRanges);
-
-    DBG("NUM WRITES FOR RANGES " << MidiFXProcessorPointer_->GroovePianoRollWidget2GrooveThreadQues->newVelOffRanges.getLatestDataWithoutMovingFIFOHeads()[0]);
-*/
-}
-
 void MidiFXProcessorEditor::timerCallback()
 {
     // get Generations and probs from model thread to display on drum piano rolls

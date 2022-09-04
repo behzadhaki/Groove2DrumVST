@@ -841,13 +841,23 @@ namespace FinalUIWidgets {
 
         void resized() override
         {
+            float toggle_height_ratio = 0.2f;
+            float slider_labels_width_ratio = 0.3f;
+            {
+                auto area = getLocalBounds();
+                area.removeFromBottom(proportionOfHeight(1.0f - toggle_height_ratio));
+                auto toggle_w = proportionOfWidth(.5f);
+                overdubToggle.setBounds(area.removeFromLeft(toggle_w));
+                recordToggle.setBounds(area.removeFromLeft(toggle_w));
+            }
+
             // put vel offset range sliders
             {
                 auto area = getLocalBounds();
-                area.removeFromLeft(area.proportionOfWidth(0.7f));
-                auto height = area.proportionOfHeight(1.0f/7.0f);
-                area.removeFromTop(height);
-                area.removeFromTop(height);
+                area.removeFromTop(proportionOfHeight(toggle_height_ratio));
+                area.removeFromTop(2 * proportionOfHeight(.05f));
+                area.removeFromLeft(area.proportionOfWidth(1.0f - slider_labels_width_ratio));
+                auto height = area.proportionOfHeight(1.0f/5.0f);
                 minVelLabel.setBounds(area.removeFromTop(height));
                 maxVelLabel.setBounds(area.removeFromTop(height));
                 minOffsetLabel.setBounds(area.removeFromTop(height));
@@ -857,10 +867,10 @@ namespace FinalUIWidgets {
 
             {
                 auto area = getLocalBounds();
-                area.removeFromRight(area.proportionOfWidth(0.3f));
-                auto height = area.proportionOfHeight(1.0f/7.0f);
-                overdubToggle.setBounds(area.removeFromTop(height));
-                recordToggle.setBounds(area.removeFromTop(height));
+                area.removeFromTop(proportionOfHeight(toggle_height_ratio));
+                area.removeFromRight(area.proportionOfWidth(slider_labels_width_ratio));
+                auto height = area.proportionOfHeight(1.0f/5.0f);
+
                 minVelSlider.setBounds(area.removeFromTop(height));
                 maxVelSlider.setBounds(area.removeFromTop(height));
                 minOffsetSlider.setBounds(area.removeFromTop(height));
