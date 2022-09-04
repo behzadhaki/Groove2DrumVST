@@ -50,8 +50,12 @@ public:
     // ===          Utility Methods and Parameters
     // ============================================================================================================
     void ForceResetGroove();        // reset Groove if requested
-    void clearStep(int grid_ix, float start_ppq);    // clears a time step ONLY IF OVERDUBBING IS OFF!!!
     bool readyToStop; // Used to check if thread is ready to be stopped or externally stopped from a parent thread
+    void clearStep(int grid_ix, float start_ppq);    // clears a time step ONLY IF OVERDUBBING IS OFF!!!
+
+    void randomizeExistingVelocities();         // randomizes the velocities of the existing groove
+    void randomizeExistingOffsets();            // randomizes the offsets of the existing groove
+    void randomizeAll();                        // generates a fully random groove
     // ============================================================================================================
 
 
@@ -94,6 +98,12 @@ private:
     // parameters for clearing a step in case overdubbing is off
     int clearStepNumber {0};
     float clearRequestedAtPositionPpq {0};
+
+
+
+    bool shouldRandomizeVelocities {false};
+    bool shouldRandomizeOffsets {false};
+    bool shouldRandomizeAll {false};
     // ============================================================================================================
 
 };

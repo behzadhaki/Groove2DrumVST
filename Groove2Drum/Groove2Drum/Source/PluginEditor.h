@@ -27,6 +27,10 @@ private:
     juce::TextButton resetGrooveButton;
     juce::TextButton resetSamplingParametersButton;
     juce::TextButton resetAllButton;
+    // buttons for randomizing groove
+    juce::TextButton randomVelButton;
+    juce::TextButton randomOffsetButton;
+    juce::TextButton randomAllButton;
 
     //  GrooveControlSliders
     unique_ptr<FinalUIWidgets::ControlsWidget> GrooveControlSliders;

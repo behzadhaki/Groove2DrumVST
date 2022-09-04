@@ -115,6 +115,29 @@ void GrooveThread::run()
             }
         }
 
+        // see if any randomization is requested
+        if (shouldRandomizeVelocities or shouldRandomizeOffsets or shouldRandomizeAll)
+        {
+            if (shouldRandomizeVelocities)
+            {
+                monotonic_groove.hvo.randomizeExistingVelocities();
+                shouldRandomizeVelocities = false; // reset flag
+            }
+            else if (shouldRandomizeOffsets)
+            {
+                monotonic_groove.hvo.randomizeExistingOffsets();
+                shouldRandomizeOffsets = false; // reset flag
+            }
+            else if (shouldRandomizeAll)
+            {
+                monotonic_groove.hvo.randomizeAll();
+                shouldRandomizeAll = false; // reset flag
+            }
+            GrooveThread2GGroovePianoRollWidgetQue->push(monotonic_groove);
+            GrooveThreadToModelThreadQue->push(monotonic_groove);
+        }
+
+        // get overdub and record states from APVTS
         if (APVTS2GrooveThread_groove_record_overdubToggles_Que!= nullptr)
         {
             while (APVTS2GrooveThread_groove_record_overdubToggles_Que->getNumReady() > 0)
@@ -267,6 +290,21 @@ void GrooveThread::clearStep(int grid_ix, float start_ppq)
     clearStepNumber = grid_ix;
 }
 
+
+void GrooveThread::randomizeExistingVelocities()
+{
+    shouldRandomizeVelocities = true;
+}
+
+void GrooveThread::randomizeExistingOffsets()
+{
+    shouldRandomizeOffsets = true;
+}
+
+void GrooveThread::randomizeAll()
+{
+    shouldRandomizeAll = true;
+}
 
 
 

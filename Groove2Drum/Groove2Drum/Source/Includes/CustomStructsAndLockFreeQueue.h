@@ -595,7 +595,7 @@ template <int time_steps_, int num_voices_> struct HVO
         offsets_modified = torch::zeros({time_steps, num_voices}, torch::kFloat32);
     }
 
-    void randomize()
+    void randomizeAll()
     {
         auto hits_old = torch::rand({time_steps, num_voices});
         hits = torch::zeros({time_steps, num_voices});
@@ -615,8 +615,30 @@ template <int time_steps_, int num_voices_> struct HVO
 
         velocities_unmodified = velocities_unmodified * hits;
         offsets_unmodified = offsets_unmodified * hits;
-        velocities_modified = velocities_unmodified * hits;
-        offsets_modified = offsets_unmodified * hits;
+        compressAll();
+    }
+
+    void randomizeExistingVelocities()
+    {
+        // convert hits to 0 and 1s by thresholding
+        auto row_indices = torch::arange(0, time_steps);
+        for (int voice_i=0; voice_i < num_voices; voice_i++)
+        {
+            velocities_unmodified = torch::rand({time_steps, num_voices})  * hits;
+        }
+
+        compressAll();
+    }
+
+    void randomizeExistingOffsets()
+    {
+        // convert hits to 0 and 1s by thresholding
+        auto row_indices = torch::arange(0, time_steps);
+        for (int voice_i=0; voice_i < num_voices; voice_i++)
+        {
+            offsets_unmodified = (offsets_unmodified = torch::rand({time_steps, num_voices}) - 0.5)  * hits;
+        }
+        compressAll();
     }
 
     vector<BasicNote> getUnmodifiedNotes(std::array<int, HVO_params::num_voices> voice_to_midi_map = nine_voice_kit_default_midi_numbers)
