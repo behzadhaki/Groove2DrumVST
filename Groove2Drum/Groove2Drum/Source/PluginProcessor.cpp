@@ -25,6 +25,7 @@ MidiFXProcessor::MidiFXProcessor():
     GrooveThreadToModelThreadQue = make_unique<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>>();
     ModelThreadToProcessBlockQue = make_unique<GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>>();
     APVTS2GrooveThread_groove_vel_offset_ranges_Que = make_unique<LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>>();
+    APVTS2GrooveThread_groove_record_overdubToggles_Que = make_unique<LockFreeQueue<std::array<int, 2>, GeneralSettings::gui_io_queue_size>>();
     APVTS2ModelThread_max_num_hits_Que = make_unique<LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>>();
     APVTS2ModelThread_sampling_thresholds_and_temperature_Que = make_unique<LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>>();
     GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue = make_unique<LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>>();
@@ -46,10 +47,12 @@ MidiFXProcessor::MidiFXProcessor():
                                                    GrooveThreadToModelThreadQue.get(),
                                                    GrooveThread2GGroovePianoRollWidgetQue.get(),
                                                    GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue.get(),
-                                                   APVTS2GrooveThread_groove_vel_offset_ranges_Que.get());
+                                                   APVTS2GrooveThread_groove_vel_offset_ranges_Que.get(),
+                                                   APVTS2GrooveThread_groove_record_overdubToggles_Que.get());
 
     apvtsMediatorThread.startThreadUsingProvidedResources(&apvts,
                                                           APVTS2GrooveThread_groove_vel_offset_ranges_Que.get(),
+                                                          APVTS2GrooveThread_groove_record_overdubToggles_Que.get(),
                                                           APVTS2ModelThread_max_num_hits_Que.get(),
                                                           APVTS2ModelThread_sampling_thresholds_and_temperature_Que.get(),
                                                           APVTS2ModelThread_midi_mappings_Que.get());
@@ -113,6 +116,14 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         auto qpm = *Pinfo->getBpm();
         auto start_ = fmod(startPpq, HVO_params::time_steps/4); // start_ should be always between 0 and 8
         playhead_pos = fmod(float(startPpq + HVO_params::_32_note_ppq), float(HVO_params::time_steps/4.0f)) / (HVO_params::time_steps/4.0f);
+
+        auto new_grid = floor(start_/HVO_params::_16_note_ppq);
+        if (new_grid != current_grid)
+        {
+            current_grid = new_grid;
+            grooveThread.clearStep((int) current_grid, startPpq); //FIXME THIS IS A BIT RISKY!! MAY CAUSE LOCKS!
+        }
+
         //juce::MidiMessage msg = juce::MidiMessage::noteOn((int)1, (int)36, (float)100.0);
         if (latestGeneratedData.numberOfGenerations() > 0)
         {
@@ -169,6 +180,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout MidiFXProcessor::createParam
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
     int version_hint = 1;
+    layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("OVERDUB", version_hint), "OVERDUB", 0, 1, 1));
+    layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("RECORD", version_hint), "RECORD", 0, 1, 1));
 
     layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("MIN_VELOCITY", version_hint), "MIN_VELOCITY", -2.0f, 2.0f, 0));
     layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("MAX_VELOCITY", version_hint), "MAX_VELOCITY", -2.0f, 2.0f, 1));

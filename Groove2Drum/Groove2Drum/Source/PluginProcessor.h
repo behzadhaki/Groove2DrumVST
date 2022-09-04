@@ -57,6 +57,7 @@ private:
     unique_ptr<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>> GrooveThreadToModelThreadQue;
     unique_ptr<GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>> ModelThreadToProcessBlockQue;
     unique_ptr<LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>> APVTS2GrooveThread_groove_vel_offset_ranges_Que;
+    unique_ptr<LockFreeQueue<std::array<int, 2>, GeneralSettings::gui_io_queue_size>> APVTS2GrooveThread_groove_record_overdubToggles_Que;
     unique_ptr<LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>> APVTS2ModelThread_max_num_hits_Que;
     unique_ptr<LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>> APVTS2ModelThread_sampling_thresholds_and_temperature_Que;
     unique_ptr<LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>> GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue;
@@ -70,6 +71,7 @@ private:
 
     // holds the previous start ppq to check restartedFlag status
     double startPpq {0};
+    double current_grid {-1};
 
     //  midiBuffer to fill up with generated data
     juce::MidiBuffer tempBuffer;

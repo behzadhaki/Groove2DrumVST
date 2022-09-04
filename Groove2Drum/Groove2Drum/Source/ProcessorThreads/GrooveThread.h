@@ -27,7 +27,8 @@ public:
                                            MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>* GrooveThreadToModelThreadQuePntr,
                                            MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>* GrooveThread2GGroovePianoRollWidgetQuesPntr,
                                            LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>* GroovePianoRollWidget2GrooveThread_manually_drawn_noteQuePntr,
-                                           LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_vel_offset_ranges_QuePntr);
+                                           LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_vel_offset_ranges_QuePntr,
+                                           LockFreeQueue<std::array<int, 2>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_record_overdubToggles_QuePntr);
     // ------------------------------------------------------------------------------------------------------------
     // ---         Step 3 . start run() thread by calling startThread().
     // ---                  !!DO NOT!! Call run() directly. startThread() internally makes a call to run().
@@ -49,6 +50,7 @@ public:
     // ===          Utility Methods and Parameters
     // ============================================================================================================
     void ForceResetGroove();        // reset Groove if requested
+    void clearStep(int grid_ix, float start_ppq);    // clears a time step ONLY IF OVERDUBBING IS OFF!!!
     bool readyToStop; // Used to check if thread is ready to be stopped or externally stopped from a parent thread
     // ============================================================================================================
 
@@ -69,6 +71,7 @@ private:
     LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>* ProcessBlockToGrooveThreadQue;
     LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>* GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue;
     LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_vel_offset_ranges_Que;
+    LockFreeQueue<std::array<int, 2>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_record_overdubToggles_Que;
 
     // ============================================================================================================
 
@@ -86,6 +89,9 @@ private:
     // ------------------------------------------------------------------------------------------------------------
     MonotonicGroove<HVO_params::time_steps> monotonic_groove;
     bool shouldResetGroove {false};
+    int overdubEnabled {1};
+    int recordEnabled {1};
+    int clearStepNumber {0};
     // ============================================================================================================
 
 };

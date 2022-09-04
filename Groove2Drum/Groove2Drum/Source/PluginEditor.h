@@ -30,7 +30,7 @@ private:
     juce::TextButton resetAllButton;
 
     //  GrooveControlSliders
-    unique_ptr<FinalUIWidgets::MonotonicGrooves::GlobalControlSliders> GrooveControlSliders;
+    unique_ptr<FinalUIWidgets::ControlsWidget> GrooveControlSliders;
 
     // playhead position progress bar
     double playhead_pos;

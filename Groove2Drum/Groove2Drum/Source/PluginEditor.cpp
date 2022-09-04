@@ -54,7 +54,7 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     resetAllButton.addListener (this);
 
     // initialize GrooveControlSliders
-    GrooveControlSliders = make_unique<FinalUIWidgets::MonotonicGrooves::GlobalControlSliders> (&MidiFXProcessorPointer_->apvts);
+    GrooveControlSliders = make_unique<FinalUIWidgets::ControlsWidget> (&MidiFXProcessorPointer_->apvts);
     addAndMakeVisible (GrooveControlSliders.get());
 
     // Set window size

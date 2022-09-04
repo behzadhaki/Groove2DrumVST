@@ -37,7 +37,8 @@ void GrooveThread::startThreadUsingProvidedResources(LockFreeQueue<BasicNote, Ge
                                                      MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>* GrooveThreadToModelThreadQuePntr,
                                                      MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>* GrooveThread2GGroovePianoRollWidgetQuesPntr,
                                                      LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>* GroovePianoRollWidget2GrooveThread_manually_drawn_noteQuePntr,
-                                                     LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_vel_offset_ranges_QuePntr)
+                                                     LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_vel_offset_ranges_QuePntr,
+                                                     LockFreeQueue<std::array<int, 2>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_record_overdubToggles_QuePntr)
 {
     // get the pointer to queues and control parameters instantiated
     // in the main processor thread
@@ -46,9 +47,11 @@ void GrooveThread::startThreadUsingProvidedResources(LockFreeQueue<BasicNote, Ge
     GrooveThread2GGroovePianoRollWidgetQue = GrooveThread2GGroovePianoRollWidgetQuesPntr;
     GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue = GroovePianoRollWidget2GrooveThread_manually_drawn_noteQuePntr;
     APVTS2GrooveThread_groove_vel_offset_ranges_Que = APVTS2GrooveThread_groove_vel_offset_ranges_QuePntr;
+    APVTS2GrooveThread_groove_record_overdubToggles_Que = APVTS2GrooveThread_groove_record_overdubToggles_QuePntr;
     startThread();
 
 }
+
 // ------------------------------------------------------------------------------------------------------------
 // ---         Step 3 . start run() thread by calling startThread().
 // ---                  !!DO NOT!! Call run() directly. startThread() internally makes a call to run().
@@ -70,6 +73,8 @@ void GrooveThread::run()
     vel_range = {HVO_params::_min_vel, HVO_params::_max_vel};
     offset_range = {HVO_params::_min_offset, HVO_params::_max_offset};
 
+    int lastClearedStep = -1;
+    float clearStepRequestedAttime = -1;
 
     while (!bExit)
     {
@@ -84,18 +89,47 @@ void GrooveThread::run()
             isNewGrooveAvailable = true;
         }
 
-        if (ProcessBlockToGrooveThreadQue != nullptr)
+/*        // if shouldn't overdub, just clear content as soon as new step is entered
+        if (overdubEnabled == 0 and lastClearedStep!=clearStepNumber)
         {
+            lastClearedStep = clearStepNumber;
+            monotonic_groove.hvo.hits[clearStepNumber] = 0;
+            monotonic_groove.hvo.velocities_unmodified[clearStepNumber] = 0;
+            monotonic_groove.hvo.velocities_modified[clearStepNumber] = 0;
+            monotonic_groove.hvo.hits[clearStepNumber] = 0;
+            monotonic_groove.hvo.offsets_unmodified[clearStepNumber] = 0;
+            monotonic_groove.hvo.offsets_modified[clearStepNumber] = 0;
+            GrooveThread2GGroovePianoRollWidgetQue->push(monotonic_groove);
+            GrooveThreadToModelThreadQue->push(monotonic_groove);
+        }*/
 
+        if (APVTS2GrooveThread_groove_record_overdubToggles_Que!= nullptr)
+        {
+            while (APVTS2GrooveThread_groove_record_overdubToggles_Que->getNumReady() > 0)
+            {
+                auto overdub_record_toggle_state = APVTS2GrooveThread_groove_record_overdubToggles_Que->getLatestOnly();
+                overdubEnabled = overdub_record_toggle_state[0];
+                recordEnabled = overdub_record_toggle_state[1];
+                DBG("OVERDUB " << overdubEnabled << " | RECORD " << recordEnabled);
+            }
+        }
+
+        if (GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue != nullptr)
+        {
             // see if new BasicNotes received from gui by hand drawing dragging a note
-            while (GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue->getNumReady() > 0)
+            while (
+                GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue->getNumReady()
+                > 0)
             {
                 // Step 1. get new note
-                auto handDrawnNote = GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue->pop(); // here cnt result is 3
+                auto handDrawnNote =
+                    GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue
+                        ->pop(); // here cnt result is 3
 
                 {
                     // step 2. add to groove
-                    bool grooveUpdated = monotonic_groove.overdubWithNote(handDrawnNote, true);
+                    bool grooveUpdated =
+                        monotonic_groove.overdubWithNote(handDrawnNote, true);
 
                     // activate sending flag if at least one note added
                     if (grooveUpdated)
@@ -104,25 +138,30 @@ void GrooveThread::run()
                     }
                 }
             }
+        }
 
+        if (ProcessBlockToGrooveThreadQue!= nullptr )
+        {
             // see if new BasicNotes received from main processblock
             BasicNote read_note;
             while (ProcessBlockToGrooveThreadQue->getNumReady() > 0 and not this->threadShouldExit())
             {
-
                 // Step 1. get new note
                 ProcessBlockToGrooveThreadQue->ReadFrom(&read_note, 1); // here cnt result is 3
 
                 // groove should only be updated in playback mode
-                if (read_note.capturedInPlaying)
+                if (read_note.capturedInPlaying )
                 {
-                    // step 2. add to groove
-                    bool grooveUpdated = monotonic_groove.overdubWithNote(read_note);
+                    // step 2. add to groove if record enabled
 
-                    // activate sending flag if at least one note added
-                    if (grooveUpdated)
+                    if (recordEnabled == 1)
                     {
-                        isNewGrooveAvailable = true;
+                        bool grooveUpdated = monotonic_groove.overdubWithNote(read_note);
+                        // activate sending flag if at least one note added
+                        if (grooveUpdated)
+                        {
+                            isNewGrooveAvailable = true;
+                        }
                     }
                 }
             }
@@ -181,6 +220,7 @@ void GrooveThread::run()
 
 }
 
+
 // ============================================================================================================
 // ===          Preparing Thread for Stopping
 // ============================================================================================================
@@ -206,6 +246,32 @@ GrooveThread::~GrooveThread()
 void GrooveThread::ForceResetGroove()
 {
     shouldResetGroove = true;
+}
+
+// clears a time step ONLY IF OVERDUBBING IS OFF!!!
+void GrooveThread::clearStep(int grid_ix, float start_ppq)
+{
+    if (overdubEnabled == 0)
+    {
+        if (!GrooveThread2GGroovePianoRollWidgetQue->isWritingInProgress()
+            and !GrooveThreadToModelThreadQue->isWritingInProgress())
+        {
+            if (abs(monotonic_groove.registeration_times[grid_ix].item().toFloat()
+                    - start_ppq)
+                > HVO_params::_16_note_ppq)
+            {
+                monotonic_groove.hvo.hits[grid_ix] = 0;
+                monotonic_groove.hvo.velocities_unmodified[grid_ix] = 0;
+                monotonic_groove.hvo.velocities_modified[grid_ix] = 0;
+                monotonic_groove.hvo.hits[grid_ix] = 0;
+                monotonic_groove.hvo.offsets_unmodified[grid_ix] = 0;
+                monotonic_groove.hvo.offsets_modified[grid_ix] = 0;
+                GrooveThread2GGroovePianoRollWidgetQue->push(monotonic_groove);
+                GrooveThreadToModelThreadQue->push(monotonic_groove);
+            }
+        }
+
+    }
 }
 
 
