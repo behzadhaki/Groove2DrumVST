@@ -121,8 +121,10 @@ namespace SingleStepPianoRollBlock
                     if (!ev.mods.isShiftDown())
                     {
                         offset = actualXToOffset(ev.position.getX());
+                        offset = fmax(fmin(offset, float(HVO_params::_max_offset)), float(HVO_params::_min_offset));
                     }
-                    velocity = 1 - ev.position.getY() / (float) getHeight();
+                    velocity = 1.0f - float(ev.position.getY()) / (float) getHeight();
+                    velocity = fmax(fmin(velocity, float(HVO_params::_max_vel)), float(HVO_params::_min_vel));
                 }
                 repaint();
             }

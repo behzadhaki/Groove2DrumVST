@@ -710,7 +710,7 @@ template <int time_steps_, int num_voices_> struct HVO
                 velocities_unmodified[i][voice_idx] * (max_val - min_val)
                 + min_val;
         }
-
+        velocities_modified = velocities_modified.clip(HVO_params::_min_vel, HVO_params::_max_vel);
         velocities_modified = velocities_modified * hits;
     }
 
@@ -725,6 +725,7 @@ template <int time_steps_, int num_voices_> struct HVO
                     (offsets_unmodified[i][voice_idx]+HVO_params::_max_offset)
                 +min_val;
         }
+        offsets_modified = offsets_modified.clip(HVO_params::_min_offset, HVO_params::_max_offset);
 
         offsets_modified = offsets_modified * hits;
 
@@ -756,7 +757,6 @@ template <int time_steps_, int num_voices_> struct HVO
         {
             for (int i=0; i<num_voices; i++)
             {
-                compressVelocities(i, vel_range[0], vel_range[1]);
                 compressOffsets(i, offset_range[0], offset_range[1]);
             }
         }
