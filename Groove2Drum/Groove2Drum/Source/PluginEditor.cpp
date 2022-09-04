@@ -43,25 +43,10 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     addAndMakeVisible(PlayheadProgressBar);
 
     // add buttons
-    addAndMakeVisible (resetGrooveButton);
-    resetGrooveButton.setButtonText ("Reset Groove");
-    resetGrooveButton.addListener (this);
-    addAndMakeVisible (resetSamplingParametersButton);
-    resetSamplingParametersButton.setButtonText ("Reset Sampling Parameters");
-    resetSamplingParametersButton.addListener (this);
-    addAndMakeVisible (resetAllButton);
-    resetAllButton.setButtonText ("Reset All");
-    resetAllButton.addListener (this);
+    ButtonsWidget = make_unique<FinalUIWidgets::ButtonsWidget>();
+    addAndMakeVisible (ButtonsWidget.get());
+    ButtonsWidget->addListener(this);
 
-    addAndMakeVisible (randomVelButton);
-    randomVelButton.setButtonText ("Randomize Velocity");
-    randomVelButton.addListener (this);
-    addAndMakeVisible (randomOffsetButton);
-    randomOffsetButton.setButtonText ("Randomize Offset");
-    randomOffsetButton.addListener (this);
-    addAndMakeVisible (randomAllButton);
-    randomAllButton.setButtonText ("Random Groove");
-    randomAllButton.addListener (this);
 
     // initialize GrooveControlSliders
     GrooveControlSliders = make_unique<FinalUIWidgets::ControlsWidget> (&MidiFXProcessorPointer_->apvts);
@@ -77,9 +62,7 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
 
 MidiFXProcessorEditor::~MidiFXProcessorEditor()
 {
-    resetGrooveButton.removeListener(this);
-    resetSamplingParametersButton.removeListener(this);
-    resetAllButton.removeListener(this);
+    ButtonsWidget->removeListener(this);
 }
 
 void MidiFXProcessorEditor::resized()
@@ -100,39 +83,12 @@ void MidiFXProcessorEditor::resized()
     area.removeFromLeft(area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width));
     PlayheadProgressBar.setBounds(area.removeFromLeft(DrumsPianoRollWidget->PianoRolls[0]->getPianoRollSectionWidth()));
 
-    // GrooveControlSliders
+    // put buttons and GrooveControlSliders
     area = getLocalBounds();
     area.removeFromLeft(area.proportionOfWidth(1.0f - gui_settings::PianoRolls::space_reserved_right_side_of_gui_ratio_of_width));
-    area.removeFromTop(area.proportionOfHeight(0.9));
-    GrooveControlSliders->setBounds(area);
+    ButtonsWidget->setBounds(area.removeFromTop(area.proportionOfHeight(0.3)));
+    GrooveControlSliders->setBounds(area.removeFromBottom(area.proportionOfHeight(0.3)));
 
-    // put buttons
-    area = getLocalBounds();
-    area.removeFromLeft(area.proportionOfWidth(1.0f - gui_settings::PianoRolls::space_reserved_right_side_of_gui_ratio_of_width));
-    area.removeFromBottom(area.proportionOfHeight(0.1));
-    area.removeFromTop(area.proportionOfHeight(0.9));
-    auto gap_w = area.proportionOfWidth(.05f);
-    auto button_w = area.proportionOfWidth(.2f);
-    area.removeFromLeft(gap_w);
-    resetGrooveButton.setBounds(area.removeFromLeft(button_w));
-    area.removeFromLeft(gap_w);
-    resetSamplingParametersButton.setBounds(area.removeFromLeft(button_w));
-    area.removeFromLeft(gap_w);
-    resetAllButton.setBounds(area.removeFromLeft(button_w));
-
-    // put buttons
-    area = getLocalBounds();
-    area.removeFromLeft(area.proportionOfWidth(1.0f - gui_settings::PianoRolls::space_reserved_right_side_of_gui_ratio_of_width));
-    area.removeFromBottom(area.proportionOfHeight(0.1));
-    area.removeFromTop(area.proportionOfHeight(0.6));
-    gap_w = area.proportionOfWidth(.05f);
-    button_w = area.proportionOfWidth(.2f);
-    area.removeFromLeft(gap_w);
-    randomVelButton.setBounds(area.removeFromLeft(button_w));
-    area.removeFromLeft(gap_w);
-    randomOffsetButton.setBounds(area.removeFromLeft(button_w));
-    area.removeFromLeft(gap_w);
-    randomAllButton.setBounds(area.removeFromLeft(button_w));
 }
 
 void MidiFXProcessorEditor::paint(juce::Graphics& g)
@@ -173,11 +129,11 @@ void MidiFXProcessorEditor::timerCallback()
 
 void MidiFXProcessorEditor::buttonClicked (juce::Button* button)  // [2]
 {
-    if (button == &resetGrooveButton or button == &resetAllButton)
+    if (button == &ButtonsWidget->resetGrooveButton or button == &ButtonsWidget->resetAllButton)
     {
         MidiFXProcessorPointer_->grooveThread.ForceResetGroove();
     }
-    if (button == &resetSamplingParametersButton  or button == &resetAllButton)
+    if (button == &ButtonsWidget->resetSamplingParametersButton  or button == &ButtonsWidget->resetAllButton)
     {
         // reset parameters to default
         for(const string &ParamID : {"MIN_VELOCITY", "MAX_VELOCITY", "MIN_OFFSET", "MAX_OFFSET"})
@@ -198,17 +154,17 @@ void MidiFXProcessorEditor::buttonClicked (juce::Button* button)  // [2]
         }
     }
 
-    if (button == & randomVelButton)
+    if (button == &ButtonsWidget->randomVelButton)
     {
         MidiFXProcessorPointer_->grooveThread.randomizeExistingVelocities();
     }
 
-    if (button == & randomOffsetButton)
+    if (button == &ButtonsWidget->randomOffsetButton)
     {
         MidiFXProcessorPointer_->grooveThread.randomizeExistingOffsets();
     }
 
-    if (button == & randomAllButton)
+    if (button == &ButtonsWidget->randomAllButton)
     {
         MidiFXProcessorPointer_->grooveThread.randomizeAll();
     }

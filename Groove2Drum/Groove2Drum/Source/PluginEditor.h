@@ -23,17 +23,11 @@ private:
     unique_ptr<FinalUIWidgets::GeneratedDrums::GeneratedDrumsWidget> DrumsPianoRollWidget;
     unique_ptr<FinalUIWidgets::MonotonicGrooves::MonotonicGrooveWidget> MonotonicGroovePianoRollsWidget;
 
-    // buttons for reseting groove or xyslider params
-    juce::TextButton resetGrooveButton;
-    juce::TextButton resetSamplingParametersButton;
-    juce::TextButton resetAllButton;
-    // buttons for randomizing groove
-    juce::TextButton randomVelButton;
-    juce::TextButton randomOffsetButton;
-    juce::TextButton randomAllButton;
-
     //  GrooveControlSliders
     unique_ptr<FinalUIWidgets::ControlsWidget> GrooveControlSliders;
+
+    // buttons
+    unique_ptr<FinalUIWidgets::ButtonsWidget> ButtonsWidget;
 
     // playhead position progress bar
     double playhead_pos;

@@ -882,10 +882,80 @@ namespace FinalUIWidgets {
 
     };
 
-    namespace ResetButtons
+    class ButtonsWidget: public juce::Component
     {
+    public:
+        ButtonsWidget()
+        {
+            addAndMakeVisible (resetGrooveButton);
+            resetGrooveButton.setButtonText ("Reset Groove");
+            addAndMakeVisible (resetSamplingParametersButton);
+            resetSamplingParametersButton.setButtonText ("Reset Sampling Parameters");
+            addAndMakeVisible (resetAllButton);
+            resetAllButton.setButtonText ("Reset All");
 
-    }
+            addAndMakeVisible (randomVelButton);
+            randomVelButton.setButtonText ("Randomize Velocity");
+            addAndMakeVisible (randomOffsetButton);
+            randomOffsetButton.setButtonText ("Randomize Offset");
+            addAndMakeVisible (randomAllButton);
+            randomAllButton.setButtonText ("Random Groove");
+        }
+
+        void addListener(juce::Button::Listener* buttonListenerComponent)
+        {
+            resetGrooveButton.addListener (buttonListenerComponent);
+            resetSamplingParametersButton.addListener (buttonListenerComponent);
+            resetAllButton.addListener (buttonListenerComponent);
+            randomVelButton.addListener (buttonListenerComponent);
+            randomOffsetButton.addListener (buttonListenerComponent);
+            randomAllButton.addListener (buttonListenerComponent);
+        }
+
+        void removeListener(juce::Button::Listener* buttonListenerComponent)
+        {
+            resetGrooveButton.removeListener (buttonListenerComponent);
+            resetSamplingParametersButton.removeListener (buttonListenerComponent);
+            resetAllButton.removeListener (buttonListenerComponent);
+            randomVelButton.removeListener (buttonListenerComponent);
+            randomOffsetButton.removeListener (buttonListenerComponent);
+            randomAllButton.removeListener (buttonListenerComponent);
+        }
+        void resized() override
+        {
+            auto area = getLocalBounds();
+            area.removeFromLeft(proportionOfWidth(0.15f));
+            area.removeFromRight(proportionOfWidth(0.15f));
+            area.removeFromTop(proportionOfHeight(0.1f));
+            area.removeFromBottom(proportionOfHeight(0.1f));
+
+            auto gap_h = area.proportionOfHeight(0.1f);
+            auto button_h = area.proportionOfHeight(0.15f);
+
+            // layout buttom up
+            resetAllButton.setBounds(area.removeFromBottom(button_h));
+            resetSamplingParametersButton.setBounds(area.removeFromBottom(button_h));
+            resetGrooveButton.setBounds(area.removeFromBottom(button_h));
+
+            area.removeFromBottom(gap_h);
+
+            randomAllButton.setBounds(area.removeFromBottom(button_h));
+            randomOffsetButton.setBounds(area.removeFromBottom(button_h));
+            randomVelButton.setBounds(area.removeFromBottom(button_h));
+
+        }
+
+        // buttons for reseting groove or xyslider params
+        juce::TextButton resetGrooveButton;
+        juce::TextButton resetSamplingParametersButton;
+        juce::TextButton resetAllButton;
+
+        // buttons for randomizing groove
+        juce::TextButton randomVelButton;
+        juce::TextButton randomOffsetButton;
+        juce::TextButton randomAllButton;
+    };
+
 }
 
 
