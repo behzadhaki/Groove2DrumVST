@@ -73,8 +73,8 @@ void GrooveThread::run()
     vel_range = {HVO_params::_min_vel, HVO_params::_max_vel};
     offset_range = {HVO_params::_min_offset, HVO_params::_max_offset};
 
-    int lastClearedStep = -1;
-    float clearStepRequestedAttime = -1;
+    int lastClearedStepNumber = -1;
+    float lastClearedRequestedAtPositionPpq = -1;
 
     while (!bExit)
     {
@@ -89,19 +89,31 @@ void GrooveThread::run()
             isNewGrooveAvailable = true;
         }
 
-/*        // if shouldn't overdub, just clear content as soon as new step is entered
-        if (overdubEnabled == 0 and lastClearedStep!=clearStepNumber)
+        // see if overdubbing is off, then if so, clear the timestep
+        // info for clearing (i.e. new time step and when it was requested comes from process block)
+        // see GrooveThread::clearStep(int grid_ix, float start_ppq)
+        if (overdubEnabled == 0 and lastClearedStepNumber!=clearStepNumber and lastClearedRequestedAtPositionPpq!=clearRequestedAtPositionPpq)
         {
-            lastClearedStep = clearStepNumber;
-            monotonic_groove.hvo.hits[clearStepNumber] = 0;
-            monotonic_groove.hvo.velocities_unmodified[clearStepNumber] = 0;
-            monotonic_groove.hvo.velocities_modified[clearStepNumber] = 0;
-            monotonic_groove.hvo.hits[clearStepNumber] = 0;
-            monotonic_groove.hvo.offsets_unmodified[clearStepNumber] = 0;
-            monotonic_groove.hvo.offsets_modified[clearStepNumber] = 0;
-            GrooveThread2GGroovePianoRollWidgetQue->push(monotonic_groove);
-            GrooveThreadToModelThreadQue->push(monotonic_groove);
-        }*/
+            if (GrooveThread2GGroovePianoRollWidgetQue!=nullptr
+                and GrooveThreadToModelThreadQue!= nullptr)
+            {
+                if (abs(monotonic_groove.registeration_times[clearStepNumber].item().toFloat()
+                        - clearRequestedAtPositionPpq)
+                    > HVO_params::_16_note_ppq)
+                {
+                    monotonic_groove.hvo.hits[clearStepNumber] = 0;
+                    monotonic_groove.hvo.velocities_unmodified[clearStepNumber] = 0;
+                    monotonic_groove.hvo.velocities_modified[clearStepNumber] = 0;
+                    monotonic_groove.hvo.hits[clearStepNumber] = 0;
+                    monotonic_groove.hvo.offsets_unmodified[clearStepNumber] = 0;
+                    monotonic_groove.hvo.offsets_modified[clearStepNumber] = 0;
+                    GrooveThread2GGroovePianoRollWidgetQue->push(monotonic_groove);
+                    GrooveThreadToModelThreadQue->push(monotonic_groove);
+                }
+                lastClearedStepNumber=clearStepNumber;
+                lastClearedRequestedAtPositionPpq=clearRequestedAtPositionPpq;
+            }
+        }
 
         if (APVTS2GrooveThread_groove_record_overdubToggles_Que!= nullptr)
         {
@@ -251,27 +263,8 @@ void GrooveThread::ForceResetGroove()
 // clears a time step ONLY IF OVERDUBBING IS OFF!!!
 void GrooveThread::clearStep(int grid_ix, float start_ppq)
 {
-    if (overdubEnabled == 0)
-    {
-        if (!GrooveThread2GGroovePianoRollWidgetQue->isWritingInProgress()
-            and !GrooveThreadToModelThreadQue->isWritingInProgress())
-        {
-            if (abs(monotonic_groove.registeration_times[grid_ix].item().toFloat()
-                    - start_ppq)
-                > HVO_params::_16_note_ppq)
-            {
-                monotonic_groove.hvo.hits[grid_ix] = 0;
-                monotonic_groove.hvo.velocities_unmodified[grid_ix] = 0;
-                monotonic_groove.hvo.velocities_modified[grid_ix] = 0;
-                monotonic_groove.hvo.hits[grid_ix] = 0;
-                monotonic_groove.hvo.offsets_unmodified[grid_ix] = 0;
-                monotonic_groove.hvo.offsets_modified[grid_ix] = 0;
-                GrooveThread2GGroovePianoRollWidgetQue->push(monotonic_groove);
-                GrooveThreadToModelThreadQue->push(monotonic_groove);
-            }
-        }
-
-    }
+    clearRequestedAtPositionPpq = start_ppq;
+    clearStepNumber = grid_ix;
 }
 
 

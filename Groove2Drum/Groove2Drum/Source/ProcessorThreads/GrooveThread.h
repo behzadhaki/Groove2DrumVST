@@ -91,7 +91,9 @@ private:
     bool shouldResetGroove {false};
     int overdubEnabled {1};
     int recordEnabled {1};
+    // parameters for clearing a step in case overdubbing is off
     int clearStepNumber {0};
+    float clearRequestedAtPositionPpq {0};
     // ============================================================================================================
 
 };
