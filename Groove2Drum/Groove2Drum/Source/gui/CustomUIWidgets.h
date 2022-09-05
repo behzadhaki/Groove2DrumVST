@@ -8,7 +8,7 @@
 #include "../InterThreadFifos.h"
 
 
-// ============================================================================================================
+// ------------------------------------------------------------------------------------------------------------
 // ==========              Building Blocks of each of the time steps in the pianorolls            =============
 // ========== https://forum.juce.com/t/how-to-draw-a-vertical-and-horizontal-line-of-the-mouse-position/31115/2
 // ==========
@@ -885,21 +885,28 @@ namespace FinalUIWidgets {
     class ButtonsWidget: public juce::Component
     {
     public:
-        ButtonsWidget()
+        ButtonsWidget(juce::AudioProcessorValueTreeState* apvtsPntr)
         {
             addAndMakeVisible (resetGrooveButton);
             resetGrooveButton.setButtonText ("Reset Groove");
+            resetGrooveButtonAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (*apvtsPntr, "RESET_GROOVE", resetGrooveButton);
             addAndMakeVisible (resetSamplingParametersButton);
             resetSamplingParametersButton.setButtonText ("Reset Sampling Parameters");
+            resetSamplingParametersButtonAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (*apvtsPntr, "RESET_SAMPLINGPARAMS", resetSamplingParametersButton);
             addAndMakeVisible (resetAllButton);
             resetAllButton.setButtonText ("Reset All");
+            resetAllButtonAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (*apvtsPntr, "RESET_ALL", resetAllButton);
 
             addAndMakeVisible (randomVelButton);
             randomVelButton.setButtonText ("Randomize Velocity");
+            randomVelButtonAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (*apvtsPntr, "RANDOMIZE_VEL", randomVelButton);
             addAndMakeVisible (randomOffsetButton);
             randomOffsetButton.setButtonText ("Randomize Offset");
+            randomOffsetButtonAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (*apvtsPntr, "RANDOMIZE_OFFSET", randomOffsetButton);
+
             addAndMakeVisible (randomAllButton);
             randomAllButton.setButtonText ("Random Groove");
+            randomAllButtonAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (*apvtsPntr, "RANDOMIZE_ALL", randomAllButton);
         }
 
         void addListener(juce::Button::Listener* buttonListenerComponent)
@@ -947,13 +954,20 @@ namespace FinalUIWidgets {
 
         // buttons for reseting groove or xyslider params
         juce::TextButton resetGrooveButton;
+        unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> resetGrooveButtonAPVTSAttacher;
         juce::TextButton resetSamplingParametersButton;
+        unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> resetSamplingParametersButtonAPVTSAttacher;
         juce::TextButton resetAllButton;
+        unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> resetAllButtonAPVTSAttacher;
 
         // buttons for randomizing groove
         juce::TextButton randomVelButton;
+        unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> randomVelButtonAPVTSAttacher;
         juce::TextButton randomOffsetButton;
+        unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> randomOffsetButtonAPVTSAttacher;
         juce::TextButton randomAllButton;
+        unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> randomAllButtonAPVTSAttacher;
+
     };
 
 }

@@ -183,6 +183,14 @@ juce::AudioProcessorValueTreeState::ParameterLayout MidiFXProcessor::createParam
     layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("OVERDUB", version_hint), "OVERDUB", 0, 1, 1));
     layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("RECORD", version_hint), "RECORD", 0, 1, 1));
 
+    layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("RESET_GROOVE", version_hint), "RESET_GROOVE", 0, 1, 0));
+    layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("RESET_SAMPLINGPARAMS", version_hint), "RESET_SAMPLINGPARAMS", 0, 1, 0));
+    layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("RESET_ALL", version_hint), "RESET_ALL", 0, 1, 0));
+
+    layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("RANDOMIZE_VEL", version_hint), "RANDOMIZE_VEL", 0, 1, 0));
+    layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("RANDOMIZE_OFFSET", version_hint), "RANDOMIZE_OFFSET", 0, 1, 0));
+    layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("RANDOMIZE_ALL", version_hint), "RANDOMIZE_ALL", 0, 1, 0));
+
     layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("MIN_VELOCITY", version_hint), "MIN_VELOCITY", -2.0f, 2.0f, 0));
     layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("MAX_VELOCITY", version_hint), "MAX_VELOCITY", -2.0f, 2.0f, 1));
     layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("MIN_OFFSET", version_hint), "MIN_OFFSET", -0.49f, 0.49f, -.49f));

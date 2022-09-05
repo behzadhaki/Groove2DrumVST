@@ -43,7 +43,7 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     addAndMakeVisible(PlayheadProgressBar);
 
     // add buttons
-    ButtonsWidget = make_unique<FinalUIWidgets::ButtonsWidget>();
+    ButtonsWidget = make_unique<FinalUIWidgets::ButtonsWidget>(&MidiFXProcessorPointer_->apvts);
     addAndMakeVisible (ButtonsWidget.get());
     ButtonsWidget->addListener(this);
 
