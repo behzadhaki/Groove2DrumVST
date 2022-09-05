@@ -56,7 +56,6 @@ MidiFXProcessor::MidiFXProcessor():
                                                           APVTS2ModelThread_max_num_hits_Que.get(),
                                                           APVTS2ModelThread_sampling_thresholds_and_temperature_Que.get(),
                                                           APVTS2ModelThread_midi_mappings_Que.get());
-
 }
 
 MidiFXProcessor::~MidiFXProcessor(){
@@ -226,6 +225,7 @@ void MidiFXProcessor::getStateInformation (juce::MemoryBlock& destData)
     std::unique_ptr<juce::XmlElement> xml (state.createXml());
     copyXmlToBinary (*xml, destData);
 }
+
 void MidiFXProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     std::unique_ptr<juce::XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
@@ -234,3 +234,4 @@ void MidiFXProcessor::setStateInformation (const void* data, int sizeInBytes)
         if (xmlState->hasTagName (apvts.state.getType()))
             apvts.replaceState (juce::ValueTree::fromXml (*xmlState));
 }
+
