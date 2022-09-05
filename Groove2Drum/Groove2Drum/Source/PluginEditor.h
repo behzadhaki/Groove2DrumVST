@@ -6,7 +6,7 @@
 using namespace std;
 
 class MidiFXProcessorEditor : public juce::AudioProcessorEditor, public juce::Timer,
-                              public juce::Button::Listener
+                              public juce::Button::Listener, public juce::ComboBox::Listener
 {
 public:
     explicit MidiFXProcessorEditor(MidiFXProcessor&) ;
@@ -15,6 +15,7 @@ public:
     void resized() override;
     void timerCallback() override;
     void buttonClicked (juce::Button* button) override;
+    void comboBoxChanged(juce::ComboBox* comboBox) override;
 
 private:
     MidiFXProcessor* MidiFXProcessorPointer_;
@@ -28,6 +29,9 @@ private:
 
     // buttons
     unique_ptr<FinalUIWidgets::ButtonsWidget> ButtonsWidget;
+
+    // model selector
+    unique_ptr<FinalUIWidgets::ModelSelectorWidget> ModelSelectorWidget;
 
     // playhead position progress bar
     double playhead_pos;

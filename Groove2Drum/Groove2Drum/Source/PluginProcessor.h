@@ -13,6 +13,17 @@
 
 using namespace std;
 
+inline juce::StringArray get_pt_files_in_default_path()
+{
+    juce::StringArray paths;
+    paths.clear();
+    for (const auto& filenameThatWasFound : juce::File (GeneralSettings::default_model_folder).findChildFiles (2, true, "*.pt"))
+    {
+        paths.add (filenameThatWasFound.getFileNameWithoutExtension());
+    }
+    paths.sort(false);
+    return paths;
+}
 
 class MidiFXProcessor : public PluginHelpers::ProcessorBase
 {
@@ -51,6 +62,9 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    // model paths
+    juce::StringArray model_paths{get_pt_files_in_default_path()};
+
 private:
     // =========  Queues for communicating Between the main threads in processor  =============================================
     unique_ptr<LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>> ProcessBlockToGrooveThreadQue;
@@ -78,6 +92,8 @@ private:
 
     // Parameter Layout for apvts
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+
+
 
 
 };

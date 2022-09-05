@@ -46,6 +46,8 @@ namespace GeneralSettings
     // char constexpr* default_model_path {(char*)"/Users/behzadhaki/Github/Groove2DrumVST/Groove2Drum/Groove2Drum/Source/model/misunderstood_bush_246-epoch_26_tst.pt"};
     // FIXME add to readme.me for setup ==> model should be placed in root (/Library/Groove2Drum/trained_models) folder
     char constexpr* default_model_path {(char*)"/Library/Groove2Drum/trained_models/model_1.pt"};
+    char constexpr* default_model_folder {(char*)"/Library/Groove2Drum/trained_models"};
+
 }
 
 // ======================================================================================

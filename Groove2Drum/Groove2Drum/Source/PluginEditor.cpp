@@ -47,10 +47,15 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     addAndMakeVisible (ButtonsWidget.get());
     ButtonsWidget->addListener(this);
 
-
     // initialize GrooveControlSliders
     GrooveControlSliders = make_unique<FinalUIWidgets::ControlsWidget> (&MidiFXProcessorPointer_->apvts);
     addAndMakeVisible (GrooveControlSliders.get());
+
+    // model selector
+    ModelSelectorWidget = make_unique<FinalUIWidgets::ModelSelectorWidget> (MidiFXProcessorPointer_->model_paths);
+    addAndMakeVisible (ModelSelectorWidget.get());
+    ModelSelectorWidget->addListener(this);
+
 
     // Set window size
     setResizable (true, true);
@@ -63,6 +68,7 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
 MidiFXProcessorEditor::~MidiFXProcessorEditor()
 {
     ButtonsWidget->removeListener(this);
+    ModelSelectorWidget->removeListener(this);
 }
 
 void MidiFXProcessorEditor::resized()
@@ -87,7 +93,8 @@ void MidiFXProcessorEditor::resized()
     area = getLocalBounds();
     area.removeFromLeft(area.proportionOfWidth(1.0f - gui_settings::PianoRolls::space_reserved_right_side_of_gui_ratio_of_width));
     ButtonsWidget->setBounds(area.removeFromTop(area.proportionOfHeight(0.3)));
-    GrooveControlSliders->setBounds(area.removeFromBottom(area.proportionOfHeight(0.3)));
+    ModelSelectorWidget->setBounds(area.removeFromTop(area.proportionOfHeight(0.1)));
+    GrooveControlSliders->setBounds(area.removeFromBottom(area.proportionOfHeight(0.4)));
 
 }
 
@@ -169,4 +176,14 @@ void MidiFXProcessorEditor::buttonClicked (juce::Button* button)  // [2]
         MidiFXProcessorPointer_->grooveThread.randomizeAll();
     }
 
+}
+
+void MidiFXProcessorEditor::comboBoxChanged(juce::ComboBox* comboBox)
+{
+    if (comboBox == &ModelSelectorWidget->ModelComboBox)
+    {
+        auto selection = ModelSelectorWidget->ModelComboBox.getSelectedId();
+        auto new_model_path = (string)GeneralSettings::default_model_folder + "/" + MidiFXProcessorPointer_->model_paths[selection-1].toStdString() + ".pt";
+        MidiFXProcessorPointer_->modelThread.UpdateModelPath(new_model_path);
+    }
 }

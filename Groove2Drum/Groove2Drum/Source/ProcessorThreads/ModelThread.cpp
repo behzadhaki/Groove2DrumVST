@@ -81,7 +81,7 @@ void ModelThread::run()
     bool shouldResample;
     bool newGrooveAvailable;
     bool newTemperatureAvailable;
-
+    string currentModelPath = modelAPI.model_path;
 
     while (!bExit)
     {
@@ -90,6 +90,16 @@ void ModelThread::run()
         newGrooveAvailable = false;
         newTemperatureAvailable = false;
 
+        // see if new model path is requested to load another model
+        if (currentModelPath != new_model_path)
+        {
+            modelAPI.changeModel(new_model_path);
+            currentModelPath = new_model_path;
+            newGrooveAvailable = true;
+            shouldResample = true;
+        }
+
+        // see if thresholds or max counts per voice have change
         if (APVTS2ModelThread_max_num_hits_Que != nullptr)
         {
             if (APVTS2ModelThread_max_num_hits_Que->getNumReady()>0)
@@ -204,4 +214,16 @@ ModelThread::~ModelThread()
         prepareToStop();
     }
 }
+// ============================================================================================================
+
+
+
+// ============================================================================================================
+// ===          Utility Methods
+// ============================================================================================================
+void ModelThread::UpdateModelPath(std::string new_model_path_)
+{
+    new_model_path = new_model_path_;
+}
+
 // ============================================================================================================

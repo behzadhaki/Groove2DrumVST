@@ -85,6 +85,26 @@ bool MonotonicGrooveTransformerV1::loadModel(std::string model_path_, int time_s
 
 }
 
+bool MonotonicGrooveTransformerV1::changeModel(std::string model_path_)
+{
+    ifstream myFile;
+    myFile.open(model_path_);
+    // Check for errors
+
+    // check if path works fine
+    if (myFile.fail())
+    {
+        return false;
+    }
+    else
+    {
+        myFile.close();
+        model = LoadModel(model_path_, true);
+        model_path_ = model_path;
+        return true;
+    }
+}
+
 // getters
 torch::Tensor MonotonicGrooveTransformerV1::get_hits_logits() { return hits_logits; }
 torch::Tensor MonotonicGrooveTransformerV1::get_hits_probabilities() { return hits_probabilities; }

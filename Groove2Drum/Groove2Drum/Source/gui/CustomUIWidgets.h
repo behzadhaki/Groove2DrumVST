@@ -970,6 +970,59 @@ namespace FinalUIWidgets {
 
     };
 
+    class ModelSelectorWidget: public juce::Component
+    {
+    public:
+
+        MidiFXProcessor* MidiFXProcessorPntr;
+
+        juce::StringArray model_paths;
+        // Model selector
+        int num_choices {0};
+        juce::Label textLabel { {}, "Select Model:" };
+        juce::ComboBox ModelComboBox;
+
+
+        ModelSelectorWidget(juce::StringArray model_paths_)
+        {
+            addAndMakeVisible(ModelComboBox);
+
+            model_paths = model_paths_;
+
+            for (auto model_path: model_paths)
+            {
+                num_choices++;
+                ModelComboBox.addItem((string)GeneralSettings::default_model_folder + "/" + model_path.toStdString() + ".pt", num_choices);
+            }
+
+            ModelComboBox.setSelectedId (1);
+
+        }
+
+        void resized() override
+        {
+            auto area = getLocalBounds();
+            area.removeFromLeft(proportionOfWidth(0.15f));
+            area.removeFromRight(proportionOfWidth(0.15f));
+            textLabel.setBounds(area.removeFromTop(proportionOfHeight(0.5f)));
+            ModelComboBox.setBounds(area);
+        }
+
+
+        void addListener(juce::ComboBox::Listener* ComboBoxListener)
+        {
+            ModelComboBox.addListener(ComboBoxListener);
+        }
+
+        void removeListener(juce::ComboBox::Listener* ComboBoxListener)
+        {
+            ModelComboBox.removeListener(ComboBoxListener);
+        }
+
+
+
+
+    };
 }
 
 

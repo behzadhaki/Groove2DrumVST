@@ -5,9 +5,18 @@
 using namespace std;
 
 
+
 MidiFXProcessor::MidiFXProcessor():
     apvts(*this, nullptr, "PARAMETERS", createParameterLayout())
 {
+    //////////////////////////////////////////////////////////////////
+    //// Find Models
+    //////////////////////////////////////////////////////////////////
+    for (auto model_path: model_paths)
+    {
+        DBG(model_path);
+        DBG(model_paths.size());
+    }
 
     //////////////////////////////////////////////////////////////////
     //// Make_unique pointers for Queues

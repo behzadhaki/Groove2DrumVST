@@ -23,6 +23,8 @@ public:
     // loads a model
     bool loadModel(std::string model_path, int time_steps_, int num_voices_);
 
+    // change a model
+    bool changeModel(std::string model_path);
 
     // getters
     torch::Tensor get_hits_logits();
