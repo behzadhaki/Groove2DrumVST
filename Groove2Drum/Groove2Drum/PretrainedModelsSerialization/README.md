@@ -35,3 +35,13 @@ Go to CMC folder, and activate environment
 Finally, run the python script
     
     SerializeModels.py
+
+
+Create a directory (at root not user -- don't use ~/Li...)
+
+    /Library/Groove2Drum/trained_models
+
+Move all .pt files from /serialized folder to /trained_models folder just created
+
+    copy from /serialized   -->  /Library/Groove2Drum/trained_models
+ 
