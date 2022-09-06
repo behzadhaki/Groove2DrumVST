@@ -21,11 +21,12 @@ private:
     MidiFXProcessor* MidiFXProcessorPointer_;
 
     // gui widgets
-    unique_ptr<FinalUIWidgets::GeneratedDrums::GeneratedDrumsWidget> DrumsPianoRollWidget;
-    unique_ptr<FinalUIWidgets::MonotonicGrooves::MonotonicGrooveWidget> MonotonicGroovePianoRollsWidget;
+    unique_ptr<FinalUIWidgets::GeneratedDrums::GeneratedDrumsWidget> GeneratedDrumsWidget;
+    unique_ptr<FinalUIWidgets::MonotonicGrooves::MonotonicGrooveWidget>
+        MonotonicGrooveWidget;
 
     //  GrooveControlSliders
-    unique_ptr<FinalUIWidgets::ControlsWidget> GrooveControlSliders;
+    unique_ptr<FinalUIWidgets::ControlsWidget> ControlsWidget;
 
     // buttons
     unique_ptr<FinalUIWidgets::ButtonsWidget> ButtonsWidget;
@@ -39,10 +40,6 @@ private:
 
     // vel offset ranges
     array<float, 4> VelOffRanges {HVO_params::_min_vel, HVO_params::_max_vel, HVO_params::_min_offset, HVO_params::_max_offset};
-
-
-
-
 
 };
 

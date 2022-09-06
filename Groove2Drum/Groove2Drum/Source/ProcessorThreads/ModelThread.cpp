@@ -90,7 +90,7 @@ void ModelThread::run()
         newGrooveAvailable = false;
         newTemperatureAvailable = false;
 
-        // see if new model path is requested to load another model
+        // 1. see if new model path is requested to load another model
         if (currentModelPath != new_model_path)
         {
             modelAPI.changeModel(new_model_path);
@@ -99,7 +99,7 @@ void ModelThread::run()
             shouldResample = true;
         }
 
-        // see if thresholds or max counts per voice have change
+        // 2. see if thresholds or max counts per voice have change
         if (APVTS2ModelThread_max_num_hits_Que != nullptr)
         {
             if (APVTS2ModelThread_max_num_hits_Que->getNumReady()>0)
@@ -123,6 +123,7 @@ void ModelThread::run()
             }
         }
 
+        // 3. get new drum mappings if any
         if (APVTS2ModelThread_midi_mappings_Que != nullptr)
         {
             if (APVTS2ModelThread_midi_mappings_Que->getNumReady()>0)
@@ -131,6 +132,7 @@ void ModelThread::run()
                 shouldResample = true;
             }
         }
+
 
         if (GrooveThreadToModelThreadQue != nullptr)
         {
@@ -147,7 +149,7 @@ void ModelThread::run()
 
            if (newGrooveAvailable or newTemperatureAvailable)
             {
-                // pass scaled version mapped to closed hats to input
+                // 3. pass scaled version mapped to closed hats to input
                 // !!!! dont't forget to use the scaled tensor (with modified vel/offsets)
                 bool useGrooveWithModifiedVelOffset = true;
                 int mapGrooveToVoiceNumber = 2;     // put groove in the closed hihat voice
@@ -164,7 +166,7 @@ void ModelThread::run()
 
         }
 
-        // should resample output if, input new groove received
+        // 5. should resample output if, input new groove received
         if (shouldResample)
         {
             auto [hits, velocities, offsets] = modelAPI.sample("Threshold");
@@ -174,6 +176,7 @@ void ModelThread::run()
                 hits, modelAPI.get_hits_probabilities(), velocities, offsets);
 
 
+            // 6. send to processBlock and GUI
             if (ModelThreadToProcessBlockQue != nullptr)
             {
                 auto temp = generated_hvo.getModifiedGeneratedData(drum_kit_midi_map);

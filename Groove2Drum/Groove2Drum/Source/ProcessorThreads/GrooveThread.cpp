@@ -82,6 +82,7 @@ void GrooveThread::run()
         isNewGrooveAvailable = false;
         isNewGrooveAvailableUsingHandDrawnNote = false;
 
+        // 1. see if groove reset is requested
         if (shouldResetGroove)
         {
             monotonic_groove.resetGroove();
@@ -89,7 +90,7 @@ void GrooveThread::run()
             isNewGrooveAvailable = true;
         }
 
-        // see if overdubbing is off, then if so, clear the timestep
+        // 2. see if overdubbing is off, then if so, clear the timestep
         // info for clearing (i.e. new time step and when it was requested comes from process block)
         // see GrooveThread::clearStep(int grid_ix, float start_ppq)
         if (overdubEnabled == 0 and lastClearedStepNumber!=clearStepNumber and lastClearedRequestedAtPositionPpq!=clearRequestedAtPositionPpq)
@@ -115,7 +116,7 @@ void GrooveThread::run()
             }
         }
 
-        // see if any randomization is requested
+        // 3. see if any randomization is requested
         if (shouldRandomizeVelocities or shouldRandomizeOffsets or shouldRandomizeAll)
         {
             if (shouldRandomizeVelocities)
@@ -137,7 +138,7 @@ void GrooveThread::run()
             GrooveThreadToModelThreadQue->push(monotonic_groove);
         }
 
-        // get overdub and record states from APVTS
+        // 4. get overdub and record states from APVTS
         if (APVTS2GrooveThread_groove_record_overdubToggles_Que!= nullptr)
         {
             while (APVTS2GrooveThread_groove_record_overdubToggles_Que->getNumReady() > 0)
@@ -151,7 +152,7 @@ void GrooveThread::run()
 
         if (GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue != nullptr)
         {
-            // see if new BasicNotes received from gui by hand drawing dragging a note
+            // 5. see if new BasicNotes received from gui by hand drawing dragging a note
             while (
                 GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue->getNumReady()
                 > 0)
@@ -177,7 +178,7 @@ void GrooveThread::run()
 
         if (ProcessBlockToGrooveThreadQue!= nullptr )
         {
-            // see if new BasicNotes received from main processblock
+            // 6. see if new BasicNotes received from main processblock
             BasicNote read_note;
             while (ProcessBlockToGrooveThreadQue->getNumReady() > 0 and not this->threadShouldExit())
             {
@@ -201,14 +202,14 @@ void GrooveThread::run()
                 }
             }
 
-            // apply compression if new notes overdubbed
+            // 7. apply compression if new notes overdubbed
             if (isNewGrooveAvailable or isNewGrooveAvailableUsingHandDrawnNote)
             {
                 monotonic_groove.hvo.compressAll();
             }
         }
 
-        // see if new control params received from the gui
+        // 8. see if new control params received from the gui
         if (APVTS2GrooveThread_groove_vel_offset_ranges_Que != nullptr)
         {
             array<float, 4> newVelOffsetrange {};

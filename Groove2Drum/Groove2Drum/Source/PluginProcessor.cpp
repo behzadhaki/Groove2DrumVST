@@ -129,7 +129,7 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         if (new_grid != current_grid)
         {
             current_grid = new_grid;
-            grooveThread.clearStep((int) current_grid, startPpq); //FIXME THIS IS A BIT RISKY!! MAY CAUSE LOCKS!
+            grooveThread.clearStep((int) current_grid, startPpq);
         }
 
         //juce::MidiMessage msg = juce::MidiMessage::noteOn((int)1, (int)36, (float)100.0);
@@ -151,7 +151,7 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         }
     }
 
-
+    // Step 4. see if new notes are played on the input side
     if (not midiMessages.isEmpty() /*and groove_thread_ready*/)
     {
         // send BasicNotes to the GrooveThread and also gui logger for notes

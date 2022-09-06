@@ -9,7 +9,7 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
 
 
     // initialize widgets
-    DrumsPianoRollWidget = make_unique<FinalUIWidgets::GeneratedDrums::GeneratedDrumsWidget>(
+    GeneratedDrumsWidget = make_unique<FinalUIWidgets::GeneratedDrums::GeneratedDrumsWidget>(
         &MidiFXProcessorPointer_->apvts);
     {   // re-draw events if Editor reconstructed mid-session
         auto ptr_ = MidiFXProcessorPointer_->ModelThreadToDrumPianoRollWidgetQue.get();
@@ -17,11 +17,11 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
         {
             auto latest_score =
                 ptr_->getLatestDataWithoutMovingFIFOHeads();
-            DrumsPianoRollWidget->updateWithNewScore(latest_score);
+            GeneratedDrumsWidget->updateWithNewScore(latest_score);
         }
     }
 
-    MonotonicGroovePianoRollsWidget = make_unique<FinalUIWidgets::MonotonicGrooves::MonotonicGrooveWidget>
+    MonotonicGrooveWidget = make_unique<FinalUIWidgets::MonotonicGrooves::MonotonicGrooveWidget>
         (MidiFXProcessorPointer_->get_pointer_GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue());
     {   // re-draw events if Editor reconstructed mid-session
         auto ptr_ = MidiFXProcessorPointer_->GrooveThread2GGroovePianoRollWidgetQue.get();
@@ -29,13 +29,13 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
         {
             auto latest_groove =
                 ptr_->getLatestDataWithoutMovingFIFOHeads();
-            MonotonicGroovePianoRollsWidget->updateWithNewGroove(latest_groove);
+            MonotonicGrooveWidget->updateWithNewGroove(latest_groove);
         }
     }
 
     // Add widgets to Main Editor GUI
-    addAndMakeVisible(DrumsPianoRollWidget.get());
-    addAndMakeVisible(MonotonicGroovePianoRollsWidget.get());
+    addAndMakeVisible(GeneratedDrumsWidget.get());
+    addAndMakeVisible(MonotonicGrooveWidget.get());
 
     // Progress Bar
     playhead_pos = MidiFXProcessorPointer_->get_playhead_pos();
@@ -48,8 +48,8 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     ButtonsWidget->addListener(this);
 
     // initialize GrooveControlSliders
-    GrooveControlSliders = make_unique<FinalUIWidgets::ControlsWidget> (&MidiFXProcessorPointer_->apvts);
-    addAndMakeVisible (GrooveControlSliders.get());
+    ControlsWidget = make_unique<FinalUIWidgets::ControlsWidget> (&MidiFXProcessorPointer_->apvts);
+    addAndMakeVisible (ControlsWidget.get());
 
     // model selector
     ModelSelectorWidget = make_unique<FinalUIWidgets::ModelSelectorWidget> (MidiFXProcessorPointer_->model_paths);
@@ -80,21 +80,22 @@ void MidiFXProcessorEditor::resized()
     area.removeFromRight(proportionOfWidth(gui_settings::PianoRolls::space_reserved_right_side_of_gui_ratio_of_width));
 
     // layout pianoRolls for generated drums at top
-    DrumsPianoRollWidget->setBounds (area.removeFromTop(area.proportionOfHeight(gui_settings::PianoRolls::completePianoRollHeight))); // piano rolls at top
+    GeneratedDrumsWidget->setBounds (area.removeFromTop(area.proportionOfHeight(gui_settings::PianoRolls::completePianoRollHeight))); // piano rolls at top
 
     // layout pianoRolls for generated drums on top
-    MonotonicGroovePianoRollsWidget->setBounds(area.removeFromBottom(area.proportionOfHeight(gui_settings::PianoRolls::completeMonotonicGrooveHeight))); // groove at bottom
+    MonotonicGrooveWidget->setBounds(area.removeFromBottom(area.proportionOfHeight(gui_settings::PianoRolls::completeMonotonicGrooveHeight))); // groove at bottom
 
     // layout Playhead Progress Bar
     area.removeFromLeft(area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width));
-    PlayheadProgressBar.setBounds(area.removeFromLeft(DrumsPianoRollWidget->PianoRolls[0]->getPianoRollSectionWidth()));
+    PlayheadProgressBar.setBounds(area.removeFromLeft(
+        GeneratedDrumsWidget->PianoRolls[0]->getPianoRollSectionWidth()));
 
     // put buttons and GrooveControlSliders
     area = getLocalBounds();
     area.removeFromLeft(area.proportionOfWidth(1.0f - gui_settings::PianoRolls::space_reserved_right_side_of_gui_ratio_of_width));
     ButtonsWidget->setBounds(area.removeFromTop(area.proportionOfHeight(0.3)));
     ModelSelectorWidget->setBounds(area.removeFromTop(area.proportionOfHeight(0.1)));
-    GrooveControlSliders->setBounds(area.removeFromBottom(area.proportionOfHeight(0.4)));
+    ControlsWidget->setBounds(area.removeFromBottom(area.proportionOfHeight(0.4)));
 
 }
 
@@ -112,7 +113,7 @@ void MidiFXProcessorEditor::timerCallback()
         auto ptr_ = MidiFXProcessorPointer_->ModelThreadToDrumPianoRollWidgetQue.get();
         if (ptr_->getNumReady() > 0)
         {
-            DrumsPianoRollWidget->updateWithNewScore(
+            GeneratedDrumsWidget->updateWithNewScore(
                 ptr_->getLatestOnly());
         }
     }
@@ -123,7 +124,7 @@ void MidiFXProcessorEditor::timerCallback()
 
         if (ptr_->getNumReady() > 0)
         {
-            MonotonicGroovePianoRollsWidget->updateWithNewGroove(
+            MonotonicGrooveWidget->updateWithNewGroove(
                 ptr_->getLatestOnly());
         }
 
@@ -131,7 +132,7 @@ void MidiFXProcessorEditor::timerCallback()
 
     // get playhead position to display on progress bar
     playhead_pos = MidiFXProcessorPointer_->get_playhead_pos();
-    DrumsPianoRollWidget->UpdatePlayheadLocation(playhead_pos);
+    GeneratedDrumsWidget->UpdatePlayheadLocation(playhead_pos);
 }
 
 void MidiFXProcessorEditor::buttonClicked (juce::Button* button)  // [2]
