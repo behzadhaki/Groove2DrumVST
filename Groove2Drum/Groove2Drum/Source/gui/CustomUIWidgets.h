@@ -13,6 +13,30 @@
 // ========== https://forum.juce.com/t/how-to-draw-a-vertical-and-horizontal-line-of-the-mouse-position/31115/2
 // ==========
 // ============================================================================================================
+class ButtonWithAttachment: public juce::Component
+{
+public:
+    juce::TextButton button;
+    unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> ButtonAPVTSAttacher;
+    juce::AudioProcessorValueTreeState* apvts;
+    string PrameterID;
+
+    ButtonWithAttachment(juce::AudioProcessorValueTreeState* apvtsPntr, const string& Text2show, string ParameterID_)
+    {
+        apvts = apvtsPntr;
+        PrameterID = ParameterID_;
+        ButtonAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (*apvts, PrameterID, button);
+        button.setButtonText(Text2show);
+        button.setClickingTogglesState(true);
+        addAndMakeVisible(button);
+    }
+
+    void resized() override
+    {
+        button.setBounds(getLocalBounds());
+    }
+};
+
 namespace SingleStepPianoRollBlock
 {
 
@@ -462,8 +486,10 @@ namespace SingleStepPianoRollBlock
         juce::Point<float> m_mousepos;
 
     };
-}
 
+
+
+}
 
 // ============================================================================================================
 // ==========              UI WIDGETS PLACED ON FINAL EDITOR GUI                                  =============
@@ -887,47 +913,21 @@ namespace FinalUIWidgets {
     public:
         ButtonsWidget(juce::AudioProcessorValueTreeState* apvtsPntr)
         {
-            addAndMakeVisible (resetGrooveButton);
-            resetGrooveButton.setButtonText ("Reset Groove");
-            resetGrooveButtonAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (*apvtsPntr, "RESET_GROOVE", resetGrooveButton);
-            addAndMakeVisible (resetSamplingParametersButton);
-            resetSamplingParametersButton.setButtonText ("Reset Sampling Parameters");
-            resetSamplingParametersButtonAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (*apvtsPntr, "RESET_SAMPLINGPARAMS", resetSamplingParametersButton);
-            addAndMakeVisible (resetAllButton);
-            resetAllButton.setButtonText ("Reset All");
-            resetAllButtonAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (*apvtsPntr, "RESET_ALL", resetAllButton);
+            resetGrooveButton = make_unique<ButtonWithAttachment>(apvtsPntr, "Reset Groove", "RESET_GROOVE");
+            addAndMakeVisible(*resetGrooveButton);
+            resetSamplingParametersButton = make_unique<ButtonWithAttachment>(apvtsPntr, "Reset Sampling Parameters", "RESET_SAMPLINGPARAMS");
+            addAndMakeVisible(*resetSamplingParametersButton);
+            resetAllButton = make_unique<ButtonWithAttachment>(apvtsPntr, "Reset All", "RESET_ALL");
+            addAndMakeVisible(*resetAllButton);
 
-            addAndMakeVisible (randomVelButton);
-            randomVelButton.setButtonText ("Randomize Velocity");
-            randomVelButtonAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (*apvtsPntr, "RANDOMIZE_VEL", randomVelButton);
-            addAndMakeVisible (randomOffsetButton);
-            randomOffsetButton.setButtonText ("Randomize Offset");
-            randomOffsetButtonAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (*apvtsPntr, "RANDOMIZE_OFFSET", randomOffsetButton);
-
-            addAndMakeVisible (randomAllButton);
-            randomAllButton.setButtonText ("Random Groove");
-            randomAllButtonAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (*apvtsPntr, "RANDOMIZE_ALL", randomAllButton);
+            randomVelButton = make_unique<ButtonWithAttachment>(apvtsPntr, "Randomize Velocity", "RANDOMIZE_VEL");
+            addAndMakeVisible(*randomVelButton);
+            randomOffsetButton = make_unique<ButtonWithAttachment>(apvtsPntr, "Randomize Offset", "RANDOMIZE_OFFSET");
+            addAndMakeVisible(*randomOffsetButton);
+            randomAllButton = make_unique<ButtonWithAttachment>(apvtsPntr, "Random Groove", "RANDOMIZE_ALL");
+            addAndMakeVisible(*randomAllButton);
         }
 
-        void addListener(juce::Button::Listener* buttonListenerComponent)
-        {
-            resetGrooveButton.addListener (buttonListenerComponent);
-            resetSamplingParametersButton.addListener (buttonListenerComponent);
-            resetAllButton.addListener (buttonListenerComponent);
-            randomVelButton.addListener (buttonListenerComponent);
-            randomOffsetButton.addListener (buttonListenerComponent);
-            randomAllButton.addListener (buttonListenerComponent);
-        }
-
-        void removeListener(juce::Button::Listener* buttonListenerComponent)
-        {
-            resetGrooveButton.removeListener (buttonListenerComponent);
-            resetSamplingParametersButton.removeListener (buttonListenerComponent);
-            resetAllButton.removeListener (buttonListenerComponent);
-            randomVelButton.removeListener (buttonListenerComponent);
-            randomOffsetButton.removeListener (buttonListenerComponent);
-            randomAllButton.removeListener (buttonListenerComponent);
-        }
         void resized() override
         {
             auto area = getLocalBounds();
@@ -940,33 +940,27 @@ namespace FinalUIWidgets {
             auto button_h = area.proportionOfHeight(0.15f);
 
             // layout buttom up
-            resetAllButton.setBounds(area.removeFromBottom(button_h));
-            resetSamplingParametersButton.setBounds(area.removeFromBottom(button_h));
-            resetGrooveButton.setBounds(area.removeFromBottom(button_h));
+            resetAllButton->setBounds(area.removeFromBottom(button_h));
+            resetSamplingParametersButton->setBounds(area.removeFromBottom(button_h));
+            resetGrooveButton->setBounds(area.removeFromBottom(button_h));
 
             area.removeFromBottom(gap_h);
 
-            randomAllButton.setBounds(area.removeFromBottom(button_h));
-            randomOffsetButton.setBounds(area.removeFromBottom(button_h));
-            randomVelButton.setBounds(area.removeFromBottom(button_h));
+            randomAllButton->setBounds(area.removeFromBottom(button_h));
+            randomOffsetButton->setBounds(area.removeFromBottom(button_h));
+            randomVelButton->setBounds(area.removeFromBottom(button_h));
 
         }
 
         // buttons for reseting groove or xyslider params
-        juce::TextButton resetGrooveButton;
-        unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> resetGrooveButtonAPVTSAttacher;
-        juce::TextButton resetSamplingParametersButton;
-        unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> resetSamplingParametersButtonAPVTSAttacher;
-        juce::TextButton resetAllButton;
-        unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> resetAllButtonAPVTSAttacher;
+        unique_ptr<ButtonWithAttachment>  resetGrooveButton;
+        unique_ptr<ButtonWithAttachment> resetSamplingParametersButton;
+        unique_ptr<ButtonWithAttachment> resetAllButton;
 
         // buttons for randomizing groove
-        juce::TextButton randomVelButton;
-        unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> randomVelButtonAPVTSAttacher;
-        juce::TextButton randomOffsetButton;
-        unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> randomOffsetButtonAPVTSAttacher;
-        juce::TextButton randomAllButton;
-        unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> randomAllButtonAPVTSAttacher;
+        unique_ptr<ButtonWithAttachment> randomVelButton;
+        unique_ptr<ButtonWithAttachment> randomOffsetButton;
+        unique_ptr<ButtonWithAttachment> randomAllButton;
 
     };
 

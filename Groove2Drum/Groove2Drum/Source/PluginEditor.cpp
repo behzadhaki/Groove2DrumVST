@@ -45,7 +45,7 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     // add buttons
     ButtonsWidget = make_unique<FinalUIWidgets::ButtonsWidget>(&MidiFXProcessorPointer_->apvts);
     addAndMakeVisible (ButtonsWidget.get());
-    ButtonsWidget->addListener(this);
+    // ButtonsWidget->addListener(this);
 
     // initialize GrooveControlSliders
     ControlsWidget = make_unique<FinalUIWidgets::ControlsWidget> (&MidiFXProcessorPointer_->apvts);
@@ -67,7 +67,7 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
 
 MidiFXProcessorEditor::~MidiFXProcessorEditor()
 {
-    ButtonsWidget->removeListener(this);
+    //ButtonsWidget->removeListener(this);
     ModelSelectorWidget->removeListener(this);
 }
 
@@ -133,50 +133,6 @@ void MidiFXProcessorEditor::timerCallback()
     // get playhead position to display on progress bar
     playhead_pos = MidiFXProcessorPointer_->get_playhead_pos();
     GeneratedDrumsWidget->UpdatePlayheadLocation(playhead_pos);
-}
-
-void MidiFXProcessorEditor::buttonClicked (juce::Button* button)  // [2]
-{
-    if (button == &ButtonsWidget->resetGrooveButton or button == &ButtonsWidget->resetAllButton)
-    {
-        MidiFXProcessorPointer_->grooveThread->ForceResetGroove();
-    }
-    if (button == &ButtonsWidget->resetSamplingParametersButton  or button == &ButtonsWidget->resetAllButton)
-    {
-        // reset parameters to default
-        for(const string &ParamID : {"MIN_VELOCITY", "MAX_VELOCITY", "MIN_OFFSET", "MAX_OFFSET"})
-        {
-            auto param = MidiFXProcessorPointer_->apvts.getParameter(ParamID);
-            param->setValueNotifyingHost(param->getDefaultValue());
-        }
-
-        for (size_t i=0; i < HVO_params::num_voices; i++)
-        {
-            auto ParamID = nine_voice_kit_labels[i];
-            auto param = MidiFXProcessorPointer_->apvts.getParameter(ParamID+"_X");
-            param->setValueNotifyingHost(param->getDefaultValue());
-            param = MidiFXProcessorPointer_->apvts.getParameter(ParamID+"_Y");
-            param->setValueNotifyingHost(param->getDefaultValue());
-            param = MidiFXProcessorPointer_->apvts.getParameter(ParamID+"_MIDI");
-            param->setValueNotifyingHost(param->getDefaultValue());
-        }
-    }
-
-    if (button == &ButtonsWidget->randomVelButton)
-    {
-        MidiFXProcessorPointer_->grooveThread->randomizeExistingVelocities();
-    }
-
-    if (button == &ButtonsWidget->randomOffsetButton)
-    {
-        MidiFXProcessorPointer_->grooveThread->randomizeExistingOffsets();
-    }
-
-    if (button == &ButtonsWidget->randomAllButton)
-    {
-        MidiFXProcessorPointer_->grooveThread->randomizeAll();
-    }
-
 }
 
 void MidiFXProcessorEditor::comboBoxChanged(juce::ComboBox* comboBox)

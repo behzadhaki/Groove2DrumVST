@@ -64,6 +64,11 @@ public:
         startThread();
     }
 
+
+
+
+
+
     // ------------------------------------------------------------------------------------------------------------
     // ---         Step 3 . start run() thread by calling startThread().
     // ---                  !!DO NOT!! Call run() directly. startThread() internally makes a call to run().
@@ -135,6 +140,66 @@ public:
                     APVTS2ModelThread_midi_mappings_Que->push(new_per_voice_midi_numbers);
                 }
 
+                // check if per reset buttons have been clicked
+                auto new_reset_buttons = get_reset_buttons();
+                if (current_reset_buttons != new_reset_buttons)
+                {
+                    auto resetGrooveButtonClicked = (current_reset_buttons[0] !=  new_reset_buttons[0]);
+                    auto resetSampleParamsClicked = (current_reset_buttons[1] !=  new_reset_buttons[1]);
+                    auto resetAllClicked = (current_reset_buttons[2] !=  new_reset_buttons[2]);
+                    
+                    if (resetGrooveButtonClicked or resetAllClicked)
+                    {
+                        grooveThread->ForceResetGroove();
+                    }
+                    if (resetSampleParamsClicked  or resetAllClicked)
+                    {
+                        // reset parameters to default
+                        for(const string &ParamID : {"MIN_VELOCITY", "MAX_VELOCITY", "MIN_OFFSET", "MAX_OFFSET"})
+                        {
+                            auto param = APVTS->getParameter(ParamID);
+                            param->setValueNotifyingHost(param->getDefaultValue());
+                        }
+                        
+                        for (size_t i=0; i < HVO_params::num_voices; i++)
+                        {
+                            auto ParamID = nine_voice_kit_labels[i];
+                            auto param = APVTS->getParameter(ParamID+"_X");
+                            param->setValueNotifyingHost(param->getDefaultValue());
+                            param = APVTS->getParameter(ParamID+"_Y");
+                            param->setValueNotifyingHost(param->getDefaultValue());
+                            param = APVTS->getParameter(ParamID+"_MIDI");
+                            param->setValueNotifyingHost(param->getDefaultValue());
+                        }
+                    }
+
+                    // current_reset_buttons = new_reset_buttons;
+                    reset_reset_buttons();
+                }
+
+                // check if random buttons have been clicked
+                auto new_randomize_groove_buttons = get_randomize_groove_buttons();
+                if (current_randomize_groove_buttons != new_randomize_groove_buttons)
+                {
+                    if (current_randomize_groove_buttons[0] != new_randomize_groove_buttons[0])
+                    {
+                        grooveThread->randomizeExistingVelocities();
+                    }
+
+                    if (current_randomize_groove_buttons[1] != new_randomize_groove_buttons[1])
+                    {
+                        grooveThread->randomizeExistingOffsets();
+                    }
+
+                    if (current_randomize_groove_buttons[2] != new_randomize_groove_buttons[2])
+                    {
+                        grooveThread->randomizeAll();
+                    }
+
+                    reset_random_buttons();
+                }
+
+
                 bExit = threadShouldExit();
 
                 sleep(10);
@@ -142,6 +207,12 @@ public:
         }
     }
     // ============================================================================================================
+
+
+
+
+
+
 
     // ============================================================================================================
     // ===          Preparing Thread for Stopping
@@ -213,20 +284,44 @@ public:
         return midiNumbers;
     }
 
+    // returns reset_groove, reset_samplingparams and reset all
     std::array<int, 3> get_reset_buttons()
-    {
+    { 
         return {(int)*APVTS->getRawParameterValue("RESET_GROOVE"),
                 (int)*APVTS->getRawParameterValue("RESET_SAMPLINGPARAMS"),
                 (int)*APVTS->getRawParameterValue("RESET_ALL")};
     }
 
-    std::array<int, 3> get_randomize_groove_buttons()
+    // returns all reset buttons (buttons are toggles, so when mouse release they should jump back)
+    void reset_reset_buttons()
     {
+        auto param = APVTS->getParameter("RESET_GROOVE");
+        param->setValueNotifyingHost(0);
+        param = APVTS->getParameter("RESET_SAMPLINGPARAMS");
+        param->setValueNotifyingHost(0);
+        param = APVTS->getParameter("RESET_ALL");
+        param->setValueNotifyingHost(0);
+    }
+    
+
+    // returns RANDOMIZE_VEL, RANDOMIZE_OFFSET and RANDOMIZE_ALL all
+    std::array<int, 3> get_randomize_groove_buttons()
+    { 
         return {(int)*APVTS->getRawParameterValue("RANDOMIZE_VEL"),
                 (int)*APVTS->getRawParameterValue("RANDOMIZE_OFFSET"),
                 (int)*APVTS->getRawParameterValue("RANDOMIZE_ALL")};
     }
 
+    // returns all reset buttons (buttons are toggles, so when mouse release they should jump back)
+    void reset_random_buttons()
+    {
+        auto param = APVTS->getParameter("RANDOMIZE_VEL");
+        param->setValueNotifyingHost(0);
+        param = APVTS->getParameter("RANDOMIZE_OFFSET");
+        param->setValueNotifyingHost(0);
+        param = APVTS->getParameter("RANDOMIZE_ALL");
+        param->setValueNotifyingHost(0);
+    }
 private:
     // ============================================================================================================
     // ===          Output Queues for Receiving/Sending Data
