@@ -47,9 +47,9 @@ public:
     // GUI THREADS HOSTED IN PROCESSOR
 
     // Threads used for generating patterns in the background
-    GrooveThread grooveThread;
-    ModelThread modelThread;
-    APVTSMediatorThread apvtsMediatorThread;
+    shared_ptr<GrooveThread> grooveThread;
+    shared_ptr<ModelThread> modelThread;
+    unique_ptr<APVTSMediatorThread> apvtsMediatorThread;
 
     // getters
     float get_playhead_pos();

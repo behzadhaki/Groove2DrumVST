@@ -1,4 +1,3 @@
-![MIDI Fx Plugin](https://user-images.githubusercontent.com/35939495/153415111-1811ea40-ffb0-4c51-b0c2-f27d96cc3dd9.jpg)
 
 
 # Info
@@ -22,7 +21,7 @@ In my case:	https://download.pytorch.org/libtorch/cpu/libtorch-macos-1.10.2.zip
 
     <img width="182" alt="image" src="https://user-images.githubusercontent.com/35939495/182013337-4a1505b5-c50d-44dd-924d-9f54e9b4ea2c.png">
 
-5. Write "~/" in the path to go to user folder
+5. Write "/Library/" in the path to go to user folder
 
     <img width="460" alt="image" src="https://user-images.githubusercontent.com/35939495/182013369-9e9c1cd8-d70e-44d5-882f-c3f01854d46e.png">
 
@@ -33,7 +32,7 @@ In my case:	https://download.pytorch.org/libtorch/cpu/libtorch-macos-1.10.2.zip
     <img width="1408" alt="image" src="https://user-images.githubusercontent.com/35939495/182013744-12ac339e-e01e-48a4-a247-b9873aba5e4d.png">	
 
 
-STEP 2. run cmake with the libtorch path as an argument (in clion can be added in cmake settings)
+STEP 2. run cmake with the libtorch path as an argument (in clion can be added i n cmake settings)
 
 --------
 

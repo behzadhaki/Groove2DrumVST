@@ -10,25 +10,12 @@ MidiFXProcessor::MidiFXProcessor():
     apvts(*this, nullptr, "PARAMETERS", createParameterLayout())
 {
     //////////////////////////////////////////////////////////////////
-    //// Find Models
-    //////////////////////////////////////////////////////////////////
-    for (auto model_path: model_paths)
-    {
-        DBG(model_path);
-        DBG(model_paths.size());
-    }
-
-    //////////////////////////////////////////////////////////////////
     //// Make_unique pointers for Queues
     //////////////////////////////////////////////////////////////////
     // GuiIOFifos
     GrooveThread2GGroovePianoRollWidgetQue = make_unique<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>>();
     ModelThreadToDrumPianoRollWidgetQue = make_unique<HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size>>();
 
-
-    //////////////////////////////////////////////////////////////////
-    //// Make_unique pointers for Threads
-    //////////////////////////////////////////////////////////////////
     // Intra Processor Threads
     ProcessBlockToGrooveThreadQue = make_unique<LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>>();
     GrooveThreadToModelThreadQue = make_unique<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>>();
@@ -40,26 +27,34 @@ MidiFXProcessor::MidiFXProcessor():
     GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue = make_unique<LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>>();
     APVTS2ModelThread_midi_mappings_Que = make_unique<LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>>();
 
+
+    //////////////////////////////////////////////////////////////////
+    //// Create shared pointers for Threads (shared with APVTSMediator)
+    //////////////////////////////////////////////////////////////////
+    grooveThread = make_shared<GrooveThread>();
+    modelThread = make_shared<ModelThread>();
+    apvtsMediatorThread = make_unique<APVTSMediatorThread>(grooveThread.get(), modelThread.get());
+        
     /////////////////////////////////
     //// Start Threads
     /////////////////////////////////
 
     // give access to resources and run threads
-    modelThread.startThreadUsingProvidedResources(GrooveThreadToModelThreadQue.get(),
+    modelThread->startThreadUsingProvidedResources(GrooveThreadToModelThreadQue.get(),
                                                   ModelThreadToProcessBlockQue.get(),
                                                   ModelThreadToDrumPianoRollWidgetQue.get(),
                                                   APVTS2ModelThread_max_num_hits_Que.get(),
                                                   APVTS2ModelThread_sampling_thresholds_and_temperature_Que.get(),
                                                   APVTS2ModelThread_midi_mappings_Que.get());
 
-    grooveThread.startThreadUsingProvidedResources(ProcessBlockToGrooveThreadQue.get(),
+    grooveThread->startThreadUsingProvidedResources(ProcessBlockToGrooveThreadQue.get(),
                                                    GrooveThreadToModelThreadQue.get(),
                                                    GrooveThread2GGroovePianoRollWidgetQue.get(),
                                                    GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue.get(),
                                                    APVTS2GrooveThread_groove_vel_offset_ranges_Que.get(),
                                                    APVTS2GrooveThread_groove_record_overdubToggles_Que.get());
 
-    apvtsMediatorThread.startThreadUsingProvidedResources(&apvts,
+    apvtsMediatorThread->startThreadUsingProvidedResources(&apvts,
                                                           APVTS2GrooveThread_groove_vel_offset_ranges_Que.get(),
                                                           APVTS2GrooveThread_groove_record_overdubToggles_Que.get(),
                                                           APVTS2ModelThread_max_num_hits_Que.get(),
@@ -68,19 +63,19 @@ MidiFXProcessor::MidiFXProcessor():
 }
 
 MidiFXProcessor::~MidiFXProcessor(){
-    if (!modelThread.readyToStop)
+    if (!modelThread->readyToStop)
     {
-        modelThread.prepareToStop();
+        modelThread->prepareToStop();
     }
 
-    if (!grooveThread.readyToStop)
+    if (!grooveThread->readyToStop)
     {
-        grooveThread.prepareToStop();
+        grooveThread->prepareToStop();
     }
 
-    if (!apvtsMediatorThread.readyToStop)
+    if (!apvtsMediatorThread->readyToStop)
     {
-        apvtsMediatorThread.prepareToStop();
+        apvtsMediatorThread->prepareToStop();
     }
 
 }
@@ -117,7 +112,7 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
             // if playback head moved backwards or playback paused and restarted
             // change the registration_times of groove events to ensure the
             // groove properly overdubs
-            modelThread.scaled_groove.registeration_times.index({None, None}) = -100;
+            modelThread->scaled_groove.registeration_times.index({None, None}) = -100;
         }
 
         startPpq = *Pinfo->getPpqPosition();
@@ -129,7 +124,7 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         if (new_grid != current_grid)
         {
             current_grid = new_grid;
-            grooveThread.clearStep((int) current_grid, startPpq);
+            grooveThread->clearStep((int) current_grid, startPpq);
         }
 
         //juce::MidiMessage msg = juce::MidiMessage::noteOn((int)1, (int)36, (float)100.0);

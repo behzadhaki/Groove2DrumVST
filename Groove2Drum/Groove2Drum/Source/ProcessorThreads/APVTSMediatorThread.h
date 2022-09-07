@@ -36,8 +36,10 @@ public:
     // ------------------------------------------------------------------------------------------------------------
     // ---         Step 1 . Construct
     // ------------------------------------------------------------------------------------------------------------
-    APVTSMediatorThread(): juce::Thread("APVTSMediatorThread")
+    APVTSMediatorThread(GrooveThread* grooveThreadPntr, ModelThread* modelThreadPntr): juce::Thread("APVTSMediatorThread")
     {
+        grooveThread = grooveThreadPntr;
+        modelThread = modelThreadPntr;
     }
 
     // ------------------------------------------------------------------------------------------------------------
@@ -77,6 +79,9 @@ public:
         auto current_max_num_hits = get_max_num_hits();
         auto current_sampling_thresholds_with_temperature = get_sampling_thresholds_with_temperature();
         auto current_per_voice_midi_numbers = get_per_voice_midi_numbers();
+        auto current_reset_buttons = get_reset_buttons();
+        auto current_randomize_groove_buttons = get_randomize_groove_buttons();
+
         while (!bExit)
         {
             if (APVTS != nullptr)
@@ -208,6 +213,19 @@ public:
         return midiNumbers;
     }
 
+    std::array<int, 3> get_reset_buttons()
+    {
+        return {(int)*APVTS->getRawParameterValue("RESET_GROOVE"),
+                (int)*APVTS->getRawParameterValue("RESET_SAMPLINGPARAMS"),
+                (int)*APVTS->getRawParameterValue("RESET_ALL")};
+    }
+
+    std::array<int, 3> get_randomize_groove_buttons()
+    {
+        return {(int)*APVTS->getRawParameterValue("RANDOMIZE_VEL"),
+                (int)*APVTS->getRawParameterValue("RANDOMIZE_OFFSET"),
+                (int)*APVTS->getRawParameterValue("RANDOMIZE_ALL")};
+    }
 
 private:
     // ============================================================================================================
@@ -219,8 +237,18 @@ private:
     LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_sampling_thresholds_and_temperature_Que {nullptr};
     LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_midi_mappings_Que {nullptr};
 
+
+    // ============================================================================================================
+    // ===          pointer to MidiFXProcessor
+    // ============================================================================================================
+    GrooveThread* grooveThread;
+    ModelThread* modelThread;
+
+
     // ============================================================================================================
     // ===          Pointer to APVTS hosted in the Main Processor
     // ============================================================================================================
     juce::AudioProcessorValueTreeState* APVTS {nullptr};
+
+
 };

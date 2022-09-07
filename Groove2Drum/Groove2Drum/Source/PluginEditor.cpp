@@ -139,7 +139,7 @@ void MidiFXProcessorEditor::buttonClicked (juce::Button* button)  // [2]
 {
     if (button == &ButtonsWidget->resetGrooveButton or button == &ButtonsWidget->resetAllButton)
     {
-        MidiFXProcessorPointer_->grooveThread.ForceResetGroove();
+        MidiFXProcessorPointer_->grooveThread->ForceResetGroove();
     }
     if (button == &ButtonsWidget->resetSamplingParametersButton  or button == &ButtonsWidget->resetAllButton)
     {
@@ -164,17 +164,17 @@ void MidiFXProcessorEditor::buttonClicked (juce::Button* button)  // [2]
 
     if (button == &ButtonsWidget->randomVelButton)
     {
-        MidiFXProcessorPointer_->grooveThread.randomizeExistingVelocities();
+        MidiFXProcessorPointer_->grooveThread->randomizeExistingVelocities();
     }
 
     if (button == &ButtonsWidget->randomOffsetButton)
     {
-        MidiFXProcessorPointer_->grooveThread.randomizeExistingOffsets();
+        MidiFXProcessorPointer_->grooveThread->randomizeExistingOffsets();
     }
 
     if (button == &ButtonsWidget->randomAllButton)
     {
-        MidiFXProcessorPointer_->grooveThread.randomizeAll();
+        MidiFXProcessorPointer_->grooveThread->randomizeAll();
     }
 
 }
@@ -185,6 +185,6 @@ void MidiFXProcessorEditor::comboBoxChanged(juce::ComboBox* comboBox)
     {
         auto selection = ModelSelectorWidget->ModelComboBox.getSelectedId();
         auto new_model_path = (string)GeneralSettings::default_model_folder + "/" + MidiFXProcessorPointer_->model_paths[selection-1].toStdString() + ".pt";
-        MidiFXProcessorPointer_->modelThread.UpdateModelPath(new_model_path);
+        MidiFXProcessorPointer_->modelThread->UpdateModelPath(new_model_path);
     }
 }
