@@ -13,17 +13,6 @@
 
 using namespace std;
 
-inline juce::StringArray get_pt_files_in_default_path()
-{
-    juce::StringArray paths;
-    paths.clear();
-    for (const auto& filenameThatWasFound : juce::File (GeneralSettings::default_model_folder).findChildFiles (2, true, "*.pt"))
-    {
-        paths.add (filenameThatWasFound.getFileNameWithoutExtension());
-    }
-    paths.sort(false);
-    return paths;
-}
 
 class MidiFXProcessor : public PluginHelpers::ProcessorBase
 {
@@ -39,7 +28,6 @@ public:
 
     // grooveThread i.o queues w/ GroovePianoRollWidget
     unique_ptr<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>> GrooveThread2GGroovePianoRollWidgetQue;
-    // unique_ptr<GuiIOFifos::GroovePianoRollWidget2GrooveThreadQues> GroovePianoRollWidget2GrooveThreadQues;
 
     // modelThread i.o queues w/ DrumPianoRoll Widget
     unique_ptr<HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size>> ModelThreadToDrumPianoRollWidgetQue;

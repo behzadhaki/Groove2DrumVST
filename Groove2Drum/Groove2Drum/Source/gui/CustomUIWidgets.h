@@ -366,7 +366,10 @@ namespace SingleStepPianoRollBlock
     };
 
 
-
+    /**
+     * An XYPad which is infact connected to two sliders.
+     * Can automatically connect to APVTS and also update the y level in probability widgets
+     */
     class XYPadAutomatableWithSliders: public juce::Component, public juce::Slider::Listener
     {
     public:
@@ -487,11 +490,11 @@ namespace SingleStepPianoRollBlock
 
     };
 
-
-
 }
 
-// ============================================================================================================
+
+
+// ------------------------------------------------------------------------------------------------------------
 // ==========              UI WIDGETS PLACED ON FINAL EDITOR GUI                                  =============
 // ==========
 // ============================================================================================================
@@ -974,22 +977,25 @@ namespace FinalUIWidgets {
         // Model selector
         int num_choices {0};
         juce::Label textLabel { {}, "Select Model:" };
-        juce::ComboBox ModelComboBox;
+        juce::ComboBox ComboBox;
+        unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> ComboBoxAPVTSAttacher;
 
 
-        ModelSelectorWidget(juce::StringArray model_paths_)
+        ModelSelectorWidget(juce::AudioProcessorValueTreeState* apvtsPntr, string ParameterID_, juce::StringArray model_paths_)
         {
-            addAndMakeVisible(ModelComboBox);
+            addAndMakeVisible(ComboBox);
+
+            ComboBoxAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (*apvtsPntr, ParameterID_, ComboBox);
 
             model_paths = model_paths_;
 
             for (auto model_path: model_paths)
             {
                 num_choices++;
-                ModelComboBox.addItem((string)GeneralSettings::default_model_folder + "/" + model_path.toStdString() + ".pt", num_choices);
+                ComboBox.addItem((string)GeneralSettings::default_model_folder + "/" + model_path.toStdString() + ".pt", num_choices);
             }
 
-            ModelComboBox.setSelectedId (1);
+            ComboBox.setSelectedId (1);
 
         }
 
@@ -999,21 +1005,21 @@ namespace FinalUIWidgets {
             area.removeFromLeft(proportionOfWidth(0.15f));
             area.removeFromRight(proportionOfWidth(0.15f));
             textLabel.setBounds(area.removeFromTop(proportionOfHeight(0.5f)));
-            ModelComboBox.setBounds(area);
+            ComboBox.setBounds(area);
         }
 
 
-        void addListener(juce::ComboBox::Listener* ComboBoxListener)
+        /*void addListener(juce::ComboBox::Listener* ComboBoxListener)
         {
-            ModelComboBox.addListener(ComboBoxListener);
+            ComboBox.addListener(ComboBoxListener);
         }
 
         void removeListener(juce::ComboBox::Listener* ComboBoxListener)
         {
-            ModelComboBox.removeListener(ComboBoxListener);
+            ComboBox.removeListener(ComboBoxListener);
         }
 
-
+*/
 
 
     };

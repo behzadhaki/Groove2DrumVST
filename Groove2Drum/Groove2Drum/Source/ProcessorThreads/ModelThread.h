@@ -11,6 +11,20 @@
 #include "../settings.h"
 #include "../Model/ModelAPI.h"
 
+inline juce::StringArray get_pt_files_in_default_path()
+{
+    // find models in default folder
+    juce::StringArray paths;
+    paths.clear();
+    for (const auto& filenameThatWasFound : juce::File (GeneralSettings::default_model_folder).findChildFiles (2, true, "*.pt"))
+    {
+        paths.add (filenameThatWasFound.getFileNameWithoutExtension());
+    }
+    paths.sort(false);
+    return paths;
+}
+
+
 class ModelThread: public juce::Thread/*, public juce::ChangeBroadcaster*/
 {
 public:

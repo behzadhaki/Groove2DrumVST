@@ -29,6 +29,7 @@
 class APVTSMediatorThread: public juce::Thread
 {
 public:
+    juce::StringArray paths;
 
     // ============================================================================================================
     // ===          Preparing Thread for Running
@@ -40,6 +41,7 @@ public:
     {
         grooveThread = grooveThreadPntr;
         modelThread = modelThreadPntr;
+        paths = get_pt_files_in_default_path();
     }
 
     // ------------------------------------------------------------------------------------------------------------
@@ -86,6 +88,7 @@ public:
         auto current_per_voice_midi_numbers = get_per_voice_midi_numbers();
         auto current_reset_buttons = get_reset_buttons();
         auto current_randomize_groove_buttons = get_randomize_groove_buttons();
+        auto current_model_selected = get_model_selected();
 
         while (!bExit)
         {
@@ -199,6 +202,14 @@ public:
                     reset_random_buttons();
                 }
 
+                // check if new model selected
+                auto new_model_selected = get_model_selected();
+                if (current_model_selected != new_model_selected)
+                {
+                    current_model_selected = new_model_selected;
+                    auto new_model_path = (string)GeneralSettings::default_model_folder + "/" + paths[current_model_selected].toStdString() + ".pt";
+                    modelThread->UpdateModelPath(new_model_path);
+                }
 
                 bExit = threadShouldExit();
 
@@ -322,6 +333,14 @@ public:
         param = APVTS->getParameter("RANDOMIZE_ALL");
         param->setValueNotifyingHost(0);
     }
+
+    // returns RANDOMIZE_VEL, RANDOMIZE_OFFSET and RANDOMIZE_ALL all
+    int get_model_selected()
+    {
+        auto model_selected = (int)*APVTS->getRawParameterValue("MODEL");
+        return model_selected;
+    }
+
 private:
     // ============================================================================================================
     // ===          Output Queues for Receiving/Sending Data

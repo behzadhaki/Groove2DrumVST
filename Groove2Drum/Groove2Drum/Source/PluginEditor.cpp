@@ -52,9 +52,10 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     addAndMakeVisible (ControlsWidget.get());
 
     // model selector
-    ModelSelectorWidget = make_unique<FinalUIWidgets::ModelSelectorWidget> (MidiFXProcessorPointer_->model_paths);
+    ModelSelectorWidget = make_unique<FinalUIWidgets::ModelSelectorWidget> (&MidiFXProcessorPointer_->apvts,
+                                                                           "MODEL",
+                                                                           MidiFXProcessorPointer_->model_paths);
     addAndMakeVisible (ModelSelectorWidget.get());
-    ModelSelectorWidget->addListener(this);
 
 
     // Set window size
@@ -68,7 +69,7 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
 MidiFXProcessorEditor::~MidiFXProcessorEditor()
 {
     //ButtonsWidget->removeListener(this);
-    ModelSelectorWidget->removeListener(this);
+    // ModelSelectorWidget->removeListener(this);
 }
 
 void MidiFXProcessorEditor::resized()
@@ -133,14 +134,4 @@ void MidiFXProcessorEditor::timerCallback()
     // get playhead position to display on progress bar
     playhead_pos = MidiFXProcessorPointer_->get_playhead_pos();
     GeneratedDrumsWidget->UpdatePlayheadLocation(playhead_pos);
-}
-
-void MidiFXProcessorEditor::comboBoxChanged(juce::ComboBox* comboBox)
-{
-    if (comboBox == &ModelSelectorWidget->ModelComboBox)
-    {
-        auto selection = ModelSelectorWidget->ModelComboBox.getSelectedId();
-        auto new_model_path = (string)GeneralSettings::default_model_folder + "/" + MidiFXProcessorPointer_->model_paths[selection-1].toStdString() + ".pt";
-        MidiFXProcessorPointer_->modelThread->UpdateModelPath(new_model_path);
-    }
 }
