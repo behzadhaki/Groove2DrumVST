@@ -819,12 +819,12 @@ namespace FinalUIWidgets {
         juce::Slider VelRangeSilder;
         juce::Label  VelRangeLabel;
         unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> VelRangeSilderAPVTSAttacher;
-        juce::Slider minOffsetSlider;
-        juce::Label  minOffsetLabel;
-        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> minOffsetSliderAPVTSAttacher;
-        juce::Slider maxOffsetSlider;
-        juce::Label  maxOffsetLabel;
-        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> maxOffsetSliderAPVTSAttacher;
+        juce::Slider OffsetBiasSlider;
+        juce::Label  OffsetBiasLabel;
+        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> OffsetBiasSliderAPVTSAttacher;
+        juce::Slider OffsetRangeSlider;
+        juce::Label  OffsetRangeLabel;
+        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> OffsetRangeSliderAPVTSAttacher;
 
         // sliders for sampling temperature
         juce::Slider temperatureSlider;
@@ -842,25 +842,24 @@ namespace FinalUIWidgets {
             // add sliders for vel offset ranges
             addAndMakeVisible (VelRangeSilder);
             addAndMakeVisible (VelRangeLabel);
-            VelRangeLabel.setText ("| Velocity | Dynamic Range", juce::dontSendNotification);
+            VelRangeLabel.setText ("Velocity: Dynamic Range", juce::dontSendNotification);
             VelRangeSilderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "VEL_DYNAMIC_RANGE", VelRangeSilder);
 
             addAndMakeVisible (VelBiasSilder);
             addAndMakeVisible (VelBiasLabel);
             VelBiasSilderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "VEL_BIAS", VelBiasSilder);
-            VelBiasLabel.setText  ("|          | ---- Bias ---", juce::dontSendNotification);
+            VelBiasLabel.setText  ("Velocity: Bias", juce::dontSendNotification);
 
+            addAndMakeVisible (OffsetRangeSlider);
+            addAndMakeVisible (OffsetRangeLabel);
+            OffsetRangeLabel.setText ("Offset: Dynamic Range", juce::dontSendNotification);
+            OffsetRangeSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "OFFSET_RANGE", OffsetRangeSlider);
 
-            addAndMakeVisible (minOffsetSlider);
-            addAndMakeVisible (minOffsetLabel);
-            minOffsetLabel.setText ("Min Offset", juce::dontSendNotification);
-            minOffsetSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "MIN_OFFSET", minOffsetSlider);
+            addAndMakeVisible (OffsetBiasSlider);
+            addAndMakeVisible (OffsetBiasLabel);
+            OffsetBiasLabel.setText ("Offset: Bias", juce::dontSendNotification);
+            OffsetBiasSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "OFFSET_BIAS", OffsetBiasSlider);
 
-
-            addAndMakeVisible (maxOffsetSlider);
-            addAndMakeVisible (maxOffsetLabel);
-            maxOffsetLabel.setText ("Max Offset", juce::dontSendNotification);
-            maxOffsetSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "MAX_OFFSET", maxOffsetSlider);
 
             // add temperature Slider
             addAndMakeVisible (temperatureSlider);
@@ -890,8 +889,8 @@ namespace FinalUIWidgets {
                 auto height = area.proportionOfHeight(1.0f/5.0f);
                 VelRangeLabel.setBounds(area.removeFromTop(height));
                 VelBiasLabel.setBounds(area.removeFromTop(height));
-                minOffsetLabel.setBounds(area.removeFromTop(height));
-                maxOffsetLabel.setBounds(area.removeFromTop(height));
+                OffsetRangeLabel.setBounds(area.removeFromTop(height));
+                OffsetBiasLabel.setBounds(area.removeFromTop(height));
                 temperatureLabel.setBounds(area.removeFromTop(height));
             }
 
@@ -903,8 +902,8 @@ namespace FinalUIWidgets {
 
                 VelRangeSilder.setBounds(area.removeFromTop(height));
                 VelBiasSilder.setBounds(area.removeFromTop(height));
-                minOffsetSlider.setBounds(area.removeFromTop(height));
-                maxOffsetSlider.setBounds(area.removeFromTop(height));
+                OffsetRangeSlider.setBounds(area.removeFromTop(height));
+                OffsetBiasSlider.setBounds(area.removeFromTop(height));
                 temperatureSlider.setBounds(area.removeFromTop(height));
 
             }

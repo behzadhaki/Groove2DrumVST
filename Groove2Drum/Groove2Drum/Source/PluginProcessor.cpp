@@ -202,8 +202,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout MidiFXProcessor::createParam
     // sliders
     layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("VEL_DYNAMIC_RANGE", version_hint), "VEL_DYNAMIC_RANGE", -200.0f, 200.0f, 100.0f));
     layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("VEL_BIAS", version_hint), "VEL_BIAS", -1.0f, 1.0f, 0));
-    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("MIN_OFFSET", version_hint), "MIN_OFFSET", -0.49f, 0.49f, -.49f));
-    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("MAX_OFFSET", version_hint), "MAX_OFFSET", -0.49f, 0.49, .49f));
+    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("OFFSET_RANGE", version_hint), "OFFSET_RANGE", -200.0f, 200.0f, 100.0f));
+    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("OFFSET_BIAS", version_hint), "OFFSET_BIAS", -1, 1, 0));
     layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("Temperature", version_hint), "Temperature", 0.00001f, 2.0f, 1.0f));
 
     // these parameters are used with the xySliders for each individual voice

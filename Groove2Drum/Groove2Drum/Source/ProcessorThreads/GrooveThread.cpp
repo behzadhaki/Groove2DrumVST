@@ -214,8 +214,8 @@ void GrooveThread::run()
         // 8. see if new control params (vel offset ranges ... ) received from the gui
         if (APVTS2GrooveThread_groove_vel_offset_ranges_Que != nullptr)
         {
-            array<float, 4> newVelOffsetrange {};
-            array<float, 4> compression_range  {};
+            array<float, 4> newVelOffsetrange {};  // {Vel_Bias, Vel_Range, Offset_Bias, Offset_Range}
+            array<float, 4> compression_range  {}; // {min_vel, max_vel, min_offset, max_offset}
 
             while (APVTS2GrooveThread_groove_vel_offset_ranges_Que->getNumReady() > 0
                    and not this->threadShouldExit())
@@ -224,21 +224,43 @@ void GrooveThread::run()
                 APVTS2GrooveThread_groove_vel_offset_ranges_Que->ReadFrom(&newVelOffsetrange, 1);
 
                 // calculate min/max vel using range and bias
+                {
+                    auto bias = newVelOffsetrange[0];
+                    auto range_ratio = newVelOffsetrange[1] / 100.0f;
+                    auto vl = float(bias + HVO_params::_min_vel);
+                    auto vrange = float((HVO_params::_max_vel - HVO_params::_min_vel)
+                                        * range_ratio);
+                    if (vrange > 0)
+                    {
+                        compression_range[0] = vl;
+                        compression_range[1] = vl + vrange;
+                    }
+                    else // if negative range, swap min and max
+                    {
+                        compression_range[0] = vl + (-1) * vrange;
+                        compression_range[1] = vl;
+                    }
+                }
 
-                auto bias = newVelOffsetrange[0];
-                auto range_ratio = newVelOffsetrange[1]/100.0f;
-                auto vl = float(bias + HVO_params::_min_vel);
-                auto vrange = float((HVO_params::_max_vel-HVO_params::_min_vel) * range_ratio);
-                if (vrange > 0)
+                // calculate min/max offset using range and bias
                 {
-                    compression_range[0] = vl;
-                    compression_range[1] = vl+vrange;
+                    auto bias = newVelOffsetrange[2];
+                    auto range_ratio = newVelOffsetrange[3] / 100.0f;
+                    auto offl = float(bias + HVO_params::_min_offset);
+                    auto off_range = float((HVO_params::_max_offset - HVO_params::_min_offset)
+                                        * range_ratio);
+                    if (off_range > 0)
+                    {
+                        compression_range[2] = offl;
+                        compression_range[3] = offl + off_range;
+                    }
+                    else // if negative range, swap min and max
+                    {
+                        compression_range[2] = offl + (-1) * off_range;
+                        compression_range[3] = offl;
+                    }
                 }
-                else // if negative range, swap min and max
-                {
-                    compression_range[0] = vl+ (-1)*vrange;
-                    compression_range[1] = vl;
-                }
+
 
                 // update groove with the new ranges
                 monotonic_groove.hvo.updateCompressionRanges(compression_range, true);

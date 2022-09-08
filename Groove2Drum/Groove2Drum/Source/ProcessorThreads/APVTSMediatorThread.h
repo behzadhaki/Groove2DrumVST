@@ -158,7 +158,7 @@ public:
                     if (resetSampleParamsClicked  or resetAllClicked)
                     {
                         // reset parameters to default
-                        for(const string &ParamID : {"VEL_BIAS", "VEL_DYNAMIC_RANGE", "MIN_OFFSET", "MAX_OFFSET"})
+                        for(const string &ParamID : {"VEL_BIAS", "VEL_DYNAMIC_RANGE", "OFFSET_BIAS", "OFFSET_RANGE"})
                         {
                             auto param = APVTS->getParameter(ParamID);
                             param->setValueNotifyingHost(param->getDefaultValue());
@@ -253,7 +253,7 @@ private:
     {
         return {
             *APVTS->getRawParameterValue("VEL_BIAS"), *APVTS->getRawParameterValue("VEL_DYNAMIC_RANGE"),
-            *APVTS->getRawParameterValue("MIN_OFFSET"), *APVTS->getRawParameterValue("MAX_OFFSET"),
+            *APVTS->getRawParameterValue("OFFSET_BIAS"), *APVTS->getRawParameterValue("OFFSET_RANGE"),
         };
     }
 
