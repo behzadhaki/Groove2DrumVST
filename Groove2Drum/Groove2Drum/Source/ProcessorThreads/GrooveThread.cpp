@@ -237,7 +237,8 @@ void GrooveThread::run()
                     }
                     else // if negative range, swap min and max
                     {
-                        compression_range[0] = vl + (-1) * vrange;
+                        vrange *= -1;
+                        compression_range[0] = vl + vrange;
                         compression_range[1] = vl;
                     }
                 }
@@ -246,18 +247,18 @@ void GrooveThread::run()
                 {
                     auto bias = newVelOffsetrange[2];
                     auto range_ratio = newVelOffsetrange[3] / 100.0f;
-                    auto offl = float(bias + HVO_params::_min_offset);
-                    auto off_range = float((HVO_params::_max_offset - HVO_params::_min_offset)
-                                        * range_ratio);
-                    if (off_range > 0)
+                    auto off_range_above_zero = float((HVO_params::_max_offset - HVO_params::_min_offset)
+                                        * range_ratio) / 2.0f;
+                    if (off_range_above_zero > 0)
                     {
-                        compression_range[2] = offl;
-                        compression_range[3] = offl + off_range;
+                        compression_range[2] = bias - off_range_above_zero;
+                        compression_range[3] = bias + off_range_above_zero;
                     }
                     else // if negative range, swap min and max
                     {
-                        compression_range[2] = offl + (-1) * off_range;
-                        compression_range[3] = offl;
+                        off_range_above_zero *= -1;
+                        compression_range[2] = bias + off_range_above_zero;
+                        compression_range[3] = bias - off_range_above_zero;
                     }
                 }
 
