@@ -150,9 +150,9 @@ void GrooveThread::run()
             }
         }
 
+        // 5. see if new BasicNotes received from gui by hand drawing dragging a note
         if (GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue != nullptr)
         {
-            // 5. see if new BasicNotes received from gui by hand drawing dragging a note
             while (
                 GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue->getNumReady()
                 > 0)
@@ -176,6 +176,8 @@ void GrooveThread::run()
             }
         }
 
+        // 6. see if new BasicNotes received from main processblock
+        // 7. apply compression if new notes overdubbed
         if (ProcessBlockToGrooveThreadQue!= nullptr )
         {
             // 6. see if new BasicNotes received from main processblock
@@ -209,10 +211,11 @@ void GrooveThread::run()
             }
         }
 
-        // 8. see if new control params received from the gui
+        // 8. see if new control params (vel offset ranges ... ) received from the gui
         if (APVTS2GrooveThread_groove_vel_offset_ranges_Que != nullptr)
         {
             array<float, 4> newVelOffsetrange {};
+            array<float, 4> compression_range  {};
 
             while (APVTS2GrooveThread_groove_vel_offset_ranges_Que->getNumReady() > 0
                    and not this->threadShouldExit())
@@ -220,20 +223,32 @@ void GrooveThread::run()
                 // Step 1. get new vel/offset ranges received
                 APVTS2GrooveThread_groove_vel_offset_ranges_Que->ReadFrom(&newVelOffsetrange, 1);
 
-                // update local range values
-                vel_range = {newVelOffsetrange[0], newVelOffsetrange[1]};
-                offset_range = {newVelOffsetrange[2], newVelOffsetrange[3]};
+                // calculate min/max vel using range and bias
+
+                auto bias = newVelOffsetrange[0];
+                auto range_ratio = newVelOffsetrange[1]/100.0f;
+                auto vl = float(bias + HVO_params::_min_vel);
+                auto vrange = float((HVO_params::_max_vel-HVO_params::_min_vel) * range_ratio);
+                if (vrange > 0)
+                {
+                    compression_range[0] = vl;
+                    compression_range[1] = vl+vrange;
+                }
+                else // if negative range, swap min and max
+                {
+                    compression_range[0] = vl+ (-1)*vrange;
+                    compression_range[1] = vl;
+                }
 
                 // update groove with the new ranges
-                monotonic_groove.hvo.updateCompressionRanges(newVelOffsetrange, true);
+                monotonic_groove.hvo.updateCompressionRanges(compression_range, true);
 
                 // activate sending flag
                 isNewGrooveAvailable = true;
             }
         }
 
-
-        // Send groove to other threads if new one available
+        // 9. Send groove to other threads if new one available
         if (isNewGrooveAvailable or isNewGrooveAvailableUsingHandDrawnNote)
         {
             if (GrooveThreadToModelThreadQue != nullptr)

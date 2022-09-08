@@ -158,7 +158,7 @@ public:
                     if (resetSampleParamsClicked  or resetAllClicked)
                     {
                         // reset parameters to default
-                        for(const string &ParamID : {"MIN_VELOCITY", "MAX_VELOCITY", "MIN_OFFSET", "MAX_OFFSET"})
+                        for(const string &ParamID : {"VEL_BIAS", "VEL_DYNAMIC_RANGE", "MIN_OFFSET", "MAX_OFFSET"})
                         {
                             auto param = APVTS->getParameter(ParamID);
                             param->setValueNotifyingHost(param->getDefaultValue());
@@ -220,11 +220,6 @@ public:
     // ============================================================================================================
 
 
-
-
-
-
-
     // ============================================================================================================
     // ===          Preparing Thread for Stopping
     // ============================================================================================================
@@ -242,6 +237,7 @@ public:
         }
     }
 
+private:
     // ============================================================================================================
     // ===          Utility Methods and Parameters
     // ============================================================================================================
@@ -256,11 +252,11 @@ public:
     std::array<float, 4> get_groove_vel_offset_ranges()
     {
         return {
-            *APVTS->getRawParameterValue("MIN_VELOCITY"), *APVTS->getRawParameterValue("MAX_VELOCITY"),
+            *APVTS->getRawParameterValue("VEL_BIAS"), *APVTS->getRawParameterValue("VEL_DYNAMIC_RANGE"),
             *APVTS->getRawParameterValue("MIN_OFFSET"), *APVTS->getRawParameterValue("MAX_OFFSET"),
         };
     }
-    
+
     std::array<float, HVO_params::num_voices> get_max_num_hits()
     {
         std::array<float, HVO_params::num_voices> max_num_hits {};
@@ -297,7 +293,7 @@ public:
 
     // returns reset_groove, reset_samplingparams and reset all
     std::array<int, 3> get_reset_buttons()
-    { 
+    {
         return {(int)*APVTS->getRawParameterValue("RESET_GROOVE"),
                 (int)*APVTS->getRawParameterValue("RESET_SAMPLINGPARAMS"),
                 (int)*APVTS->getRawParameterValue("RESET_ALL")};
@@ -313,11 +309,10 @@ public:
         param = APVTS->getParameter("RESET_ALL");
         param->setValueNotifyingHost(0);
     }
-    
 
     // returns RANDOMIZE_VEL, RANDOMIZE_OFFSET and RANDOMIZE_ALL all
     std::array<int, 3> get_randomize_groove_buttons()
-    { 
+    {
         return {(int)*APVTS->getRawParameterValue("RANDOMIZE_VEL"),
                 (int)*APVTS->getRawParameterValue("RANDOMIZE_OFFSET"),
                 (int)*APVTS->getRawParameterValue("RANDOMIZE_ALL")};
@@ -341,7 +336,6 @@ public:
         return model_selected;
     }
 
-private:
     // ============================================================================================================
     // ===          Output Queues for Receiving/Sending Data
     // ============================================================================================================

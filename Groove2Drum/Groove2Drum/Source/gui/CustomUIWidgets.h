@@ -813,12 +813,12 @@ namespace FinalUIWidgets {
         unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> recordToggleAttachment;
 
         // sliders for groove manipulation
-        juce::Slider minVelSlider;
-        juce::Label  minVelLabel;
-        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> minVelSliderAPVTSAttacher;
-        juce::Slider maxVelSlider;
-        juce::Label  maxVelLabel;
-        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> maxVelSliderAPVTSAttacher;
+        juce::Slider VelBiasSilder;
+        juce::Label  VelBiasLabel;
+        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> VelBiasSilderAPVTSAttacher;
+        juce::Slider VelRangeSilder;
+        juce::Label  VelRangeLabel;
+        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> VelRangeSilderAPVTSAttacher;
         juce::Slider minOffsetSlider;
         juce::Label  minOffsetLabel;
         unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> minOffsetSliderAPVTSAttacher;
@@ -840,15 +840,16 @@ namespace FinalUIWidgets {
             addAndMakeVisible (recordToggle);
 
             // add sliders for vel offset ranges
-            addAndMakeVisible (minVelSlider);
-            minVelLabel.setText ("Min Vel", juce::dontSendNotification);
-            addAndMakeVisible (minVelLabel);
-            minVelSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "MIN_VELOCITY", minVelSlider);
+            addAndMakeVisible (VelRangeSilder);
+            addAndMakeVisible (VelRangeLabel);
+            VelRangeLabel.setText ("| Velocity | Dynamic Range", juce::dontSendNotification);
+            VelRangeSilderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "VEL_DYNAMIC_RANGE", VelRangeSilder);
 
-            addAndMakeVisible (maxVelSlider);
-            addAndMakeVisible (maxVelLabel);
-            maxVelLabel.setText ("Max Vel", juce::dontSendNotification);
-            maxVelSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "MAX_VELOCITY", maxVelSlider);
+            addAndMakeVisible (VelBiasSilder);
+            addAndMakeVisible (VelBiasLabel);
+            VelBiasSilderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "VEL_BIAS", VelBiasSilder);
+            VelBiasLabel.setText  ("|          | ---- Bias ---", juce::dontSendNotification);
+
 
             addAndMakeVisible (minOffsetSlider);
             addAndMakeVisible (minOffsetLabel);
@@ -887,8 +888,8 @@ namespace FinalUIWidgets {
                 area.removeFromTop(2 * proportionOfHeight(.05f));
                 area.removeFromLeft(area.proportionOfWidth(1.0f - slider_labels_width_ratio));
                 auto height = area.proportionOfHeight(1.0f/5.0f);
-                minVelLabel.setBounds(area.removeFromTop(height));
-                maxVelLabel.setBounds(area.removeFromTop(height));
+                VelRangeLabel.setBounds(area.removeFromTop(height));
+                VelBiasLabel.setBounds(area.removeFromTop(height));
                 minOffsetLabel.setBounds(area.removeFromTop(height));
                 maxOffsetLabel.setBounds(area.removeFromTop(height));
                 temperatureLabel.setBounds(area.removeFromTop(height));
@@ -900,8 +901,8 @@ namespace FinalUIWidgets {
                 area.removeFromRight(area.proportionOfWidth(slider_labels_width_ratio));
                 auto height = area.proportionOfHeight(1.0f/5.0f);
 
-                minVelSlider.setBounds(area.removeFromTop(height));
-                maxVelSlider.setBounds(area.removeFromTop(height));
+                VelRangeSilder.setBounds(area.removeFromTop(height));
+                VelBiasSilder.setBounds(area.removeFromTop(height));
                 minOffsetSlider.setBounds(area.removeFromTop(height));
                 maxOffsetSlider.setBounds(area.removeFromTop(height));
                 temperatureSlider.setBounds(area.removeFromTop(height));
@@ -1007,20 +1008,6 @@ namespace FinalUIWidgets {
             textLabel.setBounds(area.removeFromTop(proportionOfHeight(0.5f)));
             ComboBox.setBounds(area);
         }
-
-
-        /*void addListener(juce::ComboBox::Listener* ComboBoxListener)
-        {
-            ComboBox.addListener(ComboBoxListener);
-        }
-
-        void removeListener(juce::ComboBox::Listener* ComboBoxListener)
-        {
-            ComboBox.removeListener(ComboBoxListener);
-        }
-
-*/
-
 
     };
 }
