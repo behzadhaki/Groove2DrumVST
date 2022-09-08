@@ -790,13 +790,47 @@ template <int time_steps_, int num_voices_> struct HVO
      * @param newVelOffsetrange (array<float, 4>)
      * @param shouldReApplyCompression  (bool)
      */
-    void updateCompressionRanges(array<float, 4> newVelOffsetrange,
+    void updateCompressionRanges(array<float, 4> compression_params,
                                  bool shouldReApplyCompression)
     {
-        vel_range [0] = newVelOffsetrange[0];
-        vel_range [1] = newVelOffsetrange[1];
-        offset_range [0] = newVelOffsetrange[2];
-        offset_range [1] = newVelOffsetrange[3];
+        // calculate min/max vel using range and bias
+        {
+            auto bias = compression_params[0];
+            auto range_ratio = compression_params[1] / 100.0f;
+            auto vl = float(bias + HVO_params::_min_vel);
+            auto vrange = float((HVO_params::_max_vel - HVO_params::_min_vel)
+                                * range_ratio);
+            if (vrange > 0)
+            {
+                vel_range [0] = vl;
+                vel_range[1] = vl + vrange;
+            }
+            else // if negative range, swap min and max
+            {
+                vrange *= -1;
+                vel_range[0] = vl + vrange;
+                vel_range[1] = vl;
+            }
+        }
+
+        // calculate min/max offset using range and bias
+        {
+            auto bias = compression_params[2];
+            auto range_ratio = compression_params[3] / 100.0f;
+            auto off_range_above_zero = float((HVO_params::_max_offset - HVO_params::_min_offset)
+                                              * range_ratio) / 2.0f;
+            if (off_range_above_zero > 0)
+            {
+                offset_range[0] = bias - off_range_above_zero;
+                offset_range[1] = bias + off_range_above_zero;
+            }
+            else // if negative range, swap min and max
+            {
+                off_range_above_zero *= -1;
+                offset_range[0] = bias + off_range_above_zero;
+                offset_range[1] = bias - off_range_above_zero;
+            }
+        }
 
         if (shouldReApplyCompression)
         {
