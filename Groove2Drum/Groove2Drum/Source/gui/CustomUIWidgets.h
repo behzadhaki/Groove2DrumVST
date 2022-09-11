@@ -60,7 +60,7 @@ namespace SingleStepPianoRollBlock
         int hit;
         float velocity;
         float offset;
-        juce::Colour backgroundcolor;
+        array<juce::Colour, 2> backgroundcolor_array;
         int grid_index; // time step corresponding to the block
         float low_offset = min(HVO_params::_min_offset, HVO_params::_max_offset); // min func just incase min and max offsets are wrongly defined
         float hi_offset = max(HVO_params::_min_offset, HVO_params::_max_offset); // max func just incase min and max offsets are wrongly defined
@@ -71,15 +71,15 @@ namespace SingleStepPianoRollBlock
          * Constructor
          *
          * @param isClickable_ (bool) True for interactive version
-         * @param backgroundcolor_  (juce::Colour type)
+         * @param backgroundcolor_array  (array<juce::Colour, 2>) backgroundcolor_array[0] color for left half, backgroundcolor_array[1] color for right half,
          * @param grid_index_ (int) specifies which time step the block is used for
          * @param GroovePianoRollWidget2GrooveThread_manually_drawn_noteQuePntr  (LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>*) used to send data to a receiver via this queue if interactive and also queue is not nullptr
          *
          */
-        InteractiveIndividualBlock(bool isClickable_, juce::Colour backgroundcolor_, int grid_index_,
+        InteractiveIndividualBlock(bool isClickable_, array<juce::Colour, 2> backgroundcolor_array_, int grid_index_,
                                    LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>* GroovePianoRollWidget2GrooveThread_manually_drawn_noteQuePntr = nullptr) {
             grid_index = grid_index_;
-            backgroundcolor = backgroundcolor_;
+            backgroundcolor_array = backgroundcolor_array_;
             isClickable = isClickable_;
             GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue = GroovePianoRollWidget2GrooveThread_manually_drawn_noteQuePntr;
             hit = 0;
@@ -90,8 +90,6 @@ namespace SingleStepPianoRollBlock
         void paint(juce::Graphics& g) override
         {
 
-            //background colour
-            g.fillAll(backgroundcolor);
 
             // get component dimensions
             auto w = (float) getWidth();
@@ -99,9 +97,29 @@ namespace SingleStepPianoRollBlock
 
             // draw a line on the left side
             g.setColour(juce::Colours::black);
-            juce::Point<float> p1_edge {0, h};
-            juce::Point<float> p2_edge {0, 0};
-            g.drawLine ({p1_edge, p2_edge}, 2.0f);
+            auto x_ = (float) proportionOfWidth(0.5f);
+
+            //background colours
+            // g.fillAll(backgroundcolor_array[0]);
+            g.setColour(backgroundcolor_array[0]);
+            juce::Rectangle<float> rectLeftBackg (juce::Point<float> {0, 0}, juce::Point<float>{x_, (float)getHeight()});
+            g.fillRect(rectLeftBackg);
+            g.drawRect(rectLeftBackg, 0.0f);
+            g.setColour(backgroundcolor_array[1]);
+            juce::Rectangle<float> rectRightBackg (juce::Point<float> {x_, 0}, juce::Point<float>{(float)getWidth(), (float)getHeight()});
+            g.fillRect(rectRightBackg);
+            g.drawRect(rectRightBackg, 0.0f);
+
+            // lines
+            // draw a line on the left edge of each step
+            g.setColour(juce::Colours::whitesmoke);
+            juce::Point<float> p1_edge {x_, h};
+            juce::Point<float> p2_edge {x_, 0};
+            g.drawLine ({p1_edge, p2_edge}, 1.0f);
+
+            /*juce::Point<float> p1_edgeL {0, h};
+            juce::Point<float> p2_edgeL {0, 0};
+            g.drawLine ({p1_edgeL, p2_edgeL}, 0.50f);*/
 
             if (hit == 1)
             {
@@ -332,10 +350,10 @@ namespace SingleStepPianoRollBlock
         unique_ptr<InteractiveIndividualBlock> pianoRollBlockWidgetPntr;  // unique_ptr to allow for initialization in the constructor
         unique_ptr<ProbabilityLevelWidget> probabilityCurveWidgetPntr;         // component instance within which we'll draw the probability curve
 
-        InteractiveIndividualBlockWithProbability(bool isClickable_, juce::Colour backgroundcolor_, int grid_index_,
+        InteractiveIndividualBlockWithProbability(bool isClickable_, array<juce::Colour, 2> backgroundcolor_array, int grid_index_,
                                                   LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>* GroovePianoRollWidget2GrooveThread_manually_drawn_noteQues=nullptr)
         {
-            pianoRollBlockWidgetPntr = make_unique<InteractiveIndividualBlock>(isClickable_, backgroundcolor_, grid_index_, GroovePianoRollWidget2GrooveThread_manually_drawn_noteQues);
+            pianoRollBlockWidgetPntr = make_unique<InteractiveIndividualBlock>(isClickable_, backgroundcolor_array, grid_index_, GroovePianoRollWidget2GrooveThread_manually_drawn_noteQues);
             addAndMakeVisible(pianoRollBlockWidgetPntr.get());
 
 
@@ -493,7 +511,6 @@ namespace SingleStepPianoRollBlock
 }
 
 
-
 // ------------------------------------------------------------------------------------------------------------
 // ==========              UI WIDGETS PLACED ON FINAL EDITOR GUI                                  =============
 // ==========
@@ -536,24 +553,39 @@ namespace FinalUIWidgets {
                 addAndMakeVisible(MaxCount_Prob_XYPad.get());
 
                 // Draw up piano roll
+                array<juce::Colour, 2> bc;
                 for (unsigned long i=0; i<HVO_params::time_steps; i++)
                 {
-                    if (fmod(i, HVO_params::num_steps_per_beat*HVO_params::num_beats_per_bar) == 0)      // bar position
+                    if (fmod(i,
+                             HVO_params::num_steps_per_beat
+                                 * HVO_params::num_beats_per_bar)
+                        == 0) // bar position
                     {
-                        interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::
-                                                                         InteractiveIndividualBlockWithProbability>(false, bar_backg_color, i));
+                        bc = {rest_backg_color, bar_backg_color};
                     }
-                    else if(fmod(i, HVO_params::num_steps_per_beat) == 0)                  // beat position
+                    else if (fmod(i,
+                                  HVO_params::num_steps_per_beat
+                                      * HVO_params::num_beats_per_bar)
+                             == 1)
                     {
-                        interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::
-                                                                         InteractiveIndividualBlockWithProbability>(false, beat_backg_color, i));
+                        bc = {bar_backg_color, rest_backg_color};
                     }
-                    else                                                    // every other position
+                    else if (fmod(i, HVO_params::num_steps_per_beat)
+                             == 0) // beat position
                     {
-                        interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::
-                                                                         InteractiveIndividualBlockWithProbability>(false, rest_backg_color, i));
+                        bc = {rest_backg_color, beat_backg_color};
+                    }
+                    else if (fmod(i, HVO_params::num_steps_per_beat) == 1)
+                    {
+                        bc = {beat_backg_color, rest_backg_color};
+                    }
+                    else // every other position
+                    {
+                        bc = {rest_backg_color, rest_backg_color};
                     }
 
+                    interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::
+                                                                     InteractiveIndividualBlockWithProbability>(false, bc, i));
                     MaxCount_Prob_XYPad->addWidget(interactivePRollBlocks[i].get());
                     addAndMakeVisible(interactivePRollBlocks[i].get());
                 }
@@ -694,9 +726,6 @@ namespace FinalUIWidgets {
         public:
 
             vector<shared_ptr<SingleStepPianoRollBlock::InteractiveIndividualBlock>> interactivePRollBlocks;
-            juce::Colour def_c {juce::Colour::fromFloatRGBA(1.0f,1.0f,1.0f,0.8f)};
-            juce::Colour beat_c { juce::Colour::fromFloatRGBA(.75f,.75f,.75f, 0.5f)};
-            juce::Colour bar_c {  juce::Colour::fromFloatRGBA(.6f,.6f,.6f, 0.5f) };
             juce::Label label;
 
             InteractiveMonotonicGrooveSingleRow(bool isInteractive, const string label_text,
@@ -711,22 +740,37 @@ namespace FinalUIWidgets {
 
                 // Draw up piano roll
                 /*auto w_per_block = (int) size_width/num_gridlines;*/
-
+                array<juce::Colour, 2> bc;
                 for (unsigned long i=0; i<HVO_params::time_steps; i++)
                 {
-                    if (fmod(i, HVO_params::num_steps_per_beat*HVO_params::num_beats_per_bar) == 0)      // bar position
+                    if (fmod(i,
+                             HVO_params::num_steps_per_beat
+                                 * HVO_params::num_beats_per_bar)
+                        == 0) // bar position
                     {
-                        interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::InteractiveIndividualBlock>(isInteractive, bar_c, i, GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue));
+                        bc = {rest_backg_color, bar_backg_color};
                     }
-                    else if(fmod(i, HVO_params::num_steps_per_beat) == 0)                  // beat position
+                    else if (fmod(i,
+                                  HVO_params::num_steps_per_beat
+                                      * HVO_params::num_beats_per_bar)
+                             == 1)
                     {
-                        interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::InteractiveIndividualBlock>(isInteractive, beat_c, i, GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue));
+                        bc = {bar_backg_color, rest_backg_color};
                     }
-                    else                                                    // every other position
+                    else if (fmod(i, HVO_params::num_steps_per_beat)
+                             == 0) // beat position
                     {
-                        interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::InteractiveIndividualBlock>(isInteractive, def_c, i, GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue));
+                        bc = {rest_backg_color, beat_backg_color};
                     }
-
+                    else if (fmod(i, HVO_params::num_steps_per_beat) == 1)
+                    {
+                        bc = {beat_backg_color, rest_backg_color};
+                    }
+                    else // every other position
+                    {
+                        bc = {rest_backg_color, rest_backg_color};
+                    }
+                    interactivePRollBlocks.push_back(make_shared<SingleStepPianoRollBlock::InteractiveIndividualBlock>(isInteractive, bc, i, GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue));
                     addAndMakeVisible(interactivePRollBlocks[i].get());
                 }
 

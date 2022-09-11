@@ -26,8 +26,8 @@
 
 
 #define rest_backg_color juce::Colour::fromFloatRGBA(1.0f,1.0f,1.0f,0.8f)
-#define  beat_backg_color juce::Colour::fromFloatRGBA(.75f,.75f,.75f, 0.5f)
-#define bar_backg_color juce::Colour::fromFloatRGBA(.6f,.6f,.6f, 0.5f)
+#define  beat_backg_color juce::Colour::fromFloatRGBA(.8f,.8f,.8f, 0.5f)
+#define bar_backg_color juce::Colour::fromFloatRGBA(.4f,.4f,.4f, 0.4f)
 
 #define note_color      juce::Colour::fromRGBA(37, 150, 190, 200)
 
