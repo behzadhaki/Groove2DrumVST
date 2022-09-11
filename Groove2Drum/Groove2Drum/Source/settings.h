@@ -72,8 +72,8 @@ namespace HVO_params
 // ======================================================================================
 // ==================     Thread Settings                  ==============================
 // ======================================================================================
-namespace thread_settings{
-//
+namespace thread_settings
+{
     namespace GrooveThread
     {
         constexpr int waitTimeBtnIters {5}; //ms between two consecutive iterations of the thread loop in run()
@@ -81,6 +81,10 @@ namespace thread_settings{
     namespace ModelThread
     {
         constexpr int waitTimeBtnIters {5}; //ms between two consecutive iterations of the thread loop in run()
+    }
+    namespace APVTSMediatorThread
+    {
+        constexpr int waitTimeBtnIters {20}; //ms between two consecutive iterations of the thread loop in run()
     }
 }
 

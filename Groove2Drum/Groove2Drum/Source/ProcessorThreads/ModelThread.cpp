@@ -194,7 +194,7 @@ void ModelThread::run()
         bExit = threadShouldExit();
 
         // avoid burning CPU, if reading is returning immediately
-        // sleep (thread_settings::ModelThread::waitTimeBtnIters);
+        sleep (thread_settings::ModelThread::waitTimeBtnIters); // avoid burning CPU, if reading is returning immediately
     }
 }
 // ============================================================================================================
@@ -206,7 +206,7 @@ void ModelThread::run()
 void ModelThread::prepareToStop()
 {
     //Need to wait enough so as to ensure the run() method is over before killing thread
-    this->stopThread(thread_settings::ModelThread::waitTimeBtnIters*2);
+    this->stopThread(3 * thread_settings::ModelThread::waitTimeBtnIters);
     readyToStop = true;
 }
 

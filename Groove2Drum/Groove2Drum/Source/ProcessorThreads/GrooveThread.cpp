@@ -247,7 +247,7 @@ void GrooveThread::run()
         }
 
         bExit = threadShouldExit();
-        // sleep (thread_settings::GrooveThread::waitTimeBtnIters); // avoid burning CPU, if reading is returning immediately
+        sleep (thread_settings::GrooveThread::waitTimeBtnIters); // avoid burning CPU, if reading is returning immediately
         // sleep(1);
     }
 
@@ -261,7 +261,8 @@ void GrooveThread::run()
 void GrooveThread::prepareToStop()
 {
     //Need to wait enough so as to ensure the run() method is over before killing thread
-    this->stopThread(thread_settings::GrooveThread::waitTimeBtnIters*2);
+    this->stopThread(3 * thread_settings::GrooveThread::waitTimeBtnIters);
+
     readyToStop = true;
 }
 

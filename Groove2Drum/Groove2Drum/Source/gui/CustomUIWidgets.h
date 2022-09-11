@@ -1029,8 +1029,6 @@ namespace FinalUIWidgets {
         {
             addAndMakeVisible(ComboBox);
 
-            ComboBoxAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (*apvtsPntr, ParameterID_, ComboBox);
-
             model_paths = model_paths_;
 
             for (auto model_path: model_paths)
@@ -1039,7 +1037,9 @@ namespace FinalUIWidgets {
                 ComboBox.addItem((string)GeneralSettings::default_model_folder + "/" + model_path.toStdString() + ".pt", num_choices);
             }
 
-            ComboBox.setSelectedId (1);
+            ComboBoxAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (*apvtsPntr, ParameterID_, ComboBox);
+
+            // ComboBox.setSelectedId (1);
 
         }
 

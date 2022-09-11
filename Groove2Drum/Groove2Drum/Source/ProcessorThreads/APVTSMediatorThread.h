@@ -213,7 +213,7 @@ public:
 
                 bExit = threadShouldExit();
 
-                sleep(10);
+                sleep (thread_settings::APVTSMediatorThread::waitTimeBtnIters); // avoid burning CPU, if reading is returning immediately
             }
         }
     }
@@ -227,9 +227,10 @@ public:
     // run this in destructor destructing object
     void prepareToStop(){
         //Need to wait enough to ensure the run() method is over before killing thread
-        this->stopThread(20);
+        this->stopThread(3 * thread_settings::APVTSMediatorThread::waitTimeBtnIters);
         readyToStop = true;
     }
+
     ~APVTSMediatorThread() override {
         if (not readyToStop)
         {
