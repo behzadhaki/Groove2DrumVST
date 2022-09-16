@@ -54,16 +54,16 @@ public:
     juce::StringArray model_paths{get_pt_files_in_default_path()};
 
 private:
-    // =========  Queues for communicating Between the main threads in processor  =============================================
-    unique_ptr<LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>> ProcessBlockToGrooveThreadQue;
-    unique_ptr<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>> GrooveThreadToModelThreadQue;
-    unique_ptr<GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>> ModelThreadToProcessBlockQue;
-    unique_ptr<LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>> APVTS2GrooveThread_groove_vel_offset_ranges_Que;
-    unique_ptr<LockFreeQueue<std::array<int, 2>, GeneralSettings::gui_io_queue_size>> APVTS2GrooveThread_groove_record_overdubToggles_Que;
-    unique_ptr<LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>> APVTS2ModelThread_max_num_hits_Que;
-    unique_ptr<LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>> APVTS2ModelThread_sampling_thresholds_and_temperature_Que;
-    unique_ptr<LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>> GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue;
-    unique_ptr<LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>> APVTS2ModelThread_midi_mappings_Que;
+    // =========  Queues for communicating Between the main threads in proce    ssor  =============================================
+    shared_ptr<LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>> ProcessBlockToGrooveThreadQue;
+    shared_ptr<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>> GrooveThreadToModelThreadQue;
+    shared_ptr<GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>> ModelThreadToProcessBlockQue;
+    shared_ptr<LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>> APVTS2GrooveThread_groove_vel_offset_ranges_Que;
+    shared_ptr<LockFreeQueue<std::array<int, 2>, GeneralSettings::gui_io_queue_size>> APVTS2GrooveThread_groove_record_overdubToggles_Que;
+    shared_ptr<LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>> APVTS2ModelThread_max_num_hits_Que;
+    shared_ptr<LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>> APVTS2ModelThread_sampling_thresholds_and_temperature_Que;
+    shared_ptr<LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>> GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue;
+    shared_ptr<LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>> APVTS2ModelThread_midi_mappings_Que;
 
     // holds the latest generations to loop over
     GeneratedData<HVO_params::time_steps, HVO_params::num_voices> latestGeneratedData;
