@@ -20,7 +20,11 @@ juce_add_plugin("${BaseTargetName}"
 
 target_sources(${BaseTargetName} PRIVATE
         Source/PluginProcessor.cpp
-        Source/PluginEditor.cpp)
+        Source/PluginEditor.cpp
+        Source/Model/ModelAPI.cpp
+        Source/gui/CustomGuiTextEditors.cpp
+        Source/ProcessorThreads/GrooveThread.cpp
+        Source/ProcessorThreads/ModelThread.cpp)
 
 target_compile_definitions(${BaseTargetName}
         PUBLIC

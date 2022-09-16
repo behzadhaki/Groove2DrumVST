@@ -13,7 +13,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 #Minimum MacOS target, set globally
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.10" CACHE STRING "Minimum OS X deployment version" FORCE)
 
-option(UniversalBinary "Build universal binary for mac" OFF)
+option(UniversalBinary "Build universal binary for mac" ON)
 
 if (UniversalBinary)
     set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE INTERNAL "")
@@ -34,7 +34,10 @@ option(JUCE_BUILD_EXAMPLES "Build JUCE Examples" OFF)
 #Fetching JUCE from git
 #IF you want to instead point it to a local version, you can invoke CMake with
 #-DCPM_JUCE_SOURCE="Path_To_JUCE"
-CPMAddPackage("gh:juce-framework/JUCE#develop")
+# use following for Latest JUCE version
+# CPMAddPackage("gh:juce-framework/JUCE#develop")
+# rn I'm using version 7.0.1 on commit # b08520c
+CPMAddPackage("gh:juce-framework/JUCE#b08520c")
 
 #By default, we are building the provided plugin/app examples:
 option(BUILD_JUCE_PROTOTYPE_EXAMPLES "Build JUCE prototype examples" ON)

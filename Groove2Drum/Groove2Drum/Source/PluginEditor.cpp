@@ -1,97 +1,102 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "settings.h"
-#include "Models_API.h"
-
-
-#include <iostream>
 
 MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPointer)
     : AudioProcessorEditor(&MidiFXProcessorPointer)
 {
-    addAndMakeVisible(SampleRateLabel);
-
-    SampleRateLabel.setText("MAKE SURE SAMPLE RATE IS "+juce::String(settings::sample_rate), juce::dontSendNotification);
-    SampleRateLabel.setBounds (0, 0, 300, 30);
-
-    /*// Create Message Box for Displaying Midi Notes, then start thread for reading
-    // from midi_message_que queue and displaying in message box
-    addAndMakeVisible (MidiNoteValueLoggerTextEditor);
-    MidiNoteValueLoggerTextEditor.setBounds (100, 40, 100, 100);
-    MidiNoteValueLoggerTextEditor.start_Thread(&MidiFXProcessorPointer.midi_message_que);
-
-    // Create TextEditor for playhead info
-    addAndMakeVisible (PlayheadLoggerTextEditor);
-    PlayheadLoggerTextEditor.setMultiLine (true);
-    PlayheadLoggerTextEditor.setBounds (300, 40, 100, 100);
-    PlayheadLoggerTextEditor.start_Thread(&MidiFXProcessorPointer.playhead_que);*/
+    MidiFXProcessorPointer_ = &MidiFXProcessorPointer;
 
 
-    // Create TextEditor for Note Struct
-    addAndMakeVisible (NoteStructLoggerTextEditor);
-    NoteStructLoggerTextEditor.setMultiLine (true);
-    NoteStructLoggerTextEditor.setBounds (100, 40, 500, 100);
-    NoteStructLoggerTextEditor.start_Thread(&MidiFXProcessorPointer.note_que);
+    // initialize widgets
+    GeneratedDrumsWidget = make_unique<FinalUIWidgets::GeneratedDrums::GeneratedDrumsWidget>(
+        &MidiFXProcessorPointer_->apvts);
+    {   // re-draw events if Editor reconstructed mid-session
+        auto ptr_ = MidiFXProcessorPointer_->ModelThreadToDrumPianoRollWidgetQue.get();
+        if (ptr_->getNumberOfWrites() > 0)
+        {
+            auto latest_score =
+                ptr_->getLatestDataWithoutMovingFIFOHeads();
+            GeneratedDrumsWidget->updateWithNewScore(latest_score);
+        }
+    }
 
+    MonotonicGrooveWidget = make_unique<FinalUIWidgets::MonotonicGrooves::MonotonicGrooveWidget>
+        (MidiFXProcessorPointer_->get_pointer_GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue());
+    {   // re-draw events if Editor reconstructed mid-session
+        auto ptr_ = MidiFXProcessorPointer_->GrooveThread2GGroovePianoRollWidgetQue.get();
+        if (ptr_->getNumberOfWrites() > 0)
+        {
+            auto latest_groove =
+                ptr_->getLatestDataWithoutMovingFIFOHeads();
+            MonotonicGrooveWidget->updateWithNewGroove(latest_groove);
+        }
+    }
 
-    // Create TextEditor for midiMsgPlayhead Struct
-    addAndMakeVisible (MidiMsgPlayHeadStructLoggerTextEditor);
-    MidiMsgPlayHeadStructLoggerTextEditor.setMultiLine (true);
-    MidiMsgPlayHeadStructLoggerTextEditor.setBounds (100, 180, 500, 100);
-    MidiMsgPlayHeadStructLoggerTextEditor.start_Thread(&MidiFXProcessorPointer.midiMsgPlayhead_que);
+    // Add widgets to Main Editor GUI
+    addAndMakeVisible(GeneratedDrumsWidget.get());
+    addAndMakeVisible(MonotonicGrooveWidget.get());
 
-    // Create TextEditor for displaying torch_tensors midiMsgPlayhead Struct
+    // Progress Bar
+    playhead_pos = MidiFXProcessorPointer_->get_playhead_pos();
+    PlayheadProgressBar.setColour(PlayheadProgressBar.foregroundColourId, playback_progressbar_color);
+    addAndMakeVisible(PlayheadProgressBar);
 
+    // add buttons
+    ButtonsWidget = make_unique<FinalUIWidgets::ButtonsWidget>(&MidiFXProcessorPointer_->apvts);
+    addAndMakeVisible (ButtonsWidget.get());
+    // ButtonsWidget->addListener(this);
 
-    addAndMakeVisible (TorchTensorTextEditor);
-    TorchTensorTextEditor.setMultiLine (true);
-    TorchTensorTextEditor.setBounds (100, 320, 500, 100);
-    TorchTensorTextEditor.start_Thread(&MidiFXProcessorPointer.torchTensor_que);
+    // initialize GrooveControlSliders
+    ControlsWidget = make_unique<FinalUIWidgets::ControlsWidget> (&MidiFXProcessorPointer_->apvts);
+    addAndMakeVisible (ControlsWidget.get());
+
+    // model selector
+    ModelSelectorWidget = make_unique<FinalUIWidgets::ModelSelectorWidget> (&MidiFXProcessorPointer_->apvts,
+                                                                           "MODEL",
+                                                                           MidiFXProcessorPointer_->model_paths);
+    addAndMakeVisible (ModelSelectorWidget.get());
+
 
     // Set window size
-    setSize (620, 500);
+    setResizable (true, true);
+    setSize (1400, 1000);
 
-    MonotonicGrooveTransformerV1 modelAPI(settings::default_model_path,
-                                          settings::time_steps,  settings::num_voices);
+    startTimer(50);
 
-    modelAPI.forward_pass(torch::rand({settings::time_steps, settings::num_voices * 3}));
+}
 
-    auto hits_probabilities = modelAPI.get_hits_probabilities();
-    // auto hits_probabilities = modelAPI.get_hits_probabilities();
-    // auto velocities = modelAPI.get_velocities();
-    // auto offsets = modelAPI.get_offsets();
+MidiFXProcessorEditor::~MidiFXProcessorEditor()
+{
+    //ButtonsWidget->removeListener(this);
+    // ModelSelectorWidget->removeListener(this);
+}
 
-    auto [hits, velocities, offsets] = modelAPI.sample("Threshold");
+void MidiFXProcessorEditor::resized()
+{
+    auto area = getLocalBounds();
+    setBounds(area);                            // bounds for main Editor GUI
 
-    DBG(tensor2string(hits));
-    DBG(tensor2string(velocities));
-    DBG(tensor2string(offsets));
+    // reserve right side for other controls
+    area.removeFromRight(proportionOfWidth(gui_settings::PianoRolls::space_reserved_right_side_of_gui_ratio_of_width));
 
-    MidiFXProcessorPointer.torchTensor_que.push(hits_probabilities);
+    // layout pianoRolls for generated drums at top
+    GeneratedDrumsWidget->setBounds (area.removeFromTop(area.proportionOfHeight(gui_settings::PianoRolls::completePianoRollHeight))); // piano rolls at top
 
-    /*
+    // layout pianoRolls for generated drums on top
+    MonotonicGrooveWidget->setBounds(area.removeFromBottom(area.proportionOfHeight(gui_settings::PianoRolls::completeMonotonicGrooveHeight))); // groove at bottom
 
-    torch::jit::script::Module model;
-    model = LoadModel("/Users/behzadhaki/Github/Groove2DrumVST/Groove2Drum/Groove2Drum/TorchScriptModels/misunderstood_bush_246-epoch_26_tst.pt");
+    // layout Playhead Progress Bar
+    area.removeFromLeft(area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width));
+    PlayheadProgressBar.setBounds(area.removeFromLeft(
+        GeneratedDrumsWidget->PianoRolls[0]->getPianoRollSectionWidth()));
 
-    std::vector<torch::jit::IValue> inputs;
-    inputs.emplace_back(torch::rand({32, 27})); // todo A wrapper needs to be implemented so as to predict h, v, o and stack them on top into a single hvo tensor within the wrappers internal forward
-    auto outputs = model.forward(inputs);
-    auto hLogit_v_o_tuples = outputs.toTuple();    // WE NEED
-
-
-    auto hits = hLogit_v_o_tuples->elements()[0].toTensor();
-    auto velocities = hLogit_v_o_tuples->elements()[1].toTensor();
-    auto offset = hLogit_v_o_tuples->elements()[2].toTensor();
-
-    // std::cout << res <<endl;
-
-    MidiFXProcessorPointer.torchTensor_que.push(hits);
-    MidiFXProcessorPointer.torchTensor_que.push(velocities);
-    MidiFXProcessorPointer.torchTensor_que.push(offset);
-     */
-
-    // model = torch::jit::load("/Users/behzadhaki/Library/Application Support/JetBrains/PyCharm2020.2/scratches/scriptmodule.pt");
+    // put buttons and GrooveControlSliders
+    area = getLocalBounds();
+    area.removeFromLeft(area.proportionOfWidth(1.0f - gui_settings::PianoRolls::space_reserved_right_side_of_gui_ratio_of_width));
+    ButtonsWidget->setBounds(area.removeFromTop(area.proportionOfHeight(0.3)));
+    ModelSelectorWidget->setBounds(area.removeFromTop(area.proportionOfHeight(0.1)));
+    ControlsWidget->setBounds(area.removeFromBottom(area.proportionOfHeight(0.4)));
 
 }
 
@@ -99,6 +104,34 @@ void MidiFXProcessorEditor::paint(juce::Graphics& g)
 {
     g.fillAll(getLookAndFeel().findColour(
         juce::ResizableWindow::backgroundColourId));
+
 }
 
+void MidiFXProcessorEditor::timerCallback()
+{
+    // get Generations and probs from model thread to display on drum piano rolls
+    {
+        auto ptr_ = MidiFXProcessorPointer_->ModelThreadToDrumPianoRollWidgetQue.get();
+        if (ptr_->getNumReady() > 0)
+        {
+            GeneratedDrumsWidget->updateWithNewScore(
+                ptr_->getLatestOnly());
+        }
+    }
 
+    // get Grooves from GrooveThread to display in Groove Piano Rolls
+    {
+        auto ptr_ = MidiFXProcessorPointer_->GrooveThread2GGroovePianoRollWidgetQue.get();
+
+        if (ptr_->getNumReady() > 0)
+        {
+            MonotonicGrooveWidget->updateWithNewGroove(
+                ptr_->getLatestOnly());
+        }
+
+    }
+
+    // get playhead position to display on progress bar
+    playhead_pos = MidiFXProcessorPointer_->get_playhead_pos();
+    GeneratedDrumsWidget->UpdatePlayheadLocation(playhead_pos);
+}
