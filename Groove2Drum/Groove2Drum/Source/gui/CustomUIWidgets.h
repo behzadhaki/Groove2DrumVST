@@ -607,7 +607,7 @@ namespace FinalUIWidgets {
                 interactivePRollBlocks[(size_t)time_step_ix]->addEvent(hit_, velocity_, offset_, probability_, (float)MaxCount_Prob_XYPad->ySlider.getValue());
             }
 
-            void resized() override {
+            void resized() override{
                 auto area = getLocalBounds();
                 area.removeFromRight(area.getWidth() - (int) area.proportionOfWidth(gui_settings::PianoRolls::label_ratio_of_width));
                 label.setBounds(area.removeFromTop(area.proportionOfHeight(0.5f)));
@@ -688,7 +688,6 @@ namespace FinalUIWidgets {
                     }
 
                 }
-
 
                 old_generated_data = latest_generated_data;
             }
