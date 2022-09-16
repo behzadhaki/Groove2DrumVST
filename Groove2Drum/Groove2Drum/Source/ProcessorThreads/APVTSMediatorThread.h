@@ -223,7 +223,8 @@ public:
     // ============================================================================================================
     // ===          Preparing Thread for Stopping
     // ============================================================================================================
-    bool readyToStop; // Used to check if thread is ready to be stopped or externally stopped from a parent thread
+    bool readyToStop {false}; // Used to check if thread is ready to be stopped or externally stopped from a parent thread
+
     // run this in destructor destructing object
     void prepareToStop(){
         //Need to wait enough to ensure the run() method is over before killing thread
