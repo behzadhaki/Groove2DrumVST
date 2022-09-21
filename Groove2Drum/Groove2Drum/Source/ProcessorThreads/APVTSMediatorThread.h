@@ -228,7 +228,7 @@ public:
     // run this in destructor destructing object
     void prepareToStop(){
         //Need to wait enough to ensure the run() method is over before killing thread
-        this->stopThread(3 * thread_settings::APVTSMediatorThread::waitTimeBtnIters);
+        this->stopThread(100 * thread_settings::APVTSMediatorThread::waitTimeBtnIters);
         readyToStop = true;
     }
 

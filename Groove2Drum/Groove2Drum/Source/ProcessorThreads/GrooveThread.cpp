@@ -261,7 +261,7 @@ void GrooveThread::run()
 void GrooveThread::prepareToStop()
 {
     //Need to wait enough so as to ensure the run() method is over before killing thread
-    this->stopThread(3 * thread_settings::GrooveThread::waitTimeBtnIters);
+    this->stopThread(100 * thread_settings::GrooveThread::waitTimeBtnIters);
 
     readyToStop = true;
 }
