@@ -206,7 +206,7 @@ void ModelThread::run()
 void ModelThread::prepareToStop()
 {
     //Need to wait enough so as to ensure the run() method is over before killing thread
-    this->stopThread(3 * thread_settings::ModelThread::waitTimeBtnIters);
+    this->stopThread(100 * thread_settings::ModelThread::waitTimeBtnIters);
     readyToStop = true;
 }
 

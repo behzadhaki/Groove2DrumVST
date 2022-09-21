@@ -17,15 +17,15 @@ MidiFXProcessor::MidiFXProcessor():
     ModelThreadToDrumPianoRollWidgetQue = make_unique<HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size>>();
 
     // Intra Processor Threads
-    ProcessBlockToGrooveThreadQue = make_unique<LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>>();
-    GrooveThreadToModelThreadQue = make_unique<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>>();
-    ModelThreadToProcessBlockQue = make_unique<GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>>();
-    APVTS2GrooveThread_groove_vel_offset_ranges_Que = make_unique<LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>>();
-    APVTS2GrooveThread_groove_record_overdubToggles_Que = make_unique<LockFreeQueue<std::array<int, 2>, GeneralSettings::gui_io_queue_size>>();
-    APVTS2ModelThread_max_num_hits_Que = make_unique<LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>>();
-    APVTS2ModelThread_sampling_thresholds_and_temperature_Que = make_unique<LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>>();
-    GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue = make_unique<LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>>();
-    APVTS2ModelThread_midi_mappings_Que = make_unique<LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>>();
+    ProcessBlockToGrooveThreadQue = make_shared<LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>>();
+    GrooveThreadToModelThreadQue = make_shared<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>>();
+    ModelThreadToProcessBlockQue = make_shared<GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>>();
+    APVTS2GrooveThread_groove_vel_offset_ranges_Que = make_shared<LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>>();
+    APVTS2GrooveThread_groove_record_overdubToggles_Que = make_shared<LockFreeQueue<std::array<int, 2>, GeneralSettings::gui_io_queue_size>>();
+    APVTS2ModelThread_max_num_hits_Que = make_shared<LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>>();
+    APVTS2ModelThread_sampling_thresholds_and_temperature_Que = make_shared<LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>>();
+    GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue = make_shared<LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>>();
+    APVTS2ModelThread_midi_mappings_Que = make_shared<LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>>();
 
 
     //////////////////////////////////////////////////////////////////
