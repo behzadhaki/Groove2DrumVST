@@ -1,12 +1,12 @@
-project(MidiFXTemplate VERSION 0.0.1)
+project(Groove2DrumFX VERSION 0.0.1)
 
-set (BaseTargetName MidiFXTemplate)
+set (BaseTargetName Groove2DrumFX)
 
 juce_add_plugin("${BaseTargetName}"
         # VERSION ...                               # Set this if the plugin version is different to the project version
         # ICON_BIG ...                              # ICON_* arguments specify a path to an image file to use as an icon for the Standalone
         # ICON_SMALL ...
-        COMPANY_NAME "MTG"
+        COMPANY_NAME "BehzadHaki"
         IS_SYNTH TRUE
         NEEDS_MIDI_INPUT TRUE
         NEEDS_MIDI_OUTPUT TRUE
