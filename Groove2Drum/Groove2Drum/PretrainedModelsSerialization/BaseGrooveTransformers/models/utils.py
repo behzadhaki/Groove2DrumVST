@@ -1,5 +1,4 @@
 import torch
-import math
 
 
 class PositionalEncoding(torch.nn.Module):
@@ -26,7 +25,7 @@ class PositionalEncoding(torch.nn.Module):
         pe = torch.zeros(max_len, d_model)  # shape (max_len, d_model)
         position = torch.arange(0, max_len, dtype=torch.float)  # Shape (max_len)
         position = position.unsqueeze(1)  # Shape (max_len, 1)
-        div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))  # Shape (d_model/2)
+        div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-torch.log(torch.tensor(10000.0))/ d_model))  # Shape (d_model/2)
         pe[:, 0::2] = torch.sin(position * div_term)
         if d_model % 2 is not 0:
             pe[:, 1::2] = torch.cos(position * div_term)[:, :-1]

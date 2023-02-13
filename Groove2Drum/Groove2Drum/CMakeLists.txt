@@ -18,6 +18,9 @@ juce_add_plugin("${BaseTargetName}"
         FORMATS AU VST3 Standalone
         PRODUCT_NAME "Groove2Drum")
 
+# Include the libtorch setup file
+include(libtorch_setup.cmake)
+
 target_sources(${BaseTargetName} PRIVATE
         Source/PluginProcessor.cpp
         Source/PluginEditor.cpp

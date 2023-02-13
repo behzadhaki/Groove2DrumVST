@@ -38,7 +38,7 @@ static torch::Tensor vector2tensor(vector<float> vec)
 {
     auto size = (int) vec.size();
     auto t = torch::zeros({size}, torch::kFloat32);
-    for (int i=0; i<size; i++)
+    for (size_t i=0; i<size; i++)
     {
         t[i] = vec[i];
     }

@@ -1,9 +1,9 @@
 import torch
 
-from BaseGrooveTransformers.models.encoder import Encoder
-from BaseGrooveTransformers.models.decoder import Decoder
-from BaseGrooveTransformers.models.io_layers import InputLayer, OutputLayer
-from BaseGrooveTransformers.models.utils import get_tgt_mask, get_hits_activation
+from Groove2Drum.Groove2Drum.PretrainedModelsSerialization.BaseGrooveTransformers.models.encoder import Encoder
+from Groove2Drum.Groove2Drum.PretrainedModelsSerialization.BaseGrooveTransformers.models.decoder import Decoder
+from Groove2Drum.Groove2Drum.PretrainedModelsSerialization.BaseGrooveTransformers.models.io_layers import InputLayer, OutputLayer
+from Groove2Drum.Groove2Drum.PretrainedModelsSerialization.BaseGrooveTransformers.models.utils import get_tgt_mask, get_hits_activation
 
 
 class GrooveTransformer(torch.nn.Module):

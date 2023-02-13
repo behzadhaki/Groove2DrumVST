@@ -10,7 +10,7 @@ class Encoder(torch.nn.Module):
         self.Encoder = torch.nn.TransformerEncoder(encoder_layer, num_encoder_layers, norm_encoder)
 
     def forward(self, src):
-        src = src.permute(1, 0, 2)  # 32xNxd_model
+        # src = src.permute(1, 0, 2)  # 32xNxd_model
         out = self.Encoder(src)  # 32xNxd_model
-        out = out.permute(1, 0, 2)  # Nx32xd_model
+        # out = out.permute(1, 0, 2)  # Nx32xd_model
         return out

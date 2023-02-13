@@ -45,10 +45,42 @@ if __name__ == '__main__':
         # flat list of parameters. You can partially specify names, i.e. provide
         # a list here shorter than the number of inputs to the model, and we will
         # only set that subset of names, starting from the beginning.
-        input_names = [ "groove_input" ]
-        output_names = [ "h_logits", "velocity", "offset"  ]
 
-        # trace model for serialization
-        # https://pytorch.org/tutorials/advanced/cpp_export.html
-        example = torch.rand(1, 32, 27)
-        torch.onnx.export(groove_transformer, example, os.path.join("serializedONNX", model_name_+".onnx"), verbose=True, input_names=input_names, output_names=output_names)
+
+        with torch.no_grad():
+            # trace model for serialization
+            # https://pytorch.org/tutorials/advanced/cpp_export.html
+
+            # # Export Input Layer
+            # input_names = [ "input_layer_in" ]
+            # output_names = [ "input_layer_out" ]
+            # example = torch.rand(1, 32, 27)
+            # torch.onnx.export(groove_transformer.InputLayerEncoder, example, os.path.join("serializedONNX", model_name_+"_input_layer.onnx"), verbose=True, input_names=input_names, output_names=output_names)
+            #
+            # Export Encoder Layer
+            input_names = [ "encoder_in" ]
+            output_names = [ "encoder_out" ]
+            example = torch.rand(32, 1, model_param_dict_["d_model"])
+
+            first_encoder_layer = groove_transformer.Encoder.named_modules().__next__()[1]
+            print(first_encoder_layer.named_modules().__next__()[1])
+            torch.onnx.export(first_encoder_layer.named_modules().__next__()[1], example, os.path.join("serializedONNX", model_name_+"_encoder.onnx"), verbose=True, input_names=input_names, output_names=output_names)
+
+            # Export Output Layer
+            # input_names = [ "output_layer_in" ]
+            # output_names = [ "output_layer_out" ]
+            # example = torch.rand(1, 32, model_param_dict_["d_model"])
+            # torch.onnx.export(groove_transformer.OutputLayer, example, os.path.join("serializedONNX", model_name_+"_output_layer.onnx"), verbose=True, input_names=input_names, output_names=output_names)
+
+
+        # # validate with onnx
+        # import onnx
+        #
+        # # Load the ONNX model
+        # model = onnx.load(os.path.join("serializedONNX", model_name_+".onnx"))
+        #
+        # # Check that the model is well formed
+        # onnx.checker.check_model(model)
+        #
+        # # Print a human readable representation of the graph
+        # print(onnx.helper.printable_graph(model.graph))
