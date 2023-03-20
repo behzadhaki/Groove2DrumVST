@@ -50,7 +50,7 @@ private:
 
     torch::jit::script::Module model;           // model to be loaded in constructor
     int time_steps;
-    size_t num_voices;
+    int num_voices;
     torch::Tensor hits_logits;
     torch::Tensor hits_probabilities;
     torch::Tensor hits;

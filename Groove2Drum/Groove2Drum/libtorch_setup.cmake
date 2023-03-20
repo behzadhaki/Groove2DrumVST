@@ -7,7 +7,7 @@ find_package(Torch)
 if(NOT Torch_FOUND)
   message(STATUS "Downloading libtorch...")
 
-  set(TORCH_VERSION 1.13.1)
+  set(TORCH_VERSION 2.0.0)
   set(TORCH_FILE libtorch-cxx11-abi-shared-with-deps-${TORCH_VERSION}%2Bcpu.zip)
   # Check if we're running on Windows
   if(WIN32)
