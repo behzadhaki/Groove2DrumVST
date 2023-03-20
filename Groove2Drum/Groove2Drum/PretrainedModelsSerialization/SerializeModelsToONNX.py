@@ -51,22 +51,32 @@ if __name__ == '__main__':
             # trace model for serialization
             # https://pytorch.org/tutorials/advanced/cpp_export.html
 
+            # Export Full Model
+            input_names = [ "input_layer_in" ]
+            output_names = [ "output_layer_out" ]
+            example = torch.rand(1, 32, 27)
+            torch.onnx.export(groove_transformer, example, os.path.join(
+                "Groove2Drum/Groove2Drum/PretrainedModelsSerialization/serializedONNX", model_name_ + "_full_model.onnx"), verbose=True, input_names=input_names, output_names=output_names)
+
+
+
             # # Export Input Layer
             # input_names = [ "input_layer_in" ]
             # output_names = [ "input_layer_out" ]
             # example = torch.rand(1, 32, 27)
             # torch.onnx.export(groove_transformer.InputLayerEncoder, example, os.path.join("serializedONNX", model_name_+"_input_layer.onnx"), verbose=True, input_names=input_names, output_names=output_names)
             #
-            # Export Encoder Layer
-            input_names = [ "encoder_in" ]
-            output_names = [ "encoder_out" ]
-            example = torch.rand(32, 1, model_param_dict_["d_model"])
-
-            first_encoder_layer = groove_transformer.Encoder.named_modules().__next__()[1]
-            print(first_encoder_layer.named_modules().__next__()[1])
-            torch.onnx.export(first_encoder_layer.named_modules().__next__()[1], example, os.path.join("serializedONNX", model_name_+"_encoder.onnx"), verbose=True, input_names=input_names, output_names=output_names)
-
-            # Export Output Layer
+            #
+            # # Export Encoder Layer
+            # input_names = [ "encoder_in" ]
+            # output_names = [ "encoder_out" ]
+            # example = torch.rand(32, 1, model_param_dict_["d_model"])
+            #
+            # first_encoder_layer = groove_transformer.Encoder.named_modules().__next__()[1]
+            # print(first_encoder_layer.named_modules().__next__()[1])
+            # torch.onnx.export(first_encoder_layer.named_modules().__next__()[1], example, os.path.join("serializedONNX", model_name_+"_encoder.onnx"), verbose=True, input_names=input_names, output_names=output_names)
+            #
+            # # Export Output Layer
             # input_names = [ "output_layer_in" ]
             # output_names = [ "output_layer_out" ]
             # example = torch.rand(1, 32, model_param_dict_["d_model"])
