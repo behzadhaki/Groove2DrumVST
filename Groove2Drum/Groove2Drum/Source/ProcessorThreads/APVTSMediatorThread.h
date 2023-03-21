@@ -253,10 +253,16 @@ private:
 
     std::array<float, 4> get_groove_vel_offset_ranges()
     {
-        return {
-            *APVTS->getRawParameterValue("VEL_BIAS"), *APVTS->getRawParameterValue("VEL_DYNAMIC_RANGE"),
-            *APVTS->getRawParameterValue("OFFSET_BIAS"), *APVTS->getRawParameterValue("OFFSET_RANGE"),
-        };
+        float vel_dynamic_range = *APVTS->getRawParameterValue("VEL_DYNAMIC_RANGE");
+        int vel_invert = *APVTS->getRawParameterValue("VEL_INVERT");
+        float vel_bias = *APVTS->getRawParameterValue("VEL_BIAS") ;
+        vel_dynamic_range = vel_invert ? (-vel_dynamic_range) : vel_dynamic_range;
+        vel_bias = vel_invert ? (-vel_bias) : vel_bias;
+
+        float offset_bias = *APVTS->getRawParameterValue("OFFSET_BIAS");
+        float offset_range = *APVTS->getRawParameterValue("OFFSET_RANGE");
+
+        return {vel_bias, vel_dynamic_range, offset_bias, offset_range};
     }
 
     std::array<float, HVO_params::num_voices> get_max_num_hits()

@@ -928,13 +928,10 @@ namespace FinalUIWidgets {
         unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> recordToggleAttachment;
 
         // sliders for groove manipulation
-//        juce::Slider VelBiasSilder;
-//        juce::Label  VelBiasLabel;
-//        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> VelBiasSilderAPVTSAttacher;
-//        juce::Slider VelRangeSilder;
-//        juce::Label  VelRangeLabel;
-//        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> VelRangeSilderAPVTSAttacher;
         unique_ptr<SingleStepPianoRollBlock::XYVelocityPad> velocityPad;
+        juce::ToggleButton velocityInvertToggle{"Invert Vel Profile"};
+        unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> velocityInvertToggleAttachment;
+
         juce::Slider OffsetBiasSlider;
         juce::Label  OffsetBiasLabel;
         unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> OffsetBiasSliderAPVTSAttacher;
@@ -956,16 +953,9 @@ namespace FinalUIWidgets {
             addAndMakeVisible (recordToggle);
 
             // add sliders for vel offset ranges
-//            addAndMakeVisible (VelRangeSilder);
-//            addAndMakeVisible (VelRangeLabel);
-//            VelRangeLabel.setText ("Velocity: Dynamic Range", juce::dontSendNotification);
-//            VelRangeSilderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "VEL_DYNAMIC_RANGE", VelRangeSilder);
-//
-//            addAndMakeVisible (VelBiasSilder);
-//            addAndMakeVisible (VelBiasLabel);
-//            VelBiasSilderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "VEL_BIAS", VelBiasSilder);
-//            VelBiasLabel.setText  ("Velocity: Bias", juce::dontSendNotification);
             velocityPad = make_unique<SingleStepPianoRollBlock::XYVelocityPad>(apvtsPntr, "VEL_BIAS", "VEL_DYNAMIC_RANGE");
+            velocityInvertToggleAttachment = make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (*apvtsPntr, "VEL_INVERT", velocityInvertToggle);
+            addAndMakeVisible(velocityInvertToggle);
             addAndMakeVisible(*velocityPad);
 
 
@@ -1006,7 +996,7 @@ namespace FinalUIWidgets {
                 area.removeFromTop(2 * proportionOfHeight(.05f));
                 area.removeFromLeft(area.proportionOfWidth(1.0f - slider_labels_width_ratio));
                 auto height = area.proportionOfHeight(1.0f/5.0f);
-                velocityPad->setBounds(area.removeFromTop(2*height));
+
                 OffsetRangeLabel.setBounds(area.removeFromTop(height));
                 OffsetBiasLabel.setBounds(area.removeFromTop(height));
                 temperatureLabel.setBounds(area.removeFromTop(height));
@@ -1018,11 +1008,11 @@ namespace FinalUIWidgets {
                 area.removeFromRight(area.proportionOfWidth(slider_labels_width_ratio));
                 auto height = area.proportionOfHeight(1.0f/5.0f);
 
-                velocityPad->setBounds(area.removeFromTop(2*height));
+                velocityInvertToggle.setBounds(area.removeFromTop(int(2*height*0.3)));
+                velocityPad->setBounds(area.removeFromTop(int(2*height*0.9)));
                 OffsetRangeSlider.setBounds(area.removeFromTop(height));
                 OffsetBiasSlider.setBounds(area.removeFromTop(height));
                 temperatureSlider.setBounds(area.removeFromTop(height));
-
             }
         }
 
