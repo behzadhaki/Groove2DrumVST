@@ -200,14 +200,14 @@ juce::AudioProcessorValueTreeState::ParameterLayout MidiFXProcessor::createParam
     layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("RANDOMIZE_ALL", version_hint), "RANDOMIZE_ALL", 0, 1, 0));
 
     // sliders
-    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("VEL_DYNAMIC_RANGE", version_hint), "VEL_DYNAMIC_RANGE", -200.0f, 200.0f, 100.0f));
-    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("VEL_BIAS", version_hint), "VEL_BIAS", -1.0f, 1.0f, 0));
+    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("VEL_DYNAMIC_RANGE", version_hint), "VEL_DYNAMIC_RANGE", 0.0f, 200.0f, 100.0f));
+    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("VEL_BIAS", version_hint), "VEL_BIAS", -0.60f, 1.0f, 0));
     layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("OFFSET_RANGE", version_hint), "OFFSET_RANGE", -200.0f, 200.0f, 100.0f));
     layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("OFFSET_BIAS", version_hint), "OFFSET_BIAS", -1, 1, 0));
     layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("Temperature", version_hint), "Temperature", 0.00001f, 2.0f, 1.0f));
 
     // these parameters are used with the xySliders for each individual voice
-    // Because xySliders are neither slider or button, we
+    // Because xySliders are neither slider nor button, we
     for (size_t i=0; i < HVO_params::num_voices; i++)
     {
         auto voice_label = nine_voice_kit_labels[i];

@@ -508,6 +508,78 @@ namespace SingleStepPianoRollBlock
 
     };
 
+    class XYVelocityPad: public juce::Component, public juce::Slider::Listener
+    {
+    public:
+        vector<InteractiveIndividualBlockWithProbability*> ListenerWidgets;
+
+        juce::Slider xSlider_bias;
+        const juce::String xParameterID_;
+        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> xSliderAttachement;
+        juce::Slider ySlider_range;
+        const juce::String yParameterID_;
+        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> ySliderAttachement;
+        unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> overdubToggleAttachment;
+        juce::AudioProcessorValueTreeState* apvts{nullptr};
+
+        float latest_x = 0;
+        float latest_y = 0;
+
+        XYVelocityPad(juce::AudioProcessorValueTreeState* apvtsPntr,
+                      const juce::String& xParameterID,
+                      const juce::String& yParameterID)
+        {
+            apvts = apvtsPntr;
+            xSliderAttachement = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvts, xParameterID, xSlider_bias);
+            ySliderAttachement = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvts, yParameterID, ySlider_range);
+            xSlider_bias.addListener(this);
+            ySlider_range.addListener(this);
+        }
+
+        void sliderValueChanged (juce::Slider* slider) override
+        {
+            if (slider == &xSlider_bias or slider == &ySlider_range)
+            {
+                repaint();
+            }
+        }
+
+        void paint(juce::Graphics& g) override
+        {
+            g.fillAll(juce::Colours::black);
+            g.fillAll(juce::Colours::black);
+            g.setColour(juce::Colours::white);
+
+            auto w = float(getWidth());
+            auto h = float(getHeight());
+
+            auto x_ = round(max(min(float(xSlider_bias.getValue() - xSlider_bias.getMinimum()) * w / float(xSlider_bias.getMaximum() - xSlider_bias.getMinimum()), w), 0.0f));
+            auto y_ = max(min(float(1.0f - (ySlider_range.getValue() - ySlider_range.getMinimum()) / float(ySlider_range.getMaximum() - ySlider_range.getMinimum())) * h, h), 0.0f);
+
+            g.setColour(juce::Colours::white);
+            g.drawLine(0.0f, y_, float(getWidth()), y_, 2);
+            g.drawLine(x_, 0, x_, float(getHeight()), 2);
+        }
+
+        void mouseDrag(const juce::MouseEvent& ev) override
+        {
+            m_mousepos = ev.position;
+            xSlider_bias.setValue(m_mousepos.getX()/float(getWidth()) * (xSlider_bias.getMaximum() - xSlider_bias.getMinimum())+ xSlider_bias.getMinimum());
+            ySlider_range.setValue((1.0f - m_mousepos.getY()/float(getHeight())) * (ySlider_range.getMaximum() - ySlider_range.getMinimum())+ ySlider_range.getMinimum());
+            repaint();
+        }
+
+        // hides an already existing note or unhides if the block is empty
+        void mouseDoubleClick(const juce::MouseEvent& ev) override
+        {
+            xSlider_bias.setValue(0.0f);
+            ySlider_range.setValue(100.0f);
+        }
+
+    private:
+        juce::Point<float> m_mousepos;
+
+    };
 }
 
 
@@ -856,12 +928,13 @@ namespace FinalUIWidgets {
         unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> recordToggleAttachment;
 
         // sliders for groove manipulation
-        juce::Slider VelBiasSilder;
-        juce::Label  VelBiasLabel;
-        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> VelBiasSilderAPVTSAttacher;
-        juce::Slider VelRangeSilder;
-        juce::Label  VelRangeLabel;
-        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> VelRangeSilderAPVTSAttacher;
+//        juce::Slider VelBiasSilder;
+//        juce::Label  VelBiasLabel;
+//        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> VelBiasSilderAPVTSAttacher;
+//        juce::Slider VelRangeSilder;
+//        juce::Label  VelRangeLabel;
+//        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> VelRangeSilderAPVTSAttacher;
+        unique_ptr<SingleStepPianoRollBlock::XYVelocityPad> velocityPad;
         juce::Slider OffsetBiasSlider;
         juce::Label  OffsetBiasLabel;
         unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> OffsetBiasSliderAPVTSAttacher;
@@ -883,15 +956,18 @@ namespace FinalUIWidgets {
             addAndMakeVisible (recordToggle);
 
             // add sliders for vel offset ranges
-            addAndMakeVisible (VelRangeSilder);
-            addAndMakeVisible (VelRangeLabel);
-            VelRangeLabel.setText ("Velocity: Dynamic Range", juce::dontSendNotification);
-            VelRangeSilderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "VEL_DYNAMIC_RANGE", VelRangeSilder);
+//            addAndMakeVisible (VelRangeSilder);
+//            addAndMakeVisible (VelRangeLabel);
+//            VelRangeLabel.setText ("Velocity: Dynamic Range", juce::dontSendNotification);
+//            VelRangeSilderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "VEL_DYNAMIC_RANGE", VelRangeSilder);
+//
+//            addAndMakeVisible (VelBiasSilder);
+//            addAndMakeVisible (VelBiasLabel);
+//            VelBiasSilderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "VEL_BIAS", VelBiasSilder);
+//            VelBiasLabel.setText  ("Velocity: Bias", juce::dontSendNotification);
+            velocityPad = make_unique<SingleStepPianoRollBlock::XYVelocityPad>(apvtsPntr, "VEL_BIAS", "VEL_DYNAMIC_RANGE");
+            addAndMakeVisible(*velocityPad);
 
-            addAndMakeVisible (VelBiasSilder);
-            addAndMakeVisible (VelBiasLabel);
-            VelBiasSilderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "VEL_BIAS", VelBiasSilder);
-            VelBiasLabel.setText  ("Velocity: Bias", juce::dontSendNotification);
 
             addAndMakeVisible (OffsetRangeSlider);
             addAndMakeVisible (OffsetRangeLabel);
@@ -930,8 +1006,7 @@ namespace FinalUIWidgets {
                 area.removeFromTop(2 * proportionOfHeight(.05f));
                 area.removeFromLeft(area.proportionOfWidth(1.0f - slider_labels_width_ratio));
                 auto height = area.proportionOfHeight(1.0f/5.0f);
-                VelRangeLabel.setBounds(area.removeFromTop(height));
-                VelBiasLabel.setBounds(area.removeFromTop(height));
+                velocityPad->setBounds(area.removeFromTop(2*height));
                 OffsetRangeLabel.setBounds(area.removeFromTop(height));
                 OffsetBiasLabel.setBounds(area.removeFromTop(height));
                 temperatureLabel.setBounds(area.removeFromTop(height));
@@ -943,8 +1018,7 @@ namespace FinalUIWidgets {
                 area.removeFromRight(area.proportionOfWidth(slider_labels_width_ratio));
                 auto height = area.proportionOfHeight(1.0f/5.0f);
 
-                VelRangeSilder.setBounds(area.removeFromTop(height));
-                VelBiasSilder.setBounds(area.removeFromTop(height));
+                velocityPad->setBounds(area.removeFromTop(2*height));
                 OffsetRangeSlider.setBounds(area.removeFromTop(height));
                 OffsetBiasSlider.setBounds(area.removeFromTop(height));
                 temperatureSlider.setBounds(area.removeFromTop(height));
