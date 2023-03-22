@@ -982,7 +982,7 @@ namespace FinalUIWidgets {
             addAndMakeVisible (temperatureSlider);
             addAndMakeVisible (temperatureLabel);
             temperatureLabel.setText ("Randomness", juce::dontSendNotification);
-            temperatureSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "Temperature", temperatureSlider);
+            temperatureSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "TEMPERATURE", temperatureSlider);
         }
 
         void resized() override
@@ -1087,8 +1087,12 @@ namespace FinalUIWidgets {
         juce::ComboBox ComboBox;
         unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> ComboBoxAPVTSAttacher;
 
+        juce::Label textLabel2 { {}, "Sampling Method:" };
+        juce::ComboBox ComboBox2;
+        unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> ComboBoxAPVTSAttacher2;
 
-        ModelSelectorWidget(juce::AudioProcessorValueTreeState* apvtsPntr, string ParameterID_, juce::StringArray model_paths_)
+        ModelSelectorWidget(juce::AudioProcessorValueTreeState* apvtsPntr, string model_ParameterID_, juce::StringArray model_paths_,
+                            string sampling_method_ParameterID_)
         {
             addAndMakeVisible(ComboBox);
 
@@ -1100,10 +1104,15 @@ namespace FinalUIWidgets {
                 ComboBox.addItem((string)GeneralSettings::default_model_folder + "/" + model_path.toStdString() + ".pt", num_choices);
             }
 
-            ComboBoxAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (*apvtsPntr, ParameterID_, ComboBox);
+            ComboBoxAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (*apvtsPntr, model_ParameterID_, ComboBox);
 
-            // ComboBox.setSelectedId (1);
+            // combo box for sampling method
+            addAndMakeVisible(ComboBox2);
+            ComboBox2.addItem("Use Probability Thresholds", 1);
+            ComboBox2.addItem("Sample Using Probabilities", 2);
 
+            ComboBoxAPVTSAttacher2 = make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (
+                *apvtsPntr, sampling_method_ParameterID_, ComboBox2);
         }
 
         void resized() override
@@ -1111,8 +1120,11 @@ namespace FinalUIWidgets {
             auto area = getLocalBounds();
             area.removeFromLeft(proportionOfWidth(0.15f));
             area.removeFromRight(proportionOfWidth(0.15f));
-            textLabel.setBounds(area.removeFromTop(proportionOfHeight(0.5f)));
-            ComboBox.setBounds(area);
+            textLabel.setBounds(area.removeFromTop(proportionOfHeight(0.25f)));
+            ComboBox.setBounds(area.removeFromTop(proportionOfHeight(0.25f)));
+            textLabel2.setBounds(area.removeFromTop(proportionOfHeight(0.25f)));
+            ComboBox2.setBounds(area.removeFromTop(proportionOfHeight(0.25f)));
+
         }
 
     };

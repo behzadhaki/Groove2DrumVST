@@ -82,6 +82,7 @@ void ModelThread::run()
     bool newGrooveAvailable;
     bool newTemperatureAvailable;
     string currentModelPath = modelAPI.model_path;
+    string currentSampleMethod = sample_mode;
 
     while (!bExit)
     {
@@ -95,6 +96,13 @@ void ModelThread::run()
         {
             modelAPI.changeModel(new_model_path);
             currentModelPath = new_model_path;
+            newGrooveAvailable = true;
+            shouldResample = true;
+        }
+
+        if (currentSampleMethod != sample_mode)
+        {
+            currentSampleMethod = sample_mode;
             newGrooveAvailable = true;
             shouldResample = true;
         }
@@ -169,7 +177,7 @@ void ModelThread::run()
         // 5. should resample output if, input new groove received
         if (shouldResample)
         {
-            auto [hits, velocities, offsets] = modelAPI.sample("SampleProbability");
+            auto [hits, velocities, offsets] = modelAPI.sample(sample_mode);
             generated_hvo = HVO<HVO_params::time_steps, HVO_params::num_voices>(
                 hits, velocities, offsets);
             auto pianoRollData = HVOLight<HVO_params::time_steps, HVO_params::num_voices>(
@@ -224,9 +232,12 @@ ModelThread::~ModelThread()
 // ============================================================================================================
 // ===          Utility Methods
 // ============================================================================================================
-void ModelThread::UpdateModelPath(std::string new_model_path_)
+void ModelThread::UpdateModelPath(std::string new_model_path_, std::string sample_mode_)
 {
     new_model_path = new_model_path_;
+
+    assert (sample_mode_ == "Threshold"  or sample_mode_ == "SampleProbability");
+    sample_mode = sample_mode_;
 }
 
 // ============================================================================================================

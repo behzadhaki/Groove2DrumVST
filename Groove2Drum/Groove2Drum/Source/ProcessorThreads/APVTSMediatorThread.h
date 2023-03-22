@@ -66,11 +66,6 @@ public:
         startThread();
     }
 
-
-
-
-
-
     // ------------------------------------------------------------------------------------------------------------
     // ---         Step 3 . start run() thread by calling startThread().
     // ---                  !!DO NOT!! Call run() directly. startThread() internally makes a call to run().
@@ -89,6 +84,7 @@ public:
         auto current_reset_buttons = get_reset_buttons();
         auto current_randomize_groove_buttons = get_randomize_groove_buttons();
         auto current_model_selected = get_model_selected();
+        auto current_sampling_method = get_sampling_method();
 
         while (!bExit)
         {
@@ -204,11 +200,13 @@ public:
 
                 // check if new model selected
                 auto new_model_selected = get_model_selected();
-                if (current_model_selected != new_model_selected)
+                auto new_sampling_method = get_sampling_method();
+                if (current_model_selected != new_model_selected or current_sampling_method != new_sampling_method)
                 {
                     current_model_selected = new_model_selected;
+                    current_sampling_method = new_sampling_method;
                     auto new_model_path = (string)GeneralSettings::default_model_folder + "/" + paths[current_model_selected].toStdString() + ".pt";
-                    modelThread->UpdateModelPath(new_model_path);
+                    modelThread->UpdateModelPath(new_model_path, current_sampling_method);
                 }
 
                 bExit = threadShouldExit();
@@ -254,18 +252,12 @@ private:
     std::array<float, 6> get_groove_vel_offset_ranges()
     {
         float vel_dynamic_range = *APVTS->getRawParameterValue("VEL_DYNAMIC_RANGE");
-        int vel_invert = *APVTS->getRawParameterValue("VEL_INVERT");
+        int vel_invert = int(*APVTS->getRawParameterValue("VEL_INVERT"));
         float vel_bias = *APVTS->getRawParameterValue("VEL_BIAS") ;
-        //vel_dynamic_range = vel_invert ? (-vel_dynamic_range) : vel_dynamic_range;
-        // vel_bias = vel_invert ? (-vel_bias) : vel_bias;
 
         float offset_dynamic_range = *APVTS->getRawParameterValue("OFFSET_DYNAMIC_RANGE");
-        int offset_invert = *APVTS->getRawParameterValue("OFFSET_INVERT");
+        int offset_invert = int(*APVTS->getRawParameterValue("OFFSET_INVERT"));
         float offset_bias = *APVTS->getRawParameterValue("OFFSET_BIAS");
-        //offset_dynamic_range = offset_invert ? (-offset_dynamic_range) : offset_dynamic_range;
-
-//        float offset_bias = *APVTS->getRawParameterValue("OFFSET_BIAS");
-//        float offset_range = *APVTS->getRawParameterValue("OFFSET_RANGE");
 
         return {vel_bias, vel_dynamic_range, float(vel_invert), offset_bias, offset_dynamic_range, float(offset_invert)};
     }
@@ -289,7 +281,7 @@ private:
             auto voice_label = nine_voice_kit_labels[i];
             sampling_thresholds_with_temperature[i] = *APVTS->getRawParameterValue(voice_label+"_Y");
         }
-        sampling_thresholds_with_temperature[HVO_params::num_voices] = *APVTS->getRawParameterValue("Temperature");
+        sampling_thresholds_with_temperature[HVO_params::num_voices] = *APVTS->getRawParameterValue("TEMPERATURE");
         return sampling_thresholds_with_temperature;
     }
 
@@ -304,7 +296,7 @@ private:
         return midiNumbers;
     }
 
-    // returns reset_groove, reset_samplingparams and reset all
+    // returns reset_groove, reset_sampling params and reset all
     std::array<int, 3> get_reset_buttons()
     {
         return {(int)*APVTS->getRawParameterValue("RESET_GROOVE"),
@@ -349,6 +341,14 @@ private:
         return model_selected;
     }
 
+    // returns RANDOMIZE_VEL, RANDOMIZE_OFFSET and RANDOMIZE_ALL all
+    string get_sampling_method()
+    {
+        auto ix = (int)*APVTS->getRawParameterValue("SAMPLINGMETHOD");
+        string model_selected = (ix == 0) ? "Threshold" : "SampleProbability";
+        return model_selected;
+    }
+
     // ============================================================================================================
     // ===          Output Queues for Receiving/Sending Data
     // ============================================================================================================
@@ -358,13 +358,11 @@ private:
     LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_sampling_thresholds_and_temperature_Que {nullptr};
     LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_midi_mappings_Que {nullptr};
 
-
     // ============================================================================================================
     // ===          pointer to MidiFXProcessor
     // ============================================================================================================
     GrooveThread* grooveThread;
     ModelThread* modelThread;
-
 
     // ============================================================================================================
     // ===          Pointer to APVTS hosted in the Main Processor

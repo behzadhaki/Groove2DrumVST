@@ -54,7 +54,8 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     // model selector
     ModelSelectorWidget = make_unique<FinalUIWidgets::ModelSelectorWidget> (&MidiFXProcessorPointer_->apvts,
                                                                            "MODEL",
-                                                                           MidiFXProcessorPointer_->model_paths);
+                                                                           MidiFXProcessorPointer_->model_paths,
+                                                                           "SAMPLINGMETHOD");
     addAndMakeVisible (ModelSelectorWidget.get());
 
 

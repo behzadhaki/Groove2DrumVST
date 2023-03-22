@@ -209,7 +209,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout MidiFXProcessor::createParam
     layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("OFFSET_BIAS", version_hint), "OFFSET_BIAS", -1, 1, 0));
     layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("OFFSET_INVERT", version_hint), "OFFSET_INVERT", 0, 1, 0));
 
-    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("Temperature", version_hint), "Temperature", 0.00001f, 10.0f, 1.0f));
+    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("TEMPERATURE", version_hint), "TEMPERATURE", 0.00001f, 10.0f, 1.0f));
+
+    // toggle for bernoulli sampling
+    layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("SAMPLINGMETHOD", version_hint), "SAMPLINGMETHOD", 0, 1, 0));
 
     // these parameters are used with the xySliders for each individual voice
     // Because xySliders are neither slider nor button, we

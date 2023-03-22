@@ -162,6 +162,7 @@ void MonotonicGrooveTransformerV1::forward_pass(torch::Tensor monotonicGrooveInp
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> MonotonicGrooveTransformerV1::
     sample(std::string sample_mode)
 {
+    DBG(sample_mode);
     assert (sample_mode=="Threshold" or sample_mode=="SampleProbability");
 
     hits = torch::zeros({time_steps, num_voices});

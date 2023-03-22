@@ -79,7 +79,7 @@ public:
     // ------------------------------------------------------------------------------------------------------------
     bool readyToStop; // Used to check if thread is ready to be stopped or externally stopped from a parent thread
 
-    void UpdateModelPath(std::string new_model_path_);
+    void UpdateModelPath(std::string new_model_path_, std::string sample_mode_);
     // ============================================================================================================
 
 
@@ -107,6 +107,7 @@ private:
     MonotonicGrooveTransformerV1 modelAPI;
     array <int, HVO_params::num_voices> drum_kit_midi_map {};
     string new_model_path {""};
+    string sample_mode {"Threshold"}; //"Threshold" or "SampleProbability"
 };
 
 #endif //JUCECMAKEREPO_MODELTHREAD_H

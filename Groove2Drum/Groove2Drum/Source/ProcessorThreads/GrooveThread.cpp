@@ -219,7 +219,6 @@ void GrooveThread::run()
             while (APVTS2GrooveThread_groove_vel_offset_ranges_Que->getNumReady() > 0
                    and not this->threadShouldExit())
             {
-                DBG("vel/offset ranges received");
                 // Step 1. get new vel/offset ranges received
                 APVTS2GrooveThread_groove_vel_offset_ranges_Que->ReadFrom(&compression_params, 1);
 
