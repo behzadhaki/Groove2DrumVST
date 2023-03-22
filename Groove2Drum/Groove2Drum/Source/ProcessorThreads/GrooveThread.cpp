@@ -37,7 +37,7 @@ void GrooveThread::startThreadUsingProvidedResources(LockFreeQueue<BasicNote, Ge
                                                      MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>* GrooveThreadToModelThreadQuePntr,
                                                      MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>* GrooveThread2GGroovePianoRollWidgetQuesPntr,
                                                      LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>* GroovePianoRollWidget2GrooveThread_manually_drawn_noteQuePntr,
-                                                     LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_vel_offset_ranges_QuePntr,
+                                                     LockFreeQueue<std::array<float, 6>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_vel_offset_ranges_QuePntr,
                                                      LockFreeQueue<std::array<int, 2>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_record_overdubToggles_QuePntr)
 {
     // get the pointer to queues and control parameters instantiated
@@ -214,11 +214,12 @@ void GrooveThread::run()
         // 8. see if new control params (vel offset ranges ... ) received from the gui
         if (APVTS2GrooveThread_groove_vel_offset_ranges_Que != nullptr)
         {
-            array<float, 4> compression_params {};  // {Vel_Bias, Vel_Range, Offset_Bias, Offset_Range}
+            array<float, 6> compression_params {};  // {Vel_Bias, Vel_Range, Offset_Bias, Offset_Range}
 
             while (APVTS2GrooveThread_groove_vel_offset_ranges_Que->getNumReady() > 0
                    and not this->threadShouldExit())
             {
+                DBG("vel/offset ranges received");
                 // Step 1. get new vel/offset ranges received
                 APVTS2GrooveThread_groove_vel_offset_ranges_Que->ReadFrom(&compression_params, 1);
 

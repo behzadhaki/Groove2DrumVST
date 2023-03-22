@@ -20,7 +20,7 @@ MidiFXProcessor::MidiFXProcessor():
     ProcessBlockToGrooveThreadQue = make_shared<LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>>();
     GrooveThreadToModelThreadQue = make_shared<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>>();
     ModelThreadToProcessBlockQue = make_shared<GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>>();
-    APVTS2GrooveThread_groove_vel_offset_ranges_Que = make_shared<LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>>();
+    APVTS2GrooveThread_groove_vel_offset_ranges_Que = make_shared<LockFreeQueue<std::array<float, 6>, GeneralSettings::gui_io_queue_size>>();
     APVTS2GrooveThread_groove_record_overdubToggles_Que = make_shared<LockFreeQueue<std::array<int, 2>, GeneralSettings::gui_io_queue_size>>();
     APVTS2ModelThread_max_num_hits_Que = make_shared<LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>>();
     APVTS2ModelThread_sampling_thresholds_and_temperature_Que = make_shared<LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>>();
@@ -205,9 +205,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout MidiFXProcessor::createParam
     layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("VEL_INVERT", version_hint), "VEL_INVERT", 0, 1, 0));
 
     // sliders
-    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("OFFSET_RANGE", version_hint), "OFFSET_RANGE", -200.0f, 200.0f, 100.0f));
+    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("OFFSET_DYNAMIC_RANGE", version_hint), "OFFSET_DYNAMIC_RANGE", 0.0f, 200.0f, 100.0f));
     layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("OFFSET_BIAS", version_hint), "OFFSET_BIAS", -1, 1, 0));
-    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("Temperature", version_hint), "Temperature", 0.00001f, 2.0f, 1.0f));
+    layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("OFFSET_INVERT", version_hint), "OFFSET_INVERT", 0, 1, 0));
+
+    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("Temperature", version_hint), "Temperature", 0.00001f, 10.0f, 1.0f));
 
     // these parameters are used with the xySliders for each individual voice
     // Because xySliders are neither slider nor button, we

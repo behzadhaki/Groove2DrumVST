@@ -93,10 +93,12 @@ void MidiFXProcessorEditor::resized()
 
     // put buttons and GrooveControlSliders
     area = getLocalBounds();
-    area.removeFromLeft(area.proportionOfWidth(1.0f - gui_settings::PianoRolls::space_reserved_right_side_of_gui_ratio_of_width));
-    ButtonsWidget->setBounds(area.removeFromTop(area.proportionOfHeight(0.3)));
-    ModelSelectorWidget->setBounds(area.removeFromTop(area.proportionOfHeight(0.1)));
-    ControlsWidget->setBounds(area.removeFromBottom(area.proportionOfHeight(0.4)));
+    auto rightArea = area.removeFromRight(area.proportionOfWidth(gui_settings::PianoRolls::space_reserved_right_side_of_gui_ratio_of_width));
+    rightArea.removeFromLeft(rightArea.proportionOfWidth(0.1));
+    rightArea.removeFromRight(rightArea.proportionOfWidth(0.1));
+    ButtonsWidget->setBounds(rightArea.removeFromTop(rightArea.proportionOfHeight(0.3)));
+    ModelSelectorWidget->setBounds(rightArea.removeFromTop(rightArea.proportionOfHeight(0.1)));
+    ControlsWidget->setBounds(rightArea.removeFromBottom(rightArea.proportionOfHeight(0.6)));
 
 }
 

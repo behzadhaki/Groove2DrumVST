@@ -190,6 +190,18 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> MonotonicGrooveTransform
 
             hits.index_put_({active_time_indices, voice_i}, 1);
         }
+    } else if (sample_mode=="SampleProbability")
+    {
+        for (int voice_i=0; voice_i < num_voices; voice_i++){
+            // Get voice threshold value
+            auto thres_voice_i  = per_voice_sampling_thresholds[voice_i];
+            // Get probabilities of voice hits at all timesteps
+            auto voice_hit_probs = hits_probabilities.index(
+                {row_indices, voice_i});
+            voice_hit_probs = torch::where(voice_hit_probs>=thres_voice_i, voice_hit_probs, 0);
+
+            hits.index_put_({row_indices, voice_i}, torch::bernoulli(voice_hit_probs));
+        }
     }
 
     // Set non-hit vel and offset values to 0

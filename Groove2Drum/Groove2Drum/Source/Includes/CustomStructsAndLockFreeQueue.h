@@ -538,7 +538,9 @@ template <int time_steps_, int num_voices_> struct HVO
 
     // local variables to keep track of vel_range = (min_vel, max_vel) and offset ranges
     array<float, 2> vel_range = {HVO_params::_min_vel, HVO_params::_max_vel};
+    bool invert_vel{false};
     array<float, 2> offset_range = {HVO_params::_min_offset, HVO_params::_max_offset};
+    bool invert_offset{false};
 
 
     torch::Tensor hits;
@@ -734,6 +736,11 @@ template <int time_steps_, int num_voices_> struct HVO
         }
         velocities_modified = velocities_modified.clip(HVO_params::_min_vel, HVO_params::_max_vel);
         velocities_modified = velocities_modified * hits;
+        if (invert_vel) {
+            velocities_modified = velocities_modified * -1 + 1.0;
+            //velocities_modified = velocities_modified.clip(HVO_params::_min_vel, HVO_params::_max_vel);
+            velocities_modified = velocities_modified * hits;
+        }
     }
 
     void compressOffsets(int voice_idx,
@@ -750,6 +757,12 @@ template <int time_steps_, int num_voices_> struct HVO
         offsets_modified = offsets_modified.clip(HVO_params::_min_offset, HVO_params::_max_offset);
 
         offsets_modified = offsets_modified * hits;
+
+        if (invert_offset) {
+            DBG("INVERT OFFSET");
+            offsets_modified = offsets_modified * -1;
+            //offsets_modified = offsets_modified.clip(HVO_params::_min_offset, HVO_params::_max_offset);
+        }
 
     }
 
@@ -771,7 +784,7 @@ template <int time_steps_, int num_voices_> struct HVO
             }
         }
 
-        if (offset_range[0] == HVO_params::_min_offset and offset_range[1] == HVO_params::_max_offset)
+        if (offset_range[0] == HVO_params::_min_offset and offset_range[1] == HVO_params::_max_offset and !invert_offset)
         {
             offsets_modified = offsets_unmodified;
         }
@@ -790,13 +803,14 @@ template <int time_steps_, int num_voices_> struct HVO
      * @param newVelOffsetrange (array<float, 4>)
      * @param shouldReApplyCompression  (bool)
      */
-    void updateCompressionRanges(array<float, 4> compression_params,
+    void updateCompressionRanges(array<float, 6> compression_params,
                                  bool shouldReApplyCompression)
     {
         // calculate min/max vel using range and bias
         {
             auto bias = compression_params[0];
             auto range_ratio = compression_params[1] / 100.0f;
+            invert_vel = (compression_params[2] == 1.0f);
             auto vl = float(bias + HVO_params::_min_vel);
             auto vrange = float((HVO_params::_max_vel - HVO_params::_min_vel)
                                 * range_ratio);
@@ -815,8 +829,9 @@ template <int time_steps_, int num_voices_> struct HVO
 
         // calculate min/max offset using range and bias
         {
-            auto bias = compression_params[2];
-            auto range_ratio = compression_params[3] / 100.0f;
+            auto bias = compression_params[3];
+            auto range_ratio = compression_params[4] / 100.0f;
+            invert_offset = (compression_params[5] == 1.0f);
             auto off_range_above_zero = float((HVO_params::_max_offset - HVO_params::_min_offset)
                                               * range_ratio) / 2.0f;
             if (off_range_above_zero > 0)

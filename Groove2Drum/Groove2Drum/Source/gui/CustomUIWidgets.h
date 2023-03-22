@@ -522,9 +522,6 @@ namespace SingleStepPianoRollBlock
         unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> overdubToggleAttachment;
         juce::AudioProcessorValueTreeState* apvts{nullptr};
 
-        float latest_x = 0;
-        float latest_y = 0;
-
         XYVelocityPad(juce::AudioProcessorValueTreeState* apvtsPntr,
                       const juce::String& xParameterID,
                       const juce::String& yParameterID)
@@ -725,6 +722,7 @@ namespace FinalUIWidgets {
 
                     addAndMakeVisible(PianoRolls[voice_i].get());
                 }
+
             }
 
             void resized() override {
@@ -778,6 +776,7 @@ namespace FinalUIWidgets {
                 g.setColour(playback_progressbar_color);
                 g.drawLine(x, 0, x, float(getHeight()));
             }
+
         private:
             HVOLight <HVO_params::time_steps, HVO_params::num_voices> old_generated_data{};
             double playhead_percentage {0};
@@ -927,10 +926,15 @@ namespace FinalUIWidgets {
         juce::ToggleButton recordToggle {"Record"};
         unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> recordToggleAttachment;
 
-        // sliders for groove manipulation
+        // xy controls for manipulation of velocity profile of the groove
         unique_ptr<SingleStepPianoRollBlock::XYVelocityPad> velocityPad;
         juce::ToggleButton velocityInvertToggle{"Invert Vel Profile"};
         unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> velocityInvertToggleAttachment;
+
+        // xy sliders for manipulation of offset profile of the groove
+        unique_ptr<SingleStepPianoRollBlock::XYVelocityPad> offsetPad;
+        juce::ToggleButton offsetInvertToggle{"Invert Offset Profile"};
+        unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> offsetInvertToggleAttachment;
 
         juce::Slider OffsetBiasSlider;
         juce::Label  OffsetBiasLabel;
@@ -952,14 +956,19 @@ namespace FinalUIWidgets {
             recordToggleAttachment = make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (*apvtsPntr, "RECORD", recordToggle);
             addAndMakeVisible (recordToggle);
 
-            // add sliders for vel offset ranges
+            // add sliders for vel manipulation of groove
             velocityPad = make_unique<SingleStepPianoRollBlock::XYVelocityPad>(apvtsPntr, "VEL_BIAS", "VEL_DYNAMIC_RANGE");
             velocityInvertToggleAttachment = make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (*apvtsPntr, "VEL_INVERT", velocityInvertToggle);
             addAndMakeVisible(velocityInvertToggle);
             addAndMakeVisible(*velocityPad);
 
+            // add sliders for offset manipulation of groove
+            offsetPad = make_unique<SingleStepPianoRollBlock::XYVelocityPad>(apvtsPntr, "OFFSET_BIAS", "OFFSET_DYNAMIC_RANGE");
+            offsetInvertToggleAttachment = make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (*apvtsPntr, "OFFSET_INVERT", offsetInvertToggle);
+            addAndMakeVisible(offsetInvertToggle);
+            addAndMakeVisible(*offsetPad);
 
-            addAndMakeVisible (OffsetRangeSlider);
+            /*addAndMakeVisible (OffsetRangeSlider);
             addAndMakeVisible (OffsetRangeLabel);
             OffsetRangeLabel.setText ("Offset: Dynamic Range", juce::dontSendNotification);
             OffsetRangeSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "OFFSET_RANGE", OffsetRangeSlider);
@@ -967,19 +976,18 @@ namespace FinalUIWidgets {
             addAndMakeVisible (OffsetBiasSlider);
             addAndMakeVisible (OffsetBiasLabel);
             OffsetBiasLabel.setText ("Offset: Bias", juce::dontSendNotification);
-            OffsetBiasSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "OFFSET_BIAS", OffsetBiasSlider);
-
+            OffsetBiasSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "OFFSET_BIAS", OffsetBiasSlider);*/
 
             // add temperature Slider
             addAndMakeVisible (temperatureSlider);
             addAndMakeVisible (temperatureLabel);
-            temperatureLabel.setText ("Temperature", juce::dontSendNotification);
+            temperatureLabel.setText ("Randomness", juce::dontSendNotification);
             temperatureSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "Temperature", temperatureSlider);
         }
 
         void resized() override
         {
-            float toggle_height_ratio = 0.2f;
+            float toggle_height_ratio = 0.1f;
             float slider_labels_width_ratio = 0.3f;
             {
                 auto area = getLocalBounds();
@@ -989,30 +997,22 @@ namespace FinalUIWidgets {
                 recordToggle.setBounds(area.removeFromLeft(toggle_w));
             }
 
-            // put vel offset range sliders
             {
                 auto area = getLocalBounds();
                 area.removeFromTop(proportionOfHeight(toggle_height_ratio));
-                area.removeFromTop(2 * proportionOfHeight(.05f));
-                area.removeFromLeft(area.proportionOfWidth(1.0f - slider_labels_width_ratio));
                 auto height = area.proportionOfHeight(1.0f/5.0f);
+                auto temperatureArea = area.removeFromBottom(int(height));
+                temperatureLabel.setBounds(temperatureArea.removeFromRight(temperatureArea.proportionOfWidth(slider_labels_width_ratio)));
+                temperatureSlider.setBounds(temperatureArea);
 
-                OffsetRangeLabel.setBounds(area.removeFromTop(height));
-                OffsetBiasLabel.setBounds(area.removeFromTop(height));
-                temperatureLabel.setBounds(area.removeFromTop(height));
-            }
-
-            {
-                auto area = getLocalBounds();
-                area.removeFromTop(proportionOfHeight(toggle_height_ratio));
-                area.removeFromRight(area.proportionOfWidth(slider_labels_width_ratio));
-                auto height = area.proportionOfHeight(1.0f/5.0f);
-
-                velocityInvertToggle.setBounds(area.removeFromTop(int(2*height*0.3)));
+                area.removeFromLeft(proportionOfWidth(0.1f));
+                area.removeFromRight(proportionOfWidth(0.1f));
+                velocityInvertToggle.setBounds(area.removeFromTop(int(2*height*0.15)));
                 velocityPad->setBounds(area.removeFromTop(int(2*height*0.9)));
-                OffsetRangeSlider.setBounds(area.removeFromTop(height));
-                OffsetBiasSlider.setBounds(area.removeFromTop(height));
-                temperatureSlider.setBounds(area.removeFromTop(height));
+                offsetInvertToggle.setBounds(area.removeFromTop(int(2*height*0.15)));
+                offsetPad->setBounds(area.removeFromTop(int(2*height*0.9)));
+
+
             }
         }
 

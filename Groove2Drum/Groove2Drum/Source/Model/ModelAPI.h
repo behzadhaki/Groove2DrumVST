@@ -41,7 +41,7 @@ public:
     void forward_pass(torch::Tensor monotonicGrooveInput);
     // Step 2. Sample hvo after the forward pass
     std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sample(
-        std::string sample_mode = "Threshold");
+        std::string sample_mode = "SampleProbability");
 
     // store path locally
     std::string model_path;

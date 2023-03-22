@@ -49,7 +49,7 @@ public:
     // ------------------------------------------------------------------------------------------------------------
     void startThreadUsingProvidedResources(
         juce::AudioProcessorValueTreeState* APVTSPntr,
-        LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_vel_offset_ranges_QuePntr,
+        LockFreeQueue<std::array<float, 6>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_vel_offset_ranges_QuePntr,
         LockFreeQueue<std::array<int, 2>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_record_overdubToggles_QuePntr,
         LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_max_num_hits_QuePntr,
         LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_sampling_thresholds_and_temperature_QuePntr,
@@ -158,7 +158,7 @@ public:
                     if (resetSampleParamsClicked  or resetAllClicked)
                     {
                         // reset parameters to default
-                        for(const string &ParamID : {"VEL_BIAS", "VEL_DYNAMIC_RANGE", "OFFSET_BIAS", "OFFSET_RANGE"})
+                        for(const string &ParamID : {"VEL_BIAS", "VEL_DYNAMIC_RANGE", "OFFSET_BIAS", "OFFSET_DYNAMIC_RANGE", "VEL_INVERT", "OFFSET_INVERT"})
                         {
                             auto param = APVTS->getParameter(ParamID);
                             param->setValueNotifyingHost(param->getDefaultValue());
@@ -251,18 +251,23 @@ private:
         };
     }
 
-    std::array<float, 4> get_groove_vel_offset_ranges()
+    std::array<float, 6> get_groove_vel_offset_ranges()
     {
         float vel_dynamic_range = *APVTS->getRawParameterValue("VEL_DYNAMIC_RANGE");
         int vel_invert = *APVTS->getRawParameterValue("VEL_INVERT");
         float vel_bias = *APVTS->getRawParameterValue("VEL_BIAS") ;
-        vel_dynamic_range = vel_invert ? (-vel_dynamic_range) : vel_dynamic_range;
-        vel_bias = vel_invert ? (-vel_bias) : vel_bias;
+        //vel_dynamic_range = vel_invert ? (-vel_dynamic_range) : vel_dynamic_range;
+        // vel_bias = vel_invert ? (-vel_bias) : vel_bias;
 
+        float offset_dynamic_range = *APVTS->getRawParameterValue("OFFSET_DYNAMIC_RANGE");
+        int offset_invert = *APVTS->getRawParameterValue("OFFSET_INVERT");
         float offset_bias = *APVTS->getRawParameterValue("OFFSET_BIAS");
-        float offset_range = *APVTS->getRawParameterValue("OFFSET_RANGE");
+        //offset_dynamic_range = offset_invert ? (-offset_dynamic_range) : offset_dynamic_range;
 
-        return {vel_bias, vel_dynamic_range, offset_bias, offset_range};
+//        float offset_bias = *APVTS->getRawParameterValue("OFFSET_BIAS");
+//        float offset_range = *APVTS->getRawParameterValue("OFFSET_RANGE");
+
+        return {vel_bias, vel_dynamic_range, float(vel_invert), offset_bias, offset_dynamic_range, float(offset_invert)};
     }
 
     std::array<float, HVO_params::num_voices> get_max_num_hits()
@@ -347,7 +352,7 @@ private:
     // ============================================================================================================
     // ===          Output Queues for Receiving/Sending Data
     // ============================================================================================================
-    LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_vel_offset_ranges_Que {nullptr};
+    LockFreeQueue<std::array<float, 6>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_vel_offset_ranges_Que {nullptr};
     LockFreeQueue<std::array<int, 2>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_record_overdubToggles_Que {nullptr};
     LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_max_num_hits_Que {nullptr};
     LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_sampling_thresholds_and_temperature_Que {nullptr};

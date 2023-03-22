@@ -53,7 +53,7 @@ BasicNoteStructLoggerTextEditor::BasicNoteStructLoggerTextEditor(
 
     numNotesPrintedOnLine = 0;
 
-    this->startThread(5);
+    this->startThread(juce::Thread::Priority::normal);
 
 }
 
@@ -109,7 +109,7 @@ TextMessageLoggerTextEditor::TextMessageLoggerTextEditor(
     TextEditorLabel.setJustificationType (juce::Justification::top);
     addAndMakeVisible (TextEditorLabel);
     setCurrentThreadName("TextMessageLoggerThread_"+label);
-    startThread(5);
+    this->startThread(juce::Thread::Priority::normal);
 }
 
 TextMessageLoggerTextEditor::~TextMessageLoggerTextEditor()
