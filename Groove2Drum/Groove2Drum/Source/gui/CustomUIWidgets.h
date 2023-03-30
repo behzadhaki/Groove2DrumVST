@@ -936,12 +936,31 @@ namespace FinalUIWidgets {
         juce::ToggleButton offsetInvertToggle{"Invert Offset Profile"};
         unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> offsetInvertToggleAttachment;
 
-        juce::Slider OffsetBiasSlider;
-        juce::Label  OffsetBiasLabel;
-        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> OffsetBiasSliderAPVTSAttacher;
-        juce::Slider OffsetRangeSlider;
-        juce::Label  OffsetRangeLabel;
-        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> OffsetRangeSliderAPVTSAttacher;
+//        juce::Slider OffsetBiasSlider;
+//        juce::Label  OffsetBiasLabel;
+//        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> OffsetBiasSliderAPVTSAttacher;
+//        juce::Slider OffsetRangeSlider;
+//        juce::Label  OffsetRangeLabel;
+//        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> OffsetRangeSliderAPVTSAttacher;
+
+        // Sliders for generation restrictions
+        juce::Slider DelayBtnGensSlider{};
+        juce::Label  DelayBtnGensLabel{};
+        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> DelayBtnGensSliderAPVTSAttacher;
+
+        juce::Slider NumberOfVariationsSlider{};
+        juce::Label  NumberOfVariationsLabel{};
+        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> NumberOfVariationsSliderAPVTSAttacher;
+
+        juce::Slider VarianceScalingSlider{};
+        juce::Label  VarianceScalingLabel{};
+        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> VarianceScalingSliderAPVTSAttacher;
+
+        juce::Slider RequiredActivitySlider{};
+        juce::Label  RequiredActivityLabel{};
+        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> RequiredActivitySliderAPVTSAttacher;
+
+
 
         // sliders for sampling temperature
         juce::Slider temperatureSlider;
@@ -968,15 +987,27 @@ namespace FinalUIWidgets {
             addAndMakeVisible(offsetInvertToggle);
             addAndMakeVisible(*offsetPad);
 
-            /*addAndMakeVisible (OffsetRangeSlider);
-            addAndMakeVisible (OffsetRangeLabel);
-            OffsetRangeLabel.setText ("Offset: Dynamic Range", juce::dontSendNotification);
-            OffsetRangeSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "OFFSET_RANGE", OffsetRangeSlider);
+            // add sliders for generation restrictions
+            addAndMakeVisible (DelayBtnGensSlider);
+            addAndMakeVisible (DelayBtnGensLabel);
+            DelayBtnGensLabel.setText ("Response Delay", juce::dontSendNotification);
+            DelayBtnGensSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "GEN_DELAY", DelayBtnGensSlider);
 
-            addAndMakeVisible (OffsetBiasSlider);
-            addAndMakeVisible (OffsetBiasLabel);
-            OffsetBiasLabel.setText ("Offset: Bias", juce::dontSendNotification);
-            OffsetBiasSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "OFFSET_BIAS", OffsetBiasSlider);*/
+            addAndMakeVisible (NumberOfVariationsSlider);
+            addAndMakeVisible (NumberOfVariationsLabel);
+            NumberOfVariationsLabel.setText ("Num Variations", juce::dontSendNotification);
+            NumberOfVariationsSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "NUM_VARIATIONS", NumberOfVariationsSlider);
+
+            addAndMakeVisible (VarianceScalingSlider);
+            addAndMakeVisible (VarianceScalingLabel);
+            VarianceScalingLabel.setText ("Variance Scaling", juce::dontSendNotification);
+            VarianceScalingSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "VARIATIONS_RANGE", VarianceScalingSlider);
+
+            addAndMakeVisible  (RequiredActivitySlider);
+            addAndMakeVisible  (RequiredActivityLabel);
+            RequiredActivityLabel.setText ("Density", juce::dontSendNotification);
+            RequiredActivitySliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "VARIATION_ACTIVITY", RequiredActivitySlider);
+
 
             // add temperature Slider
             addAndMakeVisible (temperatureSlider);
@@ -988,18 +1019,45 @@ namespace FinalUIWidgets {
         void resized() override
         {
             float toggle_height_ratio = 0.1f;
+            float sliders_height_ratio = 0.3f;
+
             float slider_labels_width_ratio = 0.3f;
             {
                 auto area = getLocalBounds();
-                area.removeFromBottom(proportionOfHeight(1.0f - toggle_height_ratio));
-                auto toggle_w = proportionOfWidth(.5f);
-                overdubToggle.setBounds(area.removeFromLeft(toggle_w));
-                recordToggle.setBounds(area.removeFromLeft(toggle_w));
+                auto toggleArea = area.removeFromTop(area.proportionOfHeight(toggle_height_ratio));
+                auto toggle_w = toggleArea.proportionOfWidth(.5f);
+                overdubToggle.setBounds(toggleArea.removeFromLeft(toggle_w));
+                recordToggle.setBounds(toggleArea.removeFromLeft(toggle_w));
             }
 
             {
                 auto area = getLocalBounds();
-                area.removeFromTop(proportionOfHeight(toggle_height_ratio));
+                area.removeFromTop(area.proportionOfHeight(toggle_height_ratio));
+                auto slidersArea = area.removeFromTop(area.proportionOfHeight(sliders_height_ratio));
+                auto current_height = slidersArea.getHeight();
+                auto height = current_height/4.0f;
+                // place labels and sliders
+
+                auto sliderArea = slidersArea.removeFromTop(int(height));
+                DelayBtnGensLabel.setBounds(sliderArea.removeFromRight(sliderArea.proportionOfWidth(slider_labels_width_ratio)));
+                DelayBtnGensSlider.setBounds(sliderArea);
+
+                sliderArea = slidersArea.removeFromTop(int(height));
+                NumberOfVariationsLabel.setBounds(sliderArea.removeFromRight(sliderArea.proportionOfWidth(slider_labels_width_ratio)));
+                NumberOfVariationsSlider.setBounds(sliderArea);
+
+                sliderArea = slidersArea.removeFromTop(int(height));
+                VarianceScalingLabel.setBounds(sliderArea.removeFromRight(sliderArea.proportionOfWidth(slider_labels_width_ratio)));
+                VarianceScalingSlider.setBounds(sliderArea);
+
+                sliderArea = slidersArea.removeFromTop(int(height));
+                RequiredActivityLabel.setBounds(sliderArea.removeFromRight(sliderArea.proportionOfWidth(slider_labels_width_ratio)));
+                RequiredActivitySlider.setBounds(sliderArea);
+            }
+
+            {
+                auto area = getLocalBounds();
+                area = area.removeFromBottom(area.proportionOfHeight(1-sliders_height_ratio-toggle_height_ratio));
                 auto height = area.proportionOfHeight(1.0f/5.0f);
                 auto temperatureArea = area.removeFromBottom(int(height));
                 temperatureLabel.setBounds(temperatureArea.removeFromRight(temperatureArea.proportionOfWidth(slider_labels_width_ratio)));
@@ -1011,11 +1069,8 @@ namespace FinalUIWidgets {
                 velocityPad->setBounds(area.removeFromTop(int(2*height*0.9)));
                 offsetInvertToggle.setBounds(area.removeFromTop(int(2*height*0.15)));
                 offsetPad->setBounds(area.removeFromTop(int(2*height*0.9)));
-
-
             }
         }
-
     };
 
     class ButtonsWidget: public juce::Component

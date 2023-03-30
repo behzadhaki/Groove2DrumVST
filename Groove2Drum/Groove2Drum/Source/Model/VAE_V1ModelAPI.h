@@ -37,7 +37,7 @@ public:
     bool set_sampling_temperature(float temperature);
 
     // Step 1. Passes input through the model and updates logits, vels and offsets
-    void forward_pass(torch::Tensor monotonicGrooveInput);
+    void forward_pass(torch::Tensor monotonicGrooveInput, float scale_log_var);
     // Step 2. Sample hvo after the forward pass
     std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sample(
         std::string sample_mode = "SampleProbability");
@@ -52,8 +52,8 @@ private:
     torch::jit::script::Module LatentEncoder;
     torch::jit::script::Module Decoder;
 
-    int time_steps;
-    int num_voices;
+    int time_steps{32};
+    int num_voices{9};
     torch::Tensor hits_logits;
     torch::Tensor hits_probabilities;
     torch::Tensor hits;
@@ -63,6 +63,6 @@ private:
     vector<float> per_voice_max_count_allowed;              // per voice Maximum limit of hits
     float sampling_temperature {1.0f};
 
-    torch::jit::script::Module LoadModel(std::string model_path);
+    torch::jit::script::Module LoadModel(const std::string& model_path);
 };
 

@@ -34,7 +34,8 @@ void ModelThread::startThreadUsingProvidedResources(
         ModelThreadToDrumPianoRollWidgetQuesPntr,
     LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_max_num_hits_QuePntr,
     LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_sampling_thresholds_and_temperature_QuePntr,
-    LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_midi_mappings_QuePntr)
+    LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_midi_mappings_QuePntr,
+    LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_Generation_Restrictions_QuePntr)
 {
     GrooveThreadToModelThreadQue = GrooveThreadToModelThreadQuesPntr;
     ModelThreadToProcessBlockQue = ModelThreadToProcessBlockQuesPntr;
@@ -42,7 +43,7 @@ void ModelThread::startThreadUsingProvidedResources(
     APVTS2ModelThread_max_num_hits_Que = APVTS2ModelThread_max_num_hits_QuePntr;
     APVTS2ModelThread_sampling_thresholds_and_temperature_Que = APVTS2ModelThread_sampling_thresholds_and_temperature_QuePntr;
     APVTS2ModelThread_midi_mappings_Que = APVTS2ModelThread_midi_mappings_QuePntr;
-
+    APVTS2ModelThread_Generation_Restrictions_Que = APVTS2ModelThread_Generation_Restrictions_QuePntr;
    /* // load model
     monotonicV1modelAPI = MonotonicGrooveTransformerV1();
     bool monotonicIsLoaded = monotonicV1modelAPI->loadModel(
@@ -97,6 +98,24 @@ void ModelThread::run()
         shouldResample = false;
         newGrooveAvailable = false;
         newTemperatureAvailable = false;
+
+        // 0. Check if new generation restrictions are available
+        if (APVTS2ModelThread_Generation_Restrictions_Que != nullptr) {
+            if (APVTS2ModelThread_Generation_Restrictions_Que->getNumReady() > 0)
+            {
+                auto restrictions =
+                    APVTS2ModelThread_Generation_Restrictions_Que->getLatestOnly();
+                delay_between_generations = restrictions[0];
+                number_of_variations_to_search_within = int(restrictions[1]);
+                variance_scaling_factor = restrictions[2];
+                auto temp =
+                    max(int(restrictions[3] * number_of_variations_to_search_within), 0);
+                hit_count_rank_for_variation_selection =
+                    min(temp, number_of_variations_to_search_within - 1);
+                shouldResample = true;
+            }
+
+        }
 
         // 1. see if new model path is requested to load another model
         if (currentModelPath != new_model_path)
@@ -206,19 +225,17 @@ void ModelThread::run()
             {
                 // 3. pass scaled version mapped to closed hats to input
                 // !!!! dont't forget to use the scaled tensor (with modified vel/offsets)
-                bool useGrooveWithModifiedVelOffset = true;
-                int mapGrooveToVoiceNumber = 2;     // put groove in the closed hihat voice
 
-                auto groove_tensor = scaled_groove.getFullVersionTensor(useGrooveWithModifiedVelOffset,
-                                                                        mapGrooveToVoiceNumber,
-                                                                        HVO_params::num_voices);
                 if (monotonicV1modelAPI != std::nullopt) // if monotonic model is loaded
                 {
+                    auto groove_tensor = scaled_groove.getFullVersionTensor(true, 2, HVO_params::num_voices);
                     monotonicV1modelAPI->forward_pass(groove_tensor);
                     shouldResample = true;
                 } else if (vaeV1ModelAPI != std::nullopt) // if vae model is loaded
                 {
-                    vaeV1ModelAPI->forward_pass(groove_tensor);
+                    // no forward pass here (because we need to do multiple variations and select
+                    // the desirable one --> forward pass done in shouldResample section
+                    // vaeV1ModelAPI->forward_pass(groove_tensor, variance_scaling_factor);
                     shouldResample = true;
 
                 } else
@@ -249,16 +266,52 @@ void ModelThread::run()
                         offsets);
             } else if (vaeV1ModelAPI != std::nullopt) // if vae model is loaded
             {
-                auto [hits, velocities, offsets] =
-                    vaeV1ModelAPI->sample(sample_mode);
-                generated_hvo = HVO<HVO_params::time_steps, HVO_params::num_voices>(
-                    hits, velocities, offsets);
-                pianoRollData =
-                    HVOLight<HVO_params::time_steps, HVO_params::num_voices>(
-                        hits,
-                        vaeV1ModelAPI->get_hits_probabilities(),
-                        velocities,
-                        offsets);
+                using hvo = HVO<HVO_params::time_steps, HVO_params::num_voices>;
+                using pianoRoll = HVOLight<HVO_params::time_steps, HVO_params::num_voices>;
+
+                std::vector<hvo> generated_hvo_variations;
+                std::vector<pianoRoll> generated_pianoRoll_variations;
+                torch::Tensor hitCounts = torch::zeros({number_of_variations_to_search_within});
+                std::cout << hitCounts << std::endl;
+                auto groove_tensor = scaled_groove.getFullVersionTensor(true, 2, HVO_params::num_voices);
+
+                DBG("GROOVE RECEIVED");
+
+                DBG("number_of_variations_to_search_within" << number_of_variations_to_search_within);
+                for (int i = 0; i<number_of_variations_to_search_within; i++) {
+                    vaeV1ModelAPI->forward_pass(groove_tensor, variance_scaling_factor);
+                    auto [hits, velocities, offsets] =
+                        vaeV1ModelAPI->sample(sample_mode);
+                    DBG("Forward success");
+                    generated_hvo_variations.emplace_back( hits, velocities, offsets);
+                    generated_pianoRoll_variations.emplace_back(hits,
+                                                                vaeV1ModelAPI->get_hits_probabilities(),
+                                                                velocities,
+                                                                offsets);
+                    hitCounts.index({i}) = hits.sum();
+                }
+                DBG("hitCounts: ");
+
+                // sort hitCounts
+                std::cout << hitCounts << std::endl;
+                DBG("number_of_variations_to_search_within" << number_of_variations_to_search_within);
+                auto ranks = torch::topk(hitCounts, number_of_variations_to_search_within, -1, false);
+                DBG("ranks: ");
+                std::cout << std::get<1>(ranks) << std::endl;
+                DBG("ranks: 1");
+                // print torch tensor
+
+
+                std::get<1>(ranks).index({0});
+                DBG("ranks: 2");
+                int candidate_idx = std::get<1>(ranks).index({0}).item<int>();
+                DBG("candidate_idx: " );
+
+//                auto [hits, velocities, offsets] =
+//                    vaeV1ModelAPI->sample(sample_mode);
+                generated_hvo = generated_hvo_variations[candidate_idx];
+                pianoRollData = generated_pianoRoll_variations[candidate_idx];
+
             } else
             {
                 DBG("No model is loaded");
@@ -283,7 +336,7 @@ void ModelThread::run()
         bExit = threadShouldExit();
 
         // avoid burning CPU, if reading is returning immediately
-        sleep (thread_settings::ModelThread::waitTimeBtnIters); // avoid burning CPU, if reading is returning immediately
+        sleep (int(delay_between_generations)); // avoid burning CPU, if reading is returning immediately
     }
 }
 // ============================================================================================================
@@ -313,7 +366,7 @@ ModelThread::~ModelThread()
 // ============================================================================================================
 // ===          Utility Methods
 // ============================================================================================================
-void ModelThread::UpdateModelPath(std::string new_model_path_, std::string sample_mode_)
+void ModelThread::UpdateModelPath(std::string new_model_path_, const std::string& sample_mode_)
 {
     new_model_path = new_model_path_;
 

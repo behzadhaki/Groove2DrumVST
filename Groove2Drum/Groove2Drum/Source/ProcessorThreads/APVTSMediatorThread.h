@@ -62,7 +62,8 @@ public:
         LockFreeQueue<std::array<int, 2>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_record_overdubToggles_QuePntr,
         LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_max_num_hits_QuePntr,
         LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_sampling_thresholds_and_temperature_QuePntr,
-        LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_midi_mappings_QuePntr
+        LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_midi_mappings_QuePntr,
+        LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_Generation_Restrictions_QuePntr
         )
     {
         APVTS = APVTSPntr;
@@ -71,7 +72,7 @@ public:
         APVTS2ModelThread_max_num_hits_Que = APVTS2ModelThread_max_num_hits_QuePntr;
         APVTS2ModelThread_sampling_thresholds_and_temperature_Que = APVTS2ModelThread_sampling_thresholds_and_temperature_QuePntr;
         APVTS2ModelThread_midi_mappings_Que = APVTS2ModelThread_midi_mappings_QuePntr;
-
+        APVTS2ModelThread_Generation_Restrictions_Que = APVTS2ModelThread_Generation_Restrictions_QuePntr;
         startThread();
     }
 
@@ -94,6 +95,7 @@ public:
         auto current_randomize_groove_buttons = std::array<int, 3>{};
         int current_model_selected = -1;
         string current_sampling_method;
+        auto current_generation_restrictions = std::array<float, 4>{};
 
         while (!bExit)
         {
@@ -116,7 +118,7 @@ public:
                 {
                     current_groove_vel_offset_ranges = new_groove_vel_offset_ranges;
                     APVTS2GrooveThread_groove_vel_offset_ranges_Que->push(
-                        new_groove_vel_offset_ranges);
+                        current_groove_vel_offset_ranges);
                 }
 
                 // check if per voice allowed maximum number of hits has changed
@@ -124,7 +126,7 @@ public:
                 if (current_max_num_hits != new_max_num_hits)
                 {
                     current_max_num_hits = new_max_num_hits;
-                    APVTS2ModelThread_max_num_hits_Que->push(new_max_num_hits);
+                    APVTS2ModelThread_max_num_hits_Que->push(current_max_num_hits);
                 }
 
                 // check if per voice allowed sampling thresholds have changed
@@ -137,7 +139,7 @@ public:
                     current_sampling_thresholds_with_temperature =
                         new_sampling_thresholds_with_temperature;
                     APVTS2ModelThread_sampling_thresholds_and_temperature_Que->push(
-                        new_sampling_thresholds_with_temperature);
+                        current_sampling_thresholds_with_temperature);
                 }
 
                 // check if per voice midi numbers have changed
@@ -145,7 +147,7 @@ public:
                 if (current_per_voice_midi_numbers != get_per_voice_midi_numbers())
                 {
                     current_per_voice_midi_numbers = new_per_voice_midi_numbers;
-                    APVTS2ModelThread_midi_mappings_Que->push(new_per_voice_midi_numbers);
+                    APVTS2ModelThread_midi_mappings_Que->push(current_per_voice_midi_numbers);
                 }
 
                 // check if per reset buttons have been clicked
@@ -207,6 +209,13 @@ public:
                     reset_random_buttons();
                 }
 
+                // check if generation restrictions have changed
+                auto new_generation_restrictions = get_generation_restrictions();
+                if (current_generation_restrictions != new_generation_restrictions) {
+                    current_generation_restrictions = new_generation_restrictions;
+                    APVTS2ModelThread_Generation_Restrictions_Que->push(current_generation_restrictions);
+                }
+
                 // check if new model selected
                 auto new_model_selected = get_model_selected();
                 auto new_sampling_method = get_sampling_method();
@@ -216,7 +225,16 @@ public:
                     current_sampling_method = new_sampling_method;
                     auto new_model_path = (string)paths[current_model_selected].toStdString();
                     modelThread->UpdateModelPath(new_model_path, current_sampling_method);
+
+                    // when model is changed reset all sampling params to push a new send
+                    APVTS2GrooveThread_groove_vel_offset_ranges_Que->push(
+                        current_groove_vel_offset_ranges);
+                    APVTS2ModelThread_sampling_thresholds_and_temperature_Que->push(
+                        current_sampling_thresholds_with_temperature);
+                    APVTS2ModelThread_Generation_Restrictions_Que->push(
+                        current_generation_restrictions);
                 }
+
 
                 bExit = threadShouldExit();
 
@@ -358,6 +376,15 @@ private:
         return model_selected;
     }
 
+    std::array<float, 4> get_generation_restrictions() {
+        std::array<float, 4> vals{};
+        vals[0] = *APVTS->getRawParameterValue("GEN_DELAY");
+        vals[1] = *APVTS->getRawParameterValue("NUM_VARIATIONS");
+        vals[2] = *APVTS->getRawParameterValue("VARIATIONS_RANGE");
+        vals[3] = *APVTS->getRawParameterValue("VARIATION_ACTIVITY");
+        return vals;
+    }
+
     // ============================================================================================================
     // ===          Output Queues for Receiving/Sending Data
     // ============================================================================================================
@@ -366,6 +393,7 @@ private:
     LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_max_num_hits_Que {nullptr};
     LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_sampling_thresholds_and_temperature_Que {nullptr};
     LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_midi_mappings_Que {nullptr};
+    LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_Generation_Restrictions_Que {nullptr};
 
     // ============================================================================================================
     // ===          pointer to MidiFXProcessor

@@ -64,7 +64,7 @@ private:
     shared_ptr<LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>> APVTS2ModelThread_sampling_thresholds_and_temperature_Que;
     shared_ptr<LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>> GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue;
     shared_ptr<LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>> APVTS2ModelThread_midi_mappings_Que;
-
+    shared_ptr<LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>> APVTS2ModelThread_Generation_Restrictions_Que;
     // holds the latest generations to loop over
     GeneratedData<HVO_params::time_steps, HVO_params::num_voices> latestGeneratedData;
 

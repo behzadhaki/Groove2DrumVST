@@ -53,7 +53,7 @@ VAE_V1ModelAPI::VAE_V1ModelAPI(){
 }
 
 // Loads model either in eval mode or train modee
-inline torch::jit::script::Module VAE_V1ModelAPI::LoadModel(std::string model_path)
+inline torch::jit::script::Module VAE_V1ModelAPI::LoadModel(const std::string& model_path)
 {
     torch::jit::script::Module model;
     model = torch::jit::load(model_path);
@@ -162,7 +162,7 @@ bool VAE_V1ModelAPI::set_sampling_temperature(float temperature)
 }
 
 // Passes input through the model and updates logits, vels and offsets
-void VAE_V1ModelAPI::forward_pass(torch::Tensor monotonicGrooveInput)
+void VAE_V1ModelAPI::forward_pass(torch::Tensor monotonicGrooveInput, float scale_log_var=1)
 {
     assert(monotonicGrooveInput.sizes()[0]==time_steps &&
            "shape [time_steps, num_voices*3]");
@@ -194,7 +194,7 @@ void VAE_V1ModelAPI::forward_pass(torch::Tensor monotonicGrooveInput)
     // latent is a tuple of 3 tensors (mean, logvar, z)
     auto latent_tuple = latent.toTuple();
     auto mean = latent_tuple->elements()[0].toTensor();
-    auto logvar = latent_tuple->elements()[1].toTensor();
+    auto logvar = latent_tuple->elements()[1].toTensor() * scale_log_var;
     auto z = latent_tuple->elements()[2].toTensor();
 
     // pass through Decoder
@@ -207,6 +207,7 @@ void VAE_V1ModelAPI::forward_pass(torch::Tensor monotonicGrooveInput)
     hits_probabilities = torch::sigmoid(hits_logits/sampling_temperature).view({time_steps, num_voices});
     velocities = torch::sigmoid(hLogit_v_o_tuples->elements()[1].toTensor().view({time_steps, num_voices}));
     offsets = torch::sigmoid(hLogit_v_o_tuples->elements()[2].toTensor().view({time_steps, num_voices})) - 0.5f;
+    DBG("DONE with Forward");
 }
 
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> VAE_V1ModelAPI::

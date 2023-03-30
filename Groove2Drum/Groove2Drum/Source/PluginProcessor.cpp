@@ -29,7 +29,7 @@ MidiFXProcessor::MidiFXProcessor():
     APVTS2ModelThread_sampling_thresholds_and_temperature_Que = make_shared<LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>>();
     GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue = make_shared<LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>>();
     APVTS2ModelThread_midi_mappings_Que = make_shared<LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>>();
-
+    APVTS2ModelThread_Generation_Restrictions_Que = make_shared<LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>>();
 
     //////////////////////////////////////////////////////////////////
     //// Create shared pointers for Threads (shared with APVTSMediator)
@@ -48,7 +48,8 @@ MidiFXProcessor::MidiFXProcessor():
                                                   ModelThreadToDrumPianoRollWidgetQue.get(),
                                                   APVTS2ModelThread_max_num_hits_Que.get(),
                                                   APVTS2ModelThread_sampling_thresholds_and_temperature_Que.get(),
-                                                  APVTS2ModelThread_midi_mappings_Que.get());
+                                                  APVTS2ModelThread_midi_mappings_Que.get(),
+                                                   APVTS2ModelThread_Generation_Restrictions_Que.get());
 
     grooveThread->startThreadUsingProvidedResources(ProcessBlockToGrooveThreadQue.get(),
                                                    GrooveThreadToModelThreadQue.get(),
@@ -62,7 +63,8 @@ MidiFXProcessor::MidiFXProcessor():
                                                           APVTS2GrooveThread_groove_record_overdubToggles_Que.get(),
                                                           APVTS2ModelThread_max_num_hits_Que.get(),
                                                           APVTS2ModelThread_sampling_thresholds_and_temperature_Que.get(),
-                                                          APVTS2ModelThread_midi_mappings_Que.get());
+                                                          APVTS2ModelThread_midi_mappings_Que.get(),
+                                                           APVTS2ModelThread_Generation_Restrictions_Que.get());
 }
 
 MidiFXProcessor::~MidiFXProcessor(){
@@ -190,6 +192,18 @@ juce::AudioProcessorValueTreeState::ParameterLayout MidiFXProcessor::createParam
     // toggles
     layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("OVERDUB", version_hint), "OVERDUB", 0, 1, 1));
     layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("RECORD", version_hint), "RECORD", 0, 1, 1));
+
+    // minimum delay time between generations (in msec)
+    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("GEN_DELAY", version_hint), "GEN_DELAY", 0, 10000, thread_settings::ModelThread::waitTimeBtnIters));
+
+    // VAE params
+    //      1. Number of Variations to Generate when new generations to be obtained
+    layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("NUM_VARIATIONS", version_hint), "NUM_VARIATIONS", 1, 100, 1));
+    //      2. Variation range (scales the logvar to generate more possibly varying patterns
+    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("VARIATIONS_RANGE", version_hint), "VAR_VARIATIONS", 0, 10, 1));
+    //      3. HIT RANK FOR VARIATION Selection (0 means least active pattern, 1 means most active one)
+    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("VARIATION_ACTIVITY", version_hint), "VARIATION_ACTIVITY", 0, 1, 0.5));
+
 
     // model selector combobox
     auto modelfiles = get_monotonic_v1_pt_files_in_default_path();

@@ -59,7 +59,8 @@ public:
         HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size>* ModelThreadToDrumPianoRollWidgetQuesPntr,
         LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_max_num_hits_QuePntr,
         LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_sampling_thresholds_and_temperature_QuePntr,
-        LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_midi_mappings_QuePntr);
+        LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_midi_mappings_QuePntr,
+        LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_Generation_Restrictions_QuePntr);
     // ------------------------------------------------------------------------------------------------------------
     // ---         Step 3 . start run() thread by calling startThread().
     // ---                  !!DO NOT!! Call run() directly. startThread() internally makes a call to run().
@@ -92,10 +93,13 @@ public:
     // ------------------------------------------------------------------------------------------------------------
     // ---         Other
     // ------------------------------------------------------------------------------------------------------------
+    // juce::WaitableEvent allowedToGenerate{}; // used to delay the generations if wait time is more than 0 ppqs
+
     bool readyToStop; // Used to check if thread is ready to be stopped or externally stopped from a parent thread
 
-    void UpdateModelPath(std::string new_model_path_, std::string sample_mode_);
+    void UpdateModelPath(std::string new_model_path_, const std::string& sample_mode_);
     // ============================================================================================================
+
 
 
 private:
@@ -115,6 +119,7 @@ private:
     LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_max_num_hits_Que;
     LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_sampling_thresholds_and_temperature_Que;
     LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_midi_mappings_Que;
+    LockFreeQueue<std::array<float, 4>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_Generation_Restrictions_Que;
 
     // ============================================================================================================
     // ===          Generative Torch Model
@@ -122,8 +127,18 @@ private:
     std::optional<MonotonicGrooveTransformerV1> monotonicV1modelAPI{std::nullopt};
     std::optional<VAE_V1ModelAPI> vaeV1ModelAPI{std::nullopt};
     array <int, HVO_params::num_voices> drum_kit_midi_map {};
-    string new_model_path {""};
+    string new_model_path;
     string sample_mode {"Threshold"}; //"Threshold" or "SampleProbability"
+
+
+    // ============================================================================================================
+    // ===          Generative Restrictions (mostly related to VAE models atm)
+    // ============================================================================================================
+    float delay_between_generations{thread_settings::ModelThread::waitTimeBtnIters};
+    int number_of_variations_to_search_within {1}; // vae model generates this many variations and selects the one matching params below
+    float variance_scaling_factor{1}; // scales the variance of the latent layer in VAE models only
+    int hit_count_rank_for_variation_selection{0}; // 0 rank means the lowest active variation is selected, higher rank means more active
+
 };
 
 #endif //JUCECMAKEREPO_MODELTHREAD_H
