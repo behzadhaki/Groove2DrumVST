@@ -1011,8 +1011,6 @@ namespace FinalUIWidgets {
                 velocityPad->setBounds(area.removeFromTop(int(2*height*0.9)));
                 offsetInvertToggle.setBounds(area.removeFromTop(int(2*height*0.15)));
                 offsetPad->setBounds(area.removeFromTop(int(2*height*0.9)));
-
-
             }
         }
 
