@@ -9,21 +9,36 @@
 #include "../Includes/CustomStructsAndLockFreeQueue.h"
 #include "../InterThreadFifos.h"
 #include "../settings.h"
-#include "../Model/ModelAPI.h"
+#include "../Model/MonotonicV1ModelAPI.h"
+#include "../Model/VAE_V1ModelAPI.h"
 
-inline juce::StringArray get_pt_files_in_default_path()
+inline juce::StringArray get_monotonic_v1_pt_files_in_default_path()
 {
     // find models in default folder
     juce::StringArray paths;
     paths.clear();
     for (const auto& filenameThatWasFound : juce::File (GeneralSettings::default_model_folder).findChildFiles (2, true, "*.pt"))
     {
-        paths.add (filenameThatWasFound.getFileNameWithoutExtension());
+        paths.add (filenameThatWasFound.getFullPathName());
     }
     paths.sort(false);
     return paths;
 }
 
+inline juce::StringArray get_vae_directories_in_default_path()
+{
+    juce::StringArray paths;
+    paths.clear();
+
+    // find subdirectories in default vae folder
+    for (const auto& filenameThatWasFound : juce::File (GeneralSettings::default_vae_model_folder).findChildFiles (1, true, "*"))
+    {
+        paths.add (filenameThatWasFound.getFullPathName());
+    }
+    paths.sort(false);
+    return paths;
+
+}
 
 class ModelThread: public juce::Thread/*, public juce::ChangeBroadcaster*/
 {
@@ -104,7 +119,8 @@ private:
     // ============================================================================================================
     // ===          Generative Torch Model
     // ============================================================================================================
-    MonotonicGrooveTransformerV1 modelAPI;
+    std::optional<MonotonicGrooveTransformerV1> monotonicV1modelAPI{std::nullopt};
+    std::optional<VAE_V1ModelAPI> vaeV1ModelAPI{std::nullopt};
     array <int, HVO_params::num_voices> drum_kit_midi_map {};
     string new_model_path {""};
     string sample_mode {"Threshold"}; //"Threshold" or "SampleProbability"

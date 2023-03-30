@@ -22,12 +22,13 @@ PRODUCT_NAME "Groove2Drum")
 include(libtorch_setup.cmake)
 
 target_sources(${BaseTargetName} PRIVATE
-Source/PluginProcessor.cpp
-Source/PluginEditor.cpp
-Source/Model/ModelAPI.cpp
-Source/gui/CustomGuiTextEditors.cpp
-Source/ProcessorThreads/GrooveThread.cpp
-Source/ProcessorThreads/ModelThread.cpp)
+        Source/PluginProcessor.cpp
+        Source/PluginEditor.cpp
+        Source/Model/MonotonicV1ModelAPI.cpp
+        Source/Model/VAE_V1ModelAPI.cpp
+        Source/gui/CustomGuiTextEditors.cpp
+        Source/ProcessorThreads/GrooveThread.cpp
+        Source/ProcessorThreads/ModelThread.cpp)
 
 target_compile_definitions(${BaseTargetName}
 PUBLIC

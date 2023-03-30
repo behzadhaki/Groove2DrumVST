@@ -51,7 +51,7 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
     // model paths
-    juce::StringArray model_paths{get_pt_files_in_default_path()};
+    juce::StringArray model_paths{};
 
 private:
     // =========  Queues for communicating Between the main threads in proce    ssor  =============================================

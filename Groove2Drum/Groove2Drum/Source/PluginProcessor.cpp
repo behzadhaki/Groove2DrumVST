@@ -9,6 +9,9 @@ using namespace std;
 MidiFXProcessor::MidiFXProcessor():
     apvts(*this, nullptr, "PARAMETERS", createParameterLayout())
 {
+    model_paths = get_monotonic_v1_pt_files_in_default_path();
+    model_paths.addArray(get_vae_directories_in_default_path());
+
     //////////////////////////////////////////////////////////////////
     //// Make_unique pointers for Queues
     //////////////////////////////////////////////////////////////////
@@ -77,7 +80,6 @@ MidiFXProcessor::~MidiFXProcessor(){
     {
         apvtsMediatorThread->prepareToStop();
     }
-
 }
 
 void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
@@ -100,6 +102,7 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         if (ModelThreadToProcessBlockQue->getNumReady() > 0)
         {
             latestGeneratedData = ModelThreadToProcessBlockQue->getLatestOnly();
+            DBG("new generated pattern received");
         }
     }
 
@@ -127,7 +130,6 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
             grooveThread->clearStep((int) current_grid, startPpq);
         }
 
-        //juce::MidiMessage msg = juce::MidiMessage::noteOn((int)1, (int)36, (float)100.0);
         if (latestGeneratedData.numberOfGenerations() > 0)
         {
             for (size_t idx = 0; idx < (size_t) latestGeneratedData.numberOfGenerations(); idx++)
@@ -137,6 +139,8 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
                 if (ppqs_from_start_>=0 and samples_from_start_<buffSize)
                 {
+                    DBG("PLAYING");
+                    DBG(latestGeneratedData.midiMessages[idx].getFloatVelocity());
                     // send note on
                     tempBuffer.addEvent(latestGeneratedData.midiMessages[idx], (int) samples_from_start_);
                     // send note off
@@ -188,7 +192,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout MidiFXProcessor::createParam
     layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("RECORD", version_hint), "RECORD", 0, 1, 1));
 
     // model selector combobox
-    auto modelfiles = get_pt_files_in_default_path();
+    auto modelfiles = get_monotonic_v1_pt_files_in_default_path();
+    modelfiles.addArray(get_vae_directories_in_default_path());
     layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("MODEL", version_hint), "MODEL", 0, modelfiles.size()-1, 0));
 
     // buttons

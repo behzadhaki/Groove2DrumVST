@@ -2,7 +2,7 @@
 // Created by Behzad Haki on 2022-08-03.
 //
 
-#include "ModelAPI.h"
+#include "VAE_V1ModelAPI.h"
 #include <shared_plugin_helpers/shared_plugin_helpers.h>  // fixme remove this
 
 
@@ -48,12 +48,20 @@ static torch::Tensor vector2tensor(vector<float> vec)
 
 
 //default constructor
-MonotonicGrooveTransformerV1::MonotonicGrooveTransformerV1(){
+VAE_V1ModelAPI::VAE_V1ModelAPI(){
     model_path = "NO Path Specified Yet!!";
 }
 
+// Loads model either in eval mode or train modee
+inline torch::jit::script::Module VAE_V1ModelAPI::LoadModel(std::string model_path)
+{
+    torch::jit::script::Module model;
+    model = torch::jit::load(model_path);
+    model.eval();
+    return model;
+}
 
-bool MonotonicGrooveTransformerV1::loadModel(std::string model_path_, int time_steps_, int num_voices_)
+bool VAE_V1ModelAPI::loadModel(std::string model_path_, int time_steps_, int num_voices_)
 {
 
     model_path = model_path_;
@@ -71,8 +79,17 @@ bool MonotonicGrooveTransformerV1::loadModel(std::string model_path_, int time_s
     else
     {
         myFile.close();
+        DBG("Model Path is OK");
+        InputLayerEncoder = LoadModel(model_path + "/InputLayerEncoder.pt");
+        DBG("InputLayerEncoder is OK");
+        DBG(model_path);
+        Encoder = LoadModel(model_path + "/Encoder.pt");
+        DBG("Encoder is OK");
+        LatentEncoder = LoadModel(model_path + "/LatentEncoder.pt");
+        DBG("LatentEncoder is OK");
+        Decoder = LoadModel(model_path + "/Decoder.pt");
+        DBG("Decoder is OK");
 
-        model = LoadModel(model_path, true);
         hits_logits = torch::zeros({time_steps_, num_voices_});
         hits_probabilities = torch::zeros({time_steps_, num_voices_});
         hits = torch::zeros({time_steps_, num_voices_});
@@ -85,10 +102,10 @@ bool MonotonicGrooveTransformerV1::loadModel(std::string model_path_, int time_s
 
 }
 
-bool MonotonicGrooveTransformerV1::changeModel(std::string model_path_)
+bool VAE_V1ModelAPI::changeModel(std::string model_path_)
 {
     ifstream myFile;
-    myFile.open(model_path_);
+    myFile.open(model_path_.append("/InputLayerEncoder.pt"));
     // Check for errors
 
     // check if path works fine
@@ -99,21 +116,24 @@ bool MonotonicGrooveTransformerV1::changeModel(std::string model_path_)
     else
     {
         myFile.close();
-        model = LoadModel(model_path_, true);
-        model_path_ = model_path;
+        model_path = model_path_;
+        InputLayerEncoder = LoadModel(model_path.append("/InputLayerEncoder.pt"));
+        Encoder = LoadModel(model_path.append("/Encoder.pt"));
+        LatentEncoder = LoadModel(model_path.append("/LatentEncoder.pt"));
+        Decoder = LoadModel(model_path.append("/Decoder.pt"));
         return true;
     }
 }
 
 // getters
-torch::Tensor MonotonicGrooveTransformerV1::get_hits_logits() { return hits_logits; }
-torch::Tensor MonotonicGrooveTransformerV1::get_hits_probabilities() { return hits_probabilities; }
-torch::Tensor MonotonicGrooveTransformerV1::get_velocities() { return velocities; }
-torch::Tensor MonotonicGrooveTransformerV1::get_offsets() { return offsets; }
+torch::Tensor VAE_V1ModelAPI::get_hits_logits() { return hits_logits; }
+torch::Tensor VAE_V1ModelAPI::get_hits_probabilities() { return hits_probabilities; }
+torch::Tensor VAE_V1ModelAPI::get_velocities() { return velocities; }
+torch::Tensor VAE_V1ModelAPI::get_offsets() { return offsets; }
 
 
 // setters
-void MonotonicGrooveTransformerV1::set_sampling_thresholds(vector<float> per_voice_thresholds)
+void VAE_V1ModelAPI::set_sampling_thresholds(vector<float> per_voice_thresholds)
 {
     assert(per_voice_thresholds.size()==num_voices &&
            "thresholds dim [num_voices]");
@@ -121,7 +141,7 @@ void MonotonicGrooveTransformerV1::set_sampling_thresholds(vector<float> per_voi
     per_voice_sampling_thresholds = vector2tensor(per_voice_thresholds);
 }
 
-void MonotonicGrooveTransformerV1::set_max_count_per_voice_limits(vector<float> perVoiceMaxNumVoicesAllowed)
+void VAE_V1ModelAPI::set_max_count_per_voice_limits(vector<float> perVoiceMaxNumVoicesAllowed)
 {
     assert(perVoiceMaxNumVoicesAllowed.size()==num_voices &&
            "thresholds dim [num_voices]");
@@ -130,7 +150,7 @@ void MonotonicGrooveTransformerV1::set_max_count_per_voice_limits(vector<float> 
 }
 
 // returns true if temperature has changed
-bool MonotonicGrooveTransformerV1::set_sampling_temperature(float temperature)
+bool VAE_V1ModelAPI::set_sampling_temperature(float temperature)
 {
     if (sampling_temperature == temperature)
     {
@@ -142,24 +162,54 @@ bool MonotonicGrooveTransformerV1::set_sampling_temperature(float temperature)
 }
 
 // Passes input through the model and updates logits, vels and offsets
-void MonotonicGrooveTransformerV1::forward_pass(torch::Tensor monotonicGrooveInput)
+void VAE_V1ModelAPI::forward_pass(torch::Tensor monotonicGrooveInput)
 {
     assert(monotonicGrooveInput.sizes()[0]==time_steps &&
            "shape [time_steps, num_voices*3]");
     assert(monotonicGrooveInput.sizes()[1]==(num_voices*3) &&
            "shape [time_steps, num_voices*3]");
 
-    std::vector<torch::jit::IValue> inputs;
-    inputs.emplace_back(monotonicGrooveInput);
-    auto outputs = model.forward(inputs);
+    // flatten groove into single voice
+    auto row_indices = torch::arange(0, time_steps);
+    auto flat_groove = torch::zeros({time_steps, 3});
+    flat_groove.index_put_({row_indices, torch::indexing::Slice(0, 1)}, monotonicGrooveInput.index({row_indices, torch::indexing::Slice(2, 3)}));
+    flat_groove.index_put_({row_indices, torch::indexing::Slice(1, 2)}, monotonicGrooveInput.index({row_indices, torch::indexing::Slice(11, 12)}));
+    flat_groove.index_put_({row_indices, torch::indexing::Slice(2, 3)}, monotonicGrooveInput.index({row_indices, torch::indexing::Slice(20, 21)}));
+
+    // wrap as IValue vector and pass through InputLayerEncoder
+    std::vector<torch::jit::IValue> inputs{flat_groove};
+    //inputs.emplace_back(flat_groove);
+    auto embedded = InputLayerEncoder.forward(inputs);
+
+    // pass through Encoder'
+    inputs.clear();
+    inputs.emplace_back(embedded);
+    auto encoded = Encoder.forward(inputs);
+
+    // pass through LatentEncoder
+    inputs.clear();
+    inputs.emplace_back(encoded);
+    auto latent = LatentEncoder.forward(inputs);
+
+    // latent is a tuple of 3 tensors (mean, logvar, z)
+    auto latent_tuple = latent.toTuple();
+    auto mean = latent_tuple->elements()[0].toTensor();
+    auto logvar = latent_tuple->elements()[1].toTensor();
+    auto z = latent_tuple->elements()[2].toTensor();
+
+    // pass through Decoder
+    inputs.clear();
+    inputs.emplace_back(z);
+    auto outputs = Decoder.forward(inputs);
+
     auto hLogit_v_o_tuples = outputs.toTuple();
     hits_logits = hLogit_v_o_tuples->elements()[0].toTensor().view({time_steps, num_voices});
     hits_probabilities = torch::sigmoid(hits_logits/sampling_temperature).view({time_steps, num_voices});
-    velocities = hLogit_v_o_tuples->elements()[1].toTensor().view({time_steps, num_voices});
-    offsets = hLogit_v_o_tuples->elements()[2].toTensor().view({time_steps, num_voices});
+    velocities = torch::sigmoid(hLogit_v_o_tuples->elements()[1].toTensor().view({time_steps, num_voices}));
+    offsets = torch::sigmoid(hLogit_v_o_tuples->elements()[2].toTensor().view({time_steps, num_voices})) - 0.5f;
 }
 
-std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> MonotonicGrooveTransformerV1::
+std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> VAE_V1ModelAPI::
     sample(std::string sample_mode)
 {
     DBG(sample_mode);
@@ -188,7 +238,6 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> MonotonicGrooveTransform
             auto accepted_candidate_indices = candidate_probs>=thres_voice_i;
             auto active_time_indices = candidate_prob_indices.index({accepted_candidate_indices});
 
-
             hits.index_put_({active_time_indices, voice_i}, 1);
         }
     } else if (sample_mode=="SampleProbability")
@@ -214,31 +263,6 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> MonotonicGrooveTransform
     return {hits, velocities, offsets};
 }
 
-// ------------------------------------------------------------
-// -------------------UTILS------------------------------------
-// ------------------------------------------------------------
-// converts a tensor to string to be used with DBG for debugging
-std::string tensor2string (torch::Tensor tensor)
-{
-    std::ostringstream stream;
-    stream << tensor;
-    std::string tensor_string = stream.str();
-    return tensor_string;
-}
 
-// Loads model either in eval mode or train modee
-inline torch::jit::script::Module LoadModel(std::string model_path, bool eval)
-{
-    torch::jit::script::Module model;
-    model = torch::jit::load(model_path);
-    if (eval)
-    {
-        model.eval();
-    }
-    else
-    {
-        model.train();
-    }
-    return model;
-}
+
 

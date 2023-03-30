@@ -41,7 +41,16 @@ public:
     {
         grooveThread = grooveThreadPntr;
         modelThread = modelThreadPntr;
-        paths = get_pt_files_in_default_path();
+        auto monotonic_paths = get_monotonic_v1_pt_files_in_default_path();
+        auto vae_folders = get_vae_directories_in_default_path();
+        // append the paths to the paths array
+        paths.addArray(monotonic_paths);
+        paths.addArray(vae_folders);
+        // print the paths
+        for (auto& path : paths)
+        {
+            std::cout << path << std::endl;
+        }
     }
 
     // ------------------------------------------------------------------------------------------------------------
@@ -76,15 +85,15 @@ public:
         // notify if the thread is still running
         bool bExit = threadShouldExit();
 
-        auto current_overdub_record_toggle_states = get_overdub_record_toggle_states();
-        auto current_groove_vel_offset_ranges = get_groove_vel_offset_ranges();
-        auto current_max_num_hits = get_max_num_hits();
-        auto current_sampling_thresholds_with_temperature = get_sampling_thresholds_with_temperature();
-        auto current_per_voice_midi_numbers = get_per_voice_midi_numbers();
-        auto current_reset_buttons = get_reset_buttons();
-        auto current_randomize_groove_buttons = get_randomize_groove_buttons();
-        auto current_model_selected = get_model_selected();
-        auto current_sampling_method = get_sampling_method();
+        auto current_overdub_record_toggle_states = std::array<int, 2>{};
+        auto current_groove_vel_offset_ranges = std::array<float, 6>{};
+        auto current_max_num_hits = std::array<float, HVO_params::num_voices>{};
+        auto current_sampling_thresholds_with_temperature = std::array<float, HVO_params::num_voices+1>{};
+        auto current_per_voice_midi_numbers = std::array<int, HVO_params::num_voices> {};
+        auto current_reset_buttons = std::array<int, 3> {};
+        auto current_randomize_groove_buttons = std::array<int, 3>{};
+        int current_model_selected = -1;
+        string current_sampling_method;
 
         while (!bExit)
         {
@@ -205,7 +214,7 @@ public:
                 {
                     current_model_selected = new_model_selected;
                     current_sampling_method = new_sampling_method;
-                    auto new_model_path = (string)GeneralSettings::default_model_folder + "/" + paths[current_model_selected].toStdString() + ".pt";
+                    auto new_model_path = (string)paths[current_model_selected].toStdString();
                     modelThread->UpdateModelPath(new_model_path, current_sampling_method);
                 }
 

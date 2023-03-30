@@ -43,27 +43,34 @@ void ModelThread::startThreadUsingProvidedResources(
     APVTS2ModelThread_sampling_thresholds_and_temperature_Que = APVTS2ModelThread_sampling_thresholds_and_temperature_QuePntr;
     APVTS2ModelThread_midi_mappings_Que = APVTS2ModelThread_midi_mappings_QuePntr;
 
-    // load model
-    modelAPI = MonotonicGrooveTransformerV1();
-    bool isLoaded = modelAPI.loadModel(
+   /* // load model
+    monotonicV1modelAPI = MonotonicGrooveTransformerV1();
+    bool monotonicIsLoaded = monotonicV1modelAPI->loadModel(
         GeneralSettings::default_model_path, HVO_params::time_steps, HVO_params::num_voices);
+    bool vae1IsLoaded = vaeV1ModelAPI->loadModel(
+        GeneralSettings::default_vae_model_folder, HVO_params::time_steps, HVO_params::num_voices);
 
     // initialize midi mappings
     drum_kit_midi_map = nine_voice_kit_default_midi_numbers;
 
     // check if model loaded successfully
-    if (isLoaded)
+    if (monotonicIsLoaded or vae1IsLoaded)
     {
-        DBG ("Model Loaded From " + modelAPI.model_path);
-        /*showMessageinEditor(text_toGui_que_for_debugging,
-                            modelAPI.model_path, "Model Loaded From", true);*/
+        if (monotonicIsLoaded) {
+            DBG ("Model Loaded From " + monotonicV1modelAPI->model_path);
+        } else {
+            DBG ("Model Loaded From " + vaeV1ModelAPI->model_path);
+        }
+        *//*showMessageinEditor(text_toGui_que_for_debugging,
+                            monotonicV1modelAPI.model_path, "Model Loaded From", true);*//*
     }
     else
     {
-        DBG ("Failed to Load Model From " + modelAPI.model_path);
-        /*showMessageinEditor(text_toGui_que_for_debugging,
-                            modelAPI.model_path, "", true);*/
-    }
+        DBG ("Failed to Load Model From " + monotonicV1modelAPI->model_path);
+        DBG ("And Also Failed to Load Model From " + vaeV1ModelAPI->model_path);
+        *//*showMessageinEditor(text_toGui_que_for_debugging,
+                            monotonicV1modelAPI.model_path, "", true);*//*
+    }*/
     startThread();
 }
 
@@ -81,7 +88,7 @@ void ModelThread::run()
     bool shouldResample;
     bool newGrooveAvailable;
     bool newTemperatureAvailable;
-    string currentModelPath = modelAPI.model_path;
+    string currentModelPath = monotonicV1modelAPI ? monotonicV1modelAPI->model_path : vaeV1ModelAPI->model_path;
     string currentSampleMethod = sample_mode;
 
     while (!bExit)
@@ -94,7 +101,20 @@ void ModelThread::run()
         // 1. see if new model path is requested to load another model
         if (currentModelPath != new_model_path)
         {
-            modelAPI.changeModel(new_model_path);
+            // check if vae in new_model_path
+            if (new_model_path.find("vae") != std::string::npos)
+            {
+                vaeV1ModelAPI = (!vaeV1ModelAPI) ? VAE_V1ModelAPI() : vaeV1ModelAPI;
+                vaeV1ModelAPI->loadModel(new_model_path, HVO_params::time_steps, HVO_params::num_voices);
+                monotonicV1modelAPI = std::nullopt;
+            }
+            else
+            {
+                monotonicV1modelAPI = (!monotonicV1modelAPI) ? MonotonicGrooveTransformerV1() : monotonicV1modelAPI;
+                monotonicV1modelAPI->loadModel(new_model_path, HVO_params::time_steps, HVO_params::num_voices);
+                vaeV1ModelAPI = std::nullopt;
+            }
+            //monotonicV1modelAPI->changeModel(new_model_path);
             currentModelPath = new_model_path;
             newGrooveAvailable = true;
             shouldResample = true;
@@ -107,16 +127,28 @@ void ModelThread::run()
             shouldResample = true;
         }
 
-        // 2. see if thresholds or max counts per voice have change
+        // 2. see if thresholds or max counts per voice have changed
         if (APVTS2ModelThread_max_num_hits_Que != nullptr)
         {
             if (APVTS2ModelThread_max_num_hits_Que->getNumReady()>0)
             {
                 auto new_counts_array = APVTS2ModelThread_max_num_hits_Que->getLatestOnly();
-                modelAPI.set_max_count_per_voice_limits(vector<float> {begin(new_counts_array), end(new_counts_array)});
+                if (monotonicV1modelAPI != std::nullopt) // if monotonic model is loaded
+                {
+                    monotonicV1modelAPI->set_max_count_per_voice_limits(
+                        vector<float> {begin(new_counts_array), end(new_counts_array)});
+                } else if(vaeV1ModelAPI != std::nullopt) // if vae model is loaded
+                {
+                    vaeV1ModelAPI->set_max_count_per_voice_limits(
+                        vector<float> {begin(new_counts_array), end(new_counts_array)});
+                }
+                else
+                {
+                    DBG("No model is loaded");
+                }
+
                 shouldResample = true;
             }
-
         }
 
         if (APVTS2ModelThread_sampling_thresholds_and_temperature_Que != nullptr)
@@ -125,8 +157,23 @@ void ModelThread::run()
             {
                 auto new_thresh_with_temperature_array = APVTS2ModelThread_sampling_thresholds_and_temperature_Que->getLatestOnly();
                 vector<float> new_thresh_vect(begin(new_thresh_with_temperature_array), end(new_thresh_with_temperature_array)-1);
-                modelAPI.set_sampling_thresholds(new_thresh_vect);
-                newTemperatureAvailable = modelAPI.set_sampling_temperature(new_thresh_with_temperature_array[HVO_params::num_voices]);
+                if (monotonicV1modelAPI != std::nullopt) // if monotonic model is loaded
+                {
+                    monotonicV1modelAPI->set_sampling_thresholds(new_thresh_vect);
+                    newTemperatureAvailable =
+                        monotonicV1modelAPI->set_sampling_temperature(
+                            new_thresh_with_temperature_array[HVO_params::num_voices]);
+                } else if (vaeV1ModelAPI !=  std::nullopt) // if vae model is loaded
+                {
+                    vaeV1ModelAPI->set_sampling_thresholds(new_thresh_vect);
+                    newTemperatureAvailable =
+                        vaeV1ModelAPI->set_sampling_temperature(
+                            new_thresh_with_temperature_array[HVO_params::num_voices]);
+                } else
+                {
+                    DBG("No model is loaded");
+                }
+
                 shouldResample = true;
             }
         }
@@ -165,9 +212,19 @@ void ModelThread::run()
                 auto groove_tensor = scaled_groove.getFullVersionTensor(useGrooveWithModifiedVelOffset,
                                                                         mapGrooveToVoiceNumber,
                                                                         HVO_params::num_voices);
-                modelAPI.forward_pass(groove_tensor);
-                shouldResample = true;
+                if (monotonicV1modelAPI != std::nullopt) // if monotonic model is loaded
+                {
+                    monotonicV1modelAPI->forward_pass(groove_tensor);
+                    shouldResample = true;
+                } else if (vaeV1ModelAPI != std::nullopt) // if vae model is loaded
+                {
+                    vaeV1ModelAPI->forward_pass(groove_tensor);
+                    shouldResample = true;
 
+                } else
+                {
+                    DBG("No model is loaded");
+                }
                 /*sendChangeMessage();*/
 
             }
@@ -177,16 +234,40 @@ void ModelThread::run()
         // 5. should resample output if, input new groove received
         if (shouldResample)
         {
-            auto [hits, velocities, offsets] = modelAPI.sample(sample_mode);
-            generated_hvo = HVO<HVO_params::time_steps, HVO_params::num_voices>(
-                hits, velocities, offsets);
-            auto pianoRollData = HVOLight<HVO_params::time_steps, HVO_params::num_voices>(
-                hits, modelAPI.get_hits_probabilities(), velocities, offsets);
-
+            HVOLight<HVO_params::time_steps, HVO_params::num_voices> pianoRollData;
+            if (monotonicV1modelAPI != std::nullopt) // if monotonic model is loaded
+            {
+                auto [hits, velocities, offsets] =
+                    monotonicV1modelAPI->sample(sample_mode);
+                generated_hvo = HVO<HVO_params::time_steps, HVO_params::num_voices>(
+                    hits, velocities, offsets);
+                pianoRollData =
+                    HVOLight<HVO_params::time_steps, HVO_params::num_voices>(
+                        hits,
+                        monotonicV1modelAPI->get_hits_probabilities(),
+                        velocities,
+                        offsets);
+            } else if (vaeV1ModelAPI != std::nullopt) // if vae model is loaded
+            {
+                auto [hits, velocities, offsets] =
+                    vaeV1ModelAPI->sample(sample_mode);
+                generated_hvo = HVO<HVO_params::time_steps, HVO_params::num_voices>(
+                    hits, velocities, offsets);
+                pianoRollData =
+                    HVOLight<HVO_params::time_steps, HVO_params::num_voices>(
+                        hits,
+                        vaeV1ModelAPI->get_hits_probabilities(),
+                        velocities,
+                        offsets);
+            } else
+            {
+                DBG("No model is loaded");
+            }
 
             // 6. send to processBlock and GUI
             if (ModelThreadToProcessBlockQue != nullptr)
             {
+                DBG("Sending to process block");
                 auto temp = generated_hvo.getModifiedGeneratedData(drum_kit_midi_map);
                 ModelThreadToProcessBlockQue->push(temp);
             }

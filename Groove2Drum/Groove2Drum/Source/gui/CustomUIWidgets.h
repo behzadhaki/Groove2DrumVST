@@ -1101,7 +1101,7 @@ namespace FinalUIWidgets {
             for (auto model_path: model_paths)
             {
                 num_choices++;
-                ComboBox.addItem((string)GeneralSettings::default_model_folder + "/" + model_path.toStdString() + ".pt", num_choices);
+                ComboBox.addItem((string)model_path.toStdString(), num_choices);
             }
 
             ComboBoxAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (*apvtsPntr, model_ParameterID_, ComboBox);
