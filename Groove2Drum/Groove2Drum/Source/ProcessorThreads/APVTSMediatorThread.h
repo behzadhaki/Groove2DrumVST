@@ -163,7 +163,7 @@ public:
                     if (resetSampleParamsClicked  or resetAllClicked)
                     {
                         // reset parameters to default
-                        for(const string &ParamID : {"VEL_BIAS", "VEL_DYNAMIC_RANGE", "OFFSET_BIAS", "OFFSET_DYNAMIC_RANGE", "VEL_INVERT", "OFFSET_INVERT"})
+                        for(const string &ParamID : {"VEL_BIAS", "VEL_DYNAMIC_RANGE", "OFFSET_BIAS", "OFFSET_DYNAMIC_RANGE", "VEL_INVERT", "OFFSET_INVERT", "TEMPERATURE"})
                         {
                             auto param = APVTS->getParameter(ParamID);
                             param->setValueNotifyingHost(param->getDefaultValue());
@@ -216,6 +216,7 @@ public:
                     current_sampling_method = new_sampling_method;
                     auto new_model_path = (string)paths[current_model_selected].toStdString();
                     modelThread->UpdateModelPath(new_model_path, current_sampling_method);
+                    rebroadcast();
                 }
 
                 bExit = threadShouldExit();
@@ -356,6 +357,16 @@ private:
         auto ix = (int)*APVTS->getRawParameterValue("SAMPLINGMETHOD");
         string model_selected = (ix == 0) ? "Threshold" : "SampleProbability";
         return model_selected;
+    }
+
+    // rebroadcasts the current state of the APVTS to all the queues
+    void rebroadcast()
+    {
+        APVTS2GrooveThread_groove_record_overdubToggles_Que->push(get_overdub_record_toggle_states());
+        APVTS2GrooveThread_groove_vel_offset_ranges_Que->push(get_groove_vel_offset_ranges());
+        APVTS2ModelThread_max_num_hits_Que->push(get_max_num_hits());
+        APVTS2ModelThread_sampling_thresholds_and_temperature_Que->push(get_sampling_thresholds_with_temperature());
+        APVTS2ModelThread_midi_mappings_Que->push(get_per_voice_midi_numbers());
     }
 
     // ============================================================================================================
