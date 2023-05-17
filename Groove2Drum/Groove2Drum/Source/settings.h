@@ -78,6 +78,7 @@ namespace thread_settings
 {
     namespace GrooveThread
     {
+        constexpr bool forceGenerateGrooveEvery2Bars {true};
         constexpr int waitTimeBtnIters {5}; //ms between two consecutive iterations of the thread loop in run()
     }
     namespace ModelThread

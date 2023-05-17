@@ -204,6 +204,7 @@ void ModelThread::run()
 
            if (newGrooveAvailable or newTemperatureAvailable)
             {
+                DBG("new groove available");
                 // 3. pass scaled version mapped to closed hats to input
                 // !!!! dont't forget to use the scaled tensor (with modified vel/offsets)
                 bool useGrooveWithModifiedVelOffset = true;
@@ -218,6 +219,7 @@ void ModelThread::run()
                     shouldResample = true;
                 } else if (vaeV1ModelAPI != std::nullopt) // if vae model is loaded
                 {
+                    DBG("forward pass");
                     vaeV1ModelAPI->forward_pass(groove_tensor);
                     shouldResample = true;
 

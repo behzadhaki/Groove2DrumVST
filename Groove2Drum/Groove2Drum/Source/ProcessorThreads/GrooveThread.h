@@ -56,6 +56,9 @@ public:
     void randomizeExistingVelocities();         // randomizes the velocities of the existing groove
     void randomizeExistingOffsets();            // randomizes the offsets of the existing groove
     void randomizeAll();                        // generates a fully random groove
+
+    void RePushGroove();                     // pushes the current groove to the model thread
+    bool shouldResendGroove {false};        // flag used to resend the groove to the model thread if the groove has been changed
     // ============================================================================================================
 
 
@@ -98,7 +101,6 @@ private:
     // parameters for clearing a step in case overdubbing is off
     int clearStepNumber {0};
     float clearRequestedAtPositionPpq {0};
-
 
 
     bool shouldRandomizeVelocities {false};

@@ -231,8 +231,9 @@ void GrooveThread::run()
         }
 
         // 9. Send groove to other threads if new one available
-        if (isNewGrooveAvailable or isNewGrooveAvailableUsingHandDrawnNote)
+        if (isNewGrooveAvailable or isNewGrooveAvailableUsingHandDrawnNote or shouldResendGroove)
         {
+            DBG("GrooveThread::run() sending groove to other threads");
             if (GrooveThreadToModelThreadQue != nullptr)
             {
                 // send to Model Thread to pass through the model
@@ -243,7 +244,7 @@ void GrooveThread::run()
                 // send groove to be displayed on the interface
                 GrooveThread2GGroovePianoRollWidgetQue->push(monotonic_groove);
             }
-
+            shouldResendGroove = false;
         }
 
         bExit = threadShouldExit();
@@ -253,6 +254,14 @@ void GrooveThread::run()
 
 }
 
+void GrooveThread::RePushGroove()
+{
+
+    if (GrooveThreadToModelThreadQue != nullptr)
+    {
+        shouldResendGroove = true;
+    }
+}
 
 // ============================================================================================================
 // ===          Preparing Thread for Stopping

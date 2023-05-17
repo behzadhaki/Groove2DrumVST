@@ -126,6 +126,11 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         auto new_grid = floor(start_/HVO_params::_16_note_ppq);
         if (new_grid != current_grid)
         {
+            if (new_grid == 0 and thread_settings::GrooveThread::forceGenerateGrooveEvery2Bars == true)      // Ensures that the generations change every 2bars TODO: add a toggle to enable/disable this
+            {
+                grooveThread->RePushGroove();
+            }
+
             current_grid = new_grid;
             grooveThread->clearStep((int) current_grid, startPpq);
         }
