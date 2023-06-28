@@ -54,7 +54,7 @@ void ModelThread::startThreadUsingProvidedResources(
     drum_kit_midi_map = nine_voice_kit_default_midi_numbers;
 
     // check if model loaded successfully
-    if (monotonicIsLoaded or vae1IsLoaded)
+    if (monotonicIsLoaded || vae1IsLoaded)
     {
         if (monotonicIsLoaded) {
             DBG ("Model Loaded From " + monotonicV1modelAPI->model_path);
@@ -84,11 +84,10 @@ void ModelThread::run()
     // notify if the thread is still running
     bool bExit = threadShouldExit();
 
-    // flag to check if sampling thresholds are changed or new groove is received
+    // flag to check if sampling thresholds are changed || new groove is received
     bool shouldResample;
     bool newGrooveAvailable;
     bool newTemperatureAvailable;
-    string currentModelPath = monotonicV1modelAPI ? monotonicV1modelAPI->model_path : vaeV1ModelAPI->model_path;
     string currentSampleMethod = sample_mode;
 
     while (!bExit)
@@ -99,8 +98,10 @@ void ModelThread::run()
         newTemperatureAvailable = false;
 
         // 1. see if new model path is requested to load another model
-        if (currentModelPath != new_model_path)
+        if (current_model_path != new_model_path)
         {
+            DBG("LOADING MODEL" << new_model_path);
+
             // check if vae in new_model_path
             if (new_model_path.find("vae") != std::string::npos)
             {
@@ -115,7 +116,7 @@ void ModelThread::run()
                 vaeV1ModelAPI = std::nullopt;
             }
             //monotonicV1modelAPI->changeModel(new_model_path);
-            currentModelPath = new_model_path;
+            current_model_path = new_model_path;
             newGrooveAvailable = true;
             shouldResample = true;
         }
@@ -127,7 +128,7 @@ void ModelThread::run()
             shouldResample = true;
         }
 
-        // 2. see if thresholds or max counts per voice have changed
+        // 2. see if thresholds || max counts per voice have changed
         if (APVTS2ModelThread_max_num_hits_Que != nullptr)
         {
             if (APVTS2ModelThread_max_num_hits_Que->getNumReady()>0)
@@ -192,7 +193,7 @@ void ModelThread::run()
         if (GrooveThreadToModelThreadQue != nullptr)
         {
             if (GrooveThreadToModelThreadQue->getNumReady() > 0
-                   and not this->threadShouldExit())
+                   && !this->threadShouldExit())
             {
                 // read latest groove
                 scaled_groove = GrooveThreadToModelThreadQue->getLatestOnly();
@@ -202,7 +203,7 @@ void ModelThread::run()
 
             }
 
-           if (newGrooveAvailable or newTemperatureAvailable)
+           if (newGrooveAvailable || newTemperatureAvailable)
             {
                 DBG("new groove available");
                 // 3. pass scaled version mapped to closed hats to input
@@ -266,7 +267,7 @@ void ModelThread::run()
                 DBG("No model is loaded");
             }
 
-            // 6. send to processBlock and GUI
+            // 6. send to processBlock && GUI
             if (ModelThreadToProcessBlockQue != nullptr)
             {
                 DBG("Sending to process block");
@@ -303,7 +304,7 @@ void ModelThread::prepareToStop()
 
 ModelThread::~ModelThread()
 {
-    if (not readyToStop)
+    if (!readyToStop)
     {
         prepareToStop();
     }
@@ -319,7 +320,7 @@ void ModelThread::UpdateModelPath(std::string new_model_path_, std::string sampl
 {
     new_model_path = new_model_path_;
 
-    assert (sample_mode_ == "Threshold"  or sample_mode_ == "SampleProbability");
+    assert (sample_mode_ == "Threshold"  || sample_mode_ == "SampleProbability");
     sample_mode = sample_mode_;
 }
 

@@ -37,7 +37,7 @@ if __name__ == '__main__':
         groove_transformer = load_model_in_eval_mode(model_param_dict_)
 
         # Providing input &&  output names sets the display names for values
-        # within the model's graph. Setting these does not change the semantics
+        # within the model's graph. Setting these does !change the semantics
         # of the graph; it is only for readability.
         #
         # The inputs to the network consist of the flat list of inputs (i.e.

@@ -43,7 +43,7 @@ namespace SingleStepPianoRollBlock
     /***
      * (A) The smallest block to draw a drum event inside
      * If interactive, notes can be created by double clicking, moved around by dragging ...
-     * Notes are drawn using offset values and velocity given a offset range (specified in settings.h)
+     * Notes are drawn using offset values && velocity given a offset range (specified in settings.h)
      * Velocity range is from 0 to 1
      *
      * (B) if a queue is provided (of type LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>),
@@ -62,8 +62,8 @@ namespace SingleStepPianoRollBlock
         float offset;
         array<juce::Colour, 2> backgroundcolor_array;
         int grid_index; // time step corresponding to the block
-        float low_offset = min(HVO_params::_min_offset, HVO_params::_max_offset); // min func just incase min and max offsets are wrongly defined
-        float hi_offset = max(HVO_params::_min_offset, HVO_params::_max_offset); // max func just incase min and max offsets are wrongly defined
+        float low_offset = min(HVO_params::_min_offset, HVO_params::_max_offset); // min func just incase min && max offsets are wrongly defined
+        float hi_offset = max(HVO_params::_min_offset, HVO_params::_max_offset); // max func just incase min && max offsets are wrongly defined
         float range_offset = hi_offset - low_offset;
         LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>* GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue;
 
@@ -73,7 +73,7 @@ namespace SingleStepPianoRollBlock
          * @param isClickable_ (bool) True for interactive version
          * @param backgroundcolor_array  (array<juce::Colour, 2>) backgroundcolor_array[0] color for left half, backgroundcolor_array[1] color for right half,
          * @param grid_index_ (int) specifies which time step the block is used for
-         * @param GroovePianoRollWidget2GrooveThread_manually_drawn_noteQuePntr  (LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>*) used to send data to a receiver via this queue if interactive and also queue is not nullptr
+         * @param GroovePianoRollWidget2GrooveThread_manually_drawn_noteQuePntr  (LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>*) used to send data to a receiver via this queue if interactive && also queue is !nullptr
          *
          */
         InteractiveIndividualBlock(bool isClickable_, array<juce::Colour, 2> backgroundcolor_array_, int grid_index_,
@@ -123,7 +123,7 @@ namespace SingleStepPianoRollBlock
 
             if (hit == 1)
             {
-                // draw a colored line and a rectangle on the top end for the note hit
+                // draw a colored line && a rectangle on the top end for the note hit
                 g.setColour(note_color);
 
                 auto x_pos = offsetToActualX();
@@ -152,14 +152,14 @@ namespace SingleStepPianoRollBlock
             }
         }
 
-        // moves a note around the block on dragging and repaints
+        // moves a note around the block on dragging && repaints
         void mouseDrag(const juce::MouseEvent& ev) override
         {
             if (isClickable)
             {
                 if (hit == 1)
                 {
-                    // if shift pressed moves only up or down
+                    // if shift pressed moves only up || down
                     if (!ev.mods.isShiftDown())
                     {
                         offset = actualXToOffset(ev.position.getX());
@@ -172,7 +172,7 @@ namespace SingleStepPianoRollBlock
             }
         }
 
-        // hides an already existing note or unhides if the block is empty
+        // hides an already existing note || unhides if the block is empty
         void mouseDoubleClick(const juce::MouseEvent& ev) override
         {
             if (isClickable)
@@ -202,7 +202,7 @@ namespace SingleStepPianoRollBlock
         // places a note in the block at the given locations
         void addEvent(int hit_, float velocity_, float offset_)
         {
-            assert (hit == 0 or hit == 1);
+            assert (hit == 0 || hit == 1);
 
             hit = hit_;
             velocity = velocity_;
@@ -315,8 +315,8 @@ namespace SingleStepPianoRollBlock
         }
 
         /** Specify probability state,
-         * i.e. what the probability level and sampling thresholds are
-         * and also whether the note will actually get played (if the note is
+         * i.e. what the probability level && sampling thresholds are
+         * && also whether the note will actually get played (if the note is
          * one of the n_max most probable events with prob over threshold)
          * @param hit_ (int) if 1, then the color for peak will be darker
          * @param hit_prob_  (float) probability level
@@ -341,7 +341,7 @@ namespace SingleStepPianoRollBlock
 
 
     /**
-     * Wraps a PianoRoll_InteractiveIndividualBlock and ProbabilityLevelWidget together into one component
+     * Wraps a PianoRoll_InteractiveIndividualBlock && ProbabilityLevelWidget together into one component
      */
     class InteractiveIndividualBlockWithProbability : public juce::Component
     {
@@ -363,7 +363,7 @@ namespace SingleStepPianoRollBlock
 
         void addEvent(int hit_, float velocity_, float offset, float hit_prob_, float sampling_threshold) const
         {
-            if (pianoRollBlockWidgetPntr->hit != hit_ or pianoRollBlockWidgetPntr->velocity != velocity_ or
+            if (pianoRollBlockWidgetPntr->hit != hit_ || pianoRollBlockWidgetPntr->velocity != velocity_ ||
                 pianoRollBlockWidgetPntr->offset != offset)
             {
                 pianoRollBlockWidgetPntr->addEvent(hit_, velocity_, offset);
@@ -386,7 +386,7 @@ namespace SingleStepPianoRollBlock
 
     /**
      * An XYPad which is infact connected to two sliders.
-     * Can automatically connect to APVTS and also update the y level in probability widgets
+     * Can automatically connect to APVTS && also update the y level in probability widgets
      */
     class XYPadAutomatableWithSliders: public juce::Component, public juce::Slider::Listener
     {
@@ -412,7 +412,7 @@ namespace SingleStepPianoRollBlock
 
         void sliderValueChanged (juce::Slider* slider) override
         {
-            if (slider == &xSlider or slider == &ySlider)
+            if (slider == &xSlider || slider == &ySlider)
             {
                 repaint();
             }
@@ -447,7 +447,7 @@ namespace SingleStepPianoRollBlock
         void mouseDoubleClick(const juce::MouseEvent&) override
         {
             // more than 2 clicks goes back to default
-            if (xSlider.getValue() == 0 and ySlider.getValue() == 1)
+            if (xSlider.getValue() == 0 && ySlider.getValue() == 1)
             {
                 xSlider.setValue(latest_x);
                 ySlider.setValue(latest_y);
@@ -535,7 +535,7 @@ namespace SingleStepPianoRollBlock
 
         void sliderValueChanged (juce::Slider* slider) override
         {
-            if (slider == &xSlider_bias or slider == &ySlider_range)
+            if (slider == &xSlider_bias || slider == &ySlider_range)
             {
                 repaint();
             }
@@ -566,7 +566,7 @@ namespace SingleStepPianoRollBlock
             repaint();
         }
 
-        // hides an already existing note or unhides if the block is empty
+        // hides an already existing note || unhides if the block is empty
         void mouseDoubleClick(const juce::MouseEvent& ev) override
         {
             xSlider_bias.setValue(0.0f);
@@ -788,7 +788,7 @@ namespace FinalUIWidgets {
     {
         /***
      * a number of SingleStepPianoRollBlock::PianoRoll_InteractiveIndividualBlockWithProbability placed together in a single
-     * row to represent either the piano roll for the unmodified (interactive) OR the modified (non-interactive) sections of
+     * row to represent either the piano roll for the unmodified (interactive) || the modified (non-interactive) sections of
      * of the piano roll for the Input Groove.
      */
         class InteractiveMonotonicGrooveSingleRow :public juce::Component
@@ -847,7 +847,7 @@ namespace FinalUIWidgets {
 
             }
 
-            // location must be between 0 or 1
+            // location must be between 0 || 1
             void addEventToStep(int idx, int hit_, float velocity_, float offset_)
             {
                 interactivePRollBlocks[(size_t) idx]->addEvent(hit_, velocity_, offset_);
@@ -869,7 +869,7 @@ namespace FinalUIWidgets {
 
         /**
      * wraps two instances of PianoRoll_InteractiveMonotonicGroove together on top of each other.
-     * Bottom one is unModified groove (interactive) and top one is Modified groove (non-interactive)
+     * Bottom one is unModified groove (interactive) && top one is Modified groove (non-interactive)
      * pianorolls.
      */
         class MonotonicGrooveWidget:public juce::Component
@@ -920,7 +920,7 @@ namespace FinalUIWidgets {
     class ControlsWidget : public juce::Component
     {
     public:
-        // Checkbox for overdub and recording enabling/disabling
+        // Checkbox for overdub && recording enabling/disabling
         juce::ToggleButton overdubToggle {"Overdub"};
         unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> overdubToggleAttachment;
         juce::ToggleButton recordToggle {"Record"};
@@ -1060,7 +1060,7 @@ namespace FinalUIWidgets {
 
         }
 
-        // buttons for reseting groove or xyslider params
+        // buttons for reseting groove || xyslider params
         unique_ptr<ButtonWithAttachment>  resetGrooveButton;
         unique_ptr<ButtonWithAttachment> resetSamplingParametersButton;
         unique_ptr<ButtonWithAttachment> resetAllButton;

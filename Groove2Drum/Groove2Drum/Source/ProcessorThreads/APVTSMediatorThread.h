@@ -17,10 +17,10 @@
 // ==========
 // ==========         To read from APVTS, we always get a std::atomic pointer, which potentially
 // ==========           can block a thread if some read/write race is happening. As a result, it is not
-// ==========           safe to directly read from APVTS inside the processBlock() thread or any other
+// ==========           safe to directly read from APVTS inside the processBlock() thread || any other
 // ==========           time sensitive threads
 // ==========
-// ==========         In this plugin, the GrooveThread and the ModelThread are not time-sensitive. So,
+// ==========         In this plugin, the GrooveThread && the ModelThread are !time-sensitive. So,
 // ==========           they can read from APVTS directly. Regardless, in future iterations, perhaps
 // ==========           these requirements change. To be future-proof, this thread has been implemented
 // ==========           to take care of mediating the communication of parameters in the APVTS to the
@@ -156,11 +156,11 @@ public:
                     auto resetSampleParamsClicked = (current_reset_buttons[1] !=  new_reset_buttons[1]);
                     auto resetAllClicked = (current_reset_buttons[2] !=  new_reset_buttons[2]);
                     
-                    if (resetGrooveButtonClicked or resetAllClicked)
+                    if (resetGrooveButtonClicked || resetAllClicked)
                     {
                         grooveThread->ForceResetGroove();
                     }
-                    if (resetSampleParamsClicked  or resetAllClicked)
+                    if (resetSampleParamsClicked  || resetAllClicked)
                     {
                         // reset parameters to default
                         for(const string &ParamID : {"VEL_BIAS", "VEL_DYNAMIC_RANGE", "OFFSET_BIAS", "OFFSET_DYNAMIC_RANGE", "VEL_INVERT", "OFFSET_INVERT", "TEMPERATURE"})
@@ -210,7 +210,7 @@ public:
                 // check if new model selected
                 auto new_model_selected = get_model_selected();
                 auto new_sampling_method = get_sampling_method();
-                if (current_model_selected != new_model_selected or current_sampling_method != new_sampling_method)
+                if (current_model_selected != new_model_selected || current_sampling_method != new_sampling_method)
                 {
                     current_model_selected = new_model_selected;
                     current_sampling_method = new_sampling_method;
@@ -231,7 +231,7 @@ public:
     // ============================================================================================================
     // ===          Preparing Thread for Stopping
     // ============================================================================================================
-    bool readyToStop {false}; // Used to check if thread is ready to be stopped or externally stopped from a parent thread
+    bool readyToStop {false}; // Used to check if thread is ready to be stopped || externally stopped from a parent thread
 
     // run this in destructor destructing object
     void prepareToStop(){
@@ -241,7 +241,7 @@ public:
     }
 
     ~APVTSMediatorThread() override {
-        if (not readyToStop)
+        if (!readyToStop)
         {
             prepareToStop();
         }
@@ -249,7 +249,7 @@ public:
 
 private:
     // ============================================================================================================
-    // ===          Utility Methods and Parameters
+    // ===          Utility Methods && Parameters
     // ============================================================================================================
 
     std::array<int, 2> get_overdub_record_toggle_states()
@@ -306,7 +306,7 @@ private:
         return midiNumbers;
     }
 
-    // returns reset_groove, reset_sampling params and reset all
+    // returns reset_groove, reset_sampling params && reset all
     std::array<int, 3> get_reset_buttons()
     {
         return {(int)*APVTS->getRawParameterValue("RESET_GROOVE"),
@@ -325,7 +325,7 @@ private:
         param->setValueNotifyingHost(0);
     }
 
-    // returns RANDOMIZE_VEL, RANDOMIZE_OFFSET and RANDOMIZE_ALL all
+    // returns RANDOMIZE_VEL, RANDOMIZE_OFFSET && RANDOMIZE_ALL all
     std::array<int, 3> get_randomize_groove_buttons()
     {
         return {(int)*APVTS->getRawParameterValue("RANDOMIZE_VEL"),
@@ -344,14 +344,14 @@ private:
         param->setValueNotifyingHost(0);
     }
 
-    // returns RANDOMIZE_VEL, RANDOMIZE_OFFSET and RANDOMIZE_ALL all
+    // returns RANDOMIZE_VEL, RANDOMIZE_OFFSET && RANDOMIZE_ALL all
     int get_model_selected()
     {
         auto model_selected = (int)*APVTS->getRawParameterValue("MODEL");
         return model_selected;
     }
 
-    // returns RANDOMIZE_VEL, RANDOMIZE_OFFSET and RANDOMIZE_ALL all
+    // returns RANDOMIZE_VEL, RANDOMIZE_OFFSET && RANDOMIZE_ALL all
     string get_sampling_method()
     {
         auto ix = (int)*APVTS->getRawParameterValue("SAMPLINGMETHOD");

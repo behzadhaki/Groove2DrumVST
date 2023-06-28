@@ -14,8 +14,8 @@
 using namespace std;
 
 // ============================================================================================================
-// ==========          LockFreeQueue used for general data such as arrays, ints, floats and...   =============
-// ==========          !!!! NOT TO BE USED WITH Vectors or                  !!!!
+// ==========          LockFreeQueue used for general data such as arrays, ints, floats &&...   =============
+// ==========          !!!! !TO BE USED WITH Vectors ||                  !!!!
 // ==========          !!!!  datatypes where size can change Dynamically    !!!!
 // ============================================================================================================
 
@@ -32,7 +32,7 @@ private:
     std::unique_ptr<juce::AbstractFifo> lockFreeFifo;
     juce::Array<T> data;
 
-    // keep track of number of reads/writes and the latest_value without moving FIFO
+    // keep track of number of reads/writes && the latest_value without moving FIFO
     int num_reads = 0;
     int num_writes = 0;
     T latest_written_data;
@@ -196,9 +196,9 @@ public:
         return num_writes;
     }
 
-    // This method is useful for keeping track of whether any data has previously written to Queue regardless of being read or not
+    // This method is useful for keeping track of whether any data has previously written to Queue regardless of being read || not
     // !! This method should only be used for initialization of GUI objects !!
-    // !!! To use the QUEUE for lock free communication use the ReadFrom() or pop() methods!!!
+    // !!! To use the QUEUE for lock free communication use the ReadFrom() || pop() methods!!!
     T getLatestDataWithoutMovingFIFOHeads()
     {
         return latest_written_data;
@@ -219,7 +219,7 @@ public:
 
 /**the onset of midi message has two attributes: (1) the ppq of the beginning of the frame
      * (2) the number of AUDIO samples from the beginning of the frame
-     * hence we need to use the sample rate and the qpm from the daw to calculate
+     * hence we need to use the sample rate && the qpm from the daw to calculate
      * absolute ppq of the onset. Look into NppqPosB structure
      *
      * \param ppq (double): time in ppq
@@ -244,7 +244,7 @@ struct onset_time{
         ppq = calculate_absolute_ppq(frameStartPpq, audioSamplePos, qpm, sample_rate); // calculate ppq
     }
 
-    //constructor for calculating ppq using grid_line index and offset
+    //constructor for calculating ppq using grid_line index && offset
     onset_time(int grid_line, double offset)
     {
         ppq = (offset / HVO_params::_max_offset * HVO_params::_32_note_ppq) + (grid_line * HVO_params::_16_note_ppq);
@@ -273,14 +273,14 @@ struct onset_time{
      * A note structure holding the note number for an onset along with
      * ppq position -->  defined as the ration of quarter note
      * onset_time (struct see above) --> structure holding absolute ppq with implemented
-     * utilities for quick conversions for buffer to processsor OR processor to buffer  cases
+     * utilities for quick conversions for buffer to processsor || processor to buffer  cases
      * \n\n
      *
      * can create object three ways:
      *          \n\t\t 1. default empty note using Note()
      *          \n\t\t 2. notes received in AudioProcessorBlock using second constructor
      *                  (see place_note_in_queue() in Includes/UtilityMethods.h)
-     *          \n\t\t 3. creating notes obtained from hvo (i.e. using ppq, note number and vel)
+     *          \n\t\t 3. creating notes obtained from hvo (i.e. using ppq, note number && vel)
      *                  (see HVO::getNotes() below)
      *
      * \param note (int): midi note number of the Note object
@@ -345,7 +345,7 @@ struct BasicNote{
 
 
 // ============================================================================================================
-// ==========          GeneratedData Structure and Corresponding Queue                            =============
+// ==========          GeneratedData Structure && Corresponding Queue                            =============
 // ==========           (Used for sending data from model thread to processBlock()
 // ============================================================================================================
 
@@ -367,7 +367,7 @@ template <int time_steps_, int num_voices_> struct GeneratedData{
 
         lastFilledIndex = -1;             // no valid messages yet
 
-        // initialize messages and ppqs
+        // initialize messages && ppqs
         for (int i = 0; i<(time_steps_*num_voices_); i++)
         {
             ppqs.push_back(-1);             // a dummy ppq value
@@ -399,7 +399,7 @@ private:
 
     int time_steps, num_voices;
 
-    // keep track of number of reads/writes and the latest_value without moving FIFO
+    // keep track of number of reads/writes && the latest_value without moving FIFO
     int num_reads = 0;
     int num_writes = 0;
     GeneratedData<time_steps_, num_voices_> latest_written_data {};
@@ -501,9 +501,9 @@ public:
         return num_writes;
     }
 
-    // This method is useful for keeping track of whether any data has previously written to Queue regardless of being read or not
+    // This method is useful for keeping track of whether any data has previously written to Queue regardless of being read || not
     // !! This method should only be used for initialization of GUI objects !!
-    // !!! To use the QUEUE for lock free communication use the pop() or getLatestOnly() methods!!!
+    // !!! To use the QUEUE for lock free communication use the pop() || getLatestOnly() methods!!!
     GeneratedData<time_steps_, num_voices_> getLatestDataWithoutMovingFIFOHeads()
     {
         return latest_written_data;
@@ -519,15 +519,15 @@ public:
 
 
 // ============================================================================================================
-// ==========                    HVO Structure and Corresponding Queue                            =============
+// ==========                    HVO Structure && Corresponding Queue                            =============
 // ==========
 // ============================================================================================================
 
-/*/// HVO structure for t time_steps and n num_voices
-/// \n . Stores hits, velocities and offsets separately.
+/*/// HVO structure for t time_steps && n num_voices
+/// \n . Stores hits, velocities && offsets separately.
 /// \n . can also create a random HVO quickly using HVO::Random()
 /// \n . can automatically compress the velocity/offset values
-/// \n . can automatically prepare and return notes extracted
+/// \n . can automatically prepare && return notes extracted
 ///     from the HVO score see HVO::getNotes()
 /// \tparam time_steps_
 /// \tparam num_voices_*/
@@ -536,7 +536,7 @@ template <int time_steps_, int num_voices_> struct HVO
     int time_steps = time_steps_;
     int num_voices = num_voices_;
 
-    // local variables to keep track of vel_range = (min_vel, max_vel) and offset ranges
+    // local variables to keep track of vel_range = (min_vel, max_vel) && offset ranges
     array<float, 2> vel_range = {HVO_params::_min_vel, HVO_params::_max_vel};
     bool invert_vel{false};
     array<float, 2> offset_range = {HVO_params::_min_offset, HVO_params::_max_offset};
@@ -604,13 +604,13 @@ template <int time_steps_, int num_voices_> struct HVO
         velocities_unmodified = torch::rand({time_steps, num_voices});
         offsets_unmodified = torch::rand({time_steps, num_voices}) - 0.5;
 
-        // convert hits to 0 and 1s by thresholding
+        // convert hits to 0 && 1s by thresholding
         auto row_indices = torch::arange(0, time_steps);
         for (int voice_i=0; voice_i < num_voices; voice_i++){
             // Get probabilities of voice hits at all timesteps
             auto voice_hot_probs = hits_old.index(
                 {row_indices, voice_i});
-            // Find locations exceeding threshold and set to 1 (hit)
+            // Find locations exceeding threshold && set to 1 (hit)
             auto active_time_indices = voice_hot_probs>=0.5;
             hits.index_put_({active_time_indices, voice_i}, 1);
         }
@@ -622,7 +622,7 @@ template <int time_steps_, int num_voices_> struct HVO
 
     void randomizeExistingVelocities()
     {
-        // convert hits to 0 and 1s by thresholding
+        // convert hits to 0 && 1s by thresholding
         auto row_indices = torch::arange(0, time_steps);
         for (int voice_i=0; voice_i < num_voices; voice_i++)
         {
@@ -634,7 +634,7 @@ template <int time_steps_, int num_voices_> struct HVO
 
     void randomizeExistingOffsets()
     {
-        // convert hits to 0 and 1s by thresholding
+        // convert hits to 0 && 1s by thresholding
         auto row_indices = torch::arange(0, time_steps);
         for (int voice_i=0; voice_i < num_voices; voice_i++)
         {
@@ -653,7 +653,7 @@ template <int time_steps_, int num_voices_> struct HVO
         // empty vector for notes
         vector<BasicNote> Notes;
 
-        // for each index create note and add to vector
+        // for each index create note && add to vector
         for (int i=0; i<n_notes; i++)
         {
             int voice_ix =  indices[i][1].template item<int>();
@@ -680,7 +680,7 @@ template <int time_steps_, int num_voices_> struct HVO
         // empty vector for notes
         vector<BasicNote> Notes;
 
-        // for each index create note and add to vector
+        // for each index create note && add to vector
         for (int i=0; i<n_notes; i++)
         {
             int voice_ix =  indices[i][1].template item<int>();
@@ -768,11 +768,11 @@ template <int time_steps_, int num_voices_> struct HVO
 
 
     /***
-     * Automatically compresses the velocities and offsets if need be
+     * Automatically compresses the velocities && offsets if need be
      */
     void compressAll()
     {
-        if (vel_range[0] == HVO_params::_min_vel and vel_range[1] == HVO_params::_max_vel)
+        if (vel_range[0] == HVO_params::_min_vel && vel_range[1] == HVO_params::_max_vel)
         {
             velocities_modified = velocities_unmodified;
         }
@@ -784,7 +784,7 @@ template <int time_steps_, int num_voices_> struct HVO
             }
         }
 
-        if (offset_range[0] == HVO_params::_min_offset and offset_range[1] == HVO_params::_max_offset and !invert_offset)
+        if (offset_range[0] == HVO_params::_min_offset && offset_range[1] == HVO_params::_max_offset && !invert_offset)
         {
             offsets_modified = offsets_unmodified;
         }
@@ -798,7 +798,7 @@ template <int time_steps_, int num_voices_> struct HVO
     }
 
     /***
-     * Updates the compression ranges for vels and offsets
+     * Updates the compression ranges for vels && offsets
      * Automatically updates the modified hvo if shouldReApplyCompression is true
      * @param newVelOffsetrange (array<float, 4>)
      * @param shouldReApplyCompression  (bool)
@@ -806,7 +806,7 @@ template <int time_steps_, int num_voices_> struct HVO
     void updateCompressionRanges(array<float, 6> compression_params,
                                  bool shouldReApplyCompression)
     {
-        // calculate min/max vel using range and bias
+        // calculate min/max vel using range && bias
         {
             auto bias = compression_params[0];
             auto range_ratio = compression_params[1] / 100.0f;
@@ -819,7 +819,7 @@ template <int time_steps_, int num_voices_> struct HVO
                 vel_range [0] = vl;
                 vel_range[1] = vl + vrange;
             }
-            else // if negative range, swap min and max
+            else // if negative range, swap min && max
             {
                 vrange *= -1;
                 vel_range[0] = vl + vrange;
@@ -827,7 +827,7 @@ template <int time_steps_, int num_voices_> struct HVO
             }
         }
 
-        // calculate min/max offset using range and bias
+        // calculate min/max offset using range && bias
         {
             auto bias = compression_params[3];
             auto range_ratio = compression_params[4] / 100.0f;
@@ -839,7 +839,7 @@ template <int time_steps_, int num_voices_> struct HVO
                 offset_range[0] = bias - off_range_above_zero;
                 offset_range[1] = bias + off_range_above_zero;
             }
-            else // if negative range, swap min and max
+            else // if negative range, swap min && max
             {
                 off_range_above_zero *= -1;
                 offset_range[0] = bias + off_range_above_zero;
@@ -923,7 +923,7 @@ private:
 
     int time_steps, num_voices;
 
-    // keep track of number of reads/writes and the latest_value without moving FIFO
+    // keep track of number of reads/writes && the latest_value without moving FIFO
     int num_reads = 0;
     int num_writes = 0;
     HVO<time_steps_, num_voices_> latest_written_data {};
@@ -1025,9 +1025,9 @@ public:
         return num_writes;
     }
 
-    // This method is useful for keeping track of whether any data has previously written to Queue regardless of being read or not
+    // This method is useful for keeping track of whether any data has previously written to Queue regardless of being read || not
     // !! This method should only be used for initialization of GUI objects !!
-    // !!! To use the QUEUE for lock free communication use the pop() or getLatestOnly() methods!!!
+    // !!! To use the QUEUE for lock free communication use the pop() || getLatestOnly() methods!!!
     HVO<time_steps_, num_voices_> getLatestDataWithoutMovingFIFOHeads()
     {
         return latest_written_data;
@@ -1042,7 +1042,7 @@ public:
 
 
 // ============================================================================================================
-// ==========                    HVOLight Structure and Corresponding Queue                       =============
+// ==========                    HVOLight Structure && Corresponding Queue                       =============
 // ==========   (Used for sending data from model thread to generated drums pianoroll in editor)
 // ============================================================================================================
 
@@ -1092,7 +1092,7 @@ template <int time_steps_, int num_voices_, int queue_size> class HVOLightQueue
 
     int time_steps, num_voices;
 
-    // keep track of number of reads/writes and the latest_value without moving FIFO
+    // keep track of number of reads/writes && the latest_value without moving FIFO
     int num_reads = 0;
     int num_writes = 0;
     HVOLight<time_steps_, num_voices_> latest_written_data {};
@@ -1195,9 +1195,9 @@ public:
         return num_writes;
     }
 
-    // This method is useful for keeping track of whether any data has previously written to Queue regardless of being read or not
+    // This method is useful for keeping track of whether any data has previously written to Queue regardless of being read || not
     // !! This method should only be used for initialization of GUI objects !!
-    // !!! To use the QUEUE for lock free communication use the pop() or getLatestOnly() methods!!!
+    // !!! To use the QUEUE for lock free communication use the pop() || getLatestOnly() methods!!!
     HVOLight<time_steps_, num_voices_> getLatestDataWithoutMovingFIFOHeads()
     {
         return latest_written_data;
@@ -1212,7 +1212,7 @@ public:
 
 
 // ============================================================================================================
-// ==========                    MonotonicGroove Structure and Corresponding Queue                =============
+// ==========                    MonotonicGroove Structure && Corresponding Queue                =============
 // ==========   (Used for sending data from groove thread to model thread)
 // ============================================================================================================
 /**
@@ -1243,7 +1243,7 @@ template <int time_steps_> struct MonotonicGroove
     bool overdubWithNote(BasicNote note_, bool force_overdub = false)
     {
 
-        // 1. find the nearest grid line and calculate offset
+        // 1. find the nearest grid line && calculate offset
         auto ppq = note_.time.ppq;
         auto div = round(ppq / HVO_params::_16_note_ppq);
         auto offset = (ppq - (div * HVO_params::_16_note_ppq))
@@ -1270,8 +1270,8 @@ template <int time_steps_> struct MonotonicGroove
             {
                 auto prev_registration_time_at_grid = registeration_times[grid_index].template item<float>();
                 if (abs(ppq - prev_registration_time_at_grid) > HVO_params::_32_note_ppq)
-                {   // 2.b. add note if received not in the vicinity of previous note registered at the same position
-                    if (note_.velocity != (hvo.velocities_unmodified[grid_index] * hvo.hits[grid_index]).template item<float>() or
+                {   // 2.b. add note if received !in the vicinity of previous note registered at the same position
+                    if (note_.velocity != (hvo.velocities_unmodified[grid_index] * hvo.hits[grid_index]).template item<float>() ||
                         fmod((ppq - prev_registration_time_at_grid), (time_steps/4))!=0)
                         shouldAddNote = true;
                 }
@@ -1317,9 +1317,9 @@ template <int time_steps_> struct MonotonicGroove
         return hvo.getStringDescription(showHits, showVels, showOffsets, needScaled);
     }
 
-    // gets a full n_voices version of the groove and places the groove parts in the specified
+    // gets a full n_voices version of the groove && places the groove parts in the specified
     // VoiceToPlace version.
-    // if needScaled is true, the version with modified velocities and offsets will be returned
+    // if needScaled is true, the version with modified velocities && offsets will be returned
     // (if this is used to feed groove to model, make sure needScaled is True!)
     torch::Tensor getFullVersionTensor(bool needScaled, int VoiceToPlace, int num_voices)
     {
@@ -1350,7 +1350,7 @@ private:
 
     int time_steps;
 
-    // keep track of number of reads/writes and the latest_value without moving FIFO
+    // keep track of number of reads/writes && the latest_value without moving FIFO
     int num_reads = 0;
     int num_writes = 0;
     MonotonicGroove<time_steps_> latest_written_data {};
@@ -1455,9 +1455,9 @@ public:
         return num_writes;
     }
 
-    // This method is useful for keeping track of whether any data has previously written to Queue regardless of being read or not
+    // This method is useful for keeping track of whether any data has previously written to Queue regardless of being read || not
     // !! This method should only be used for initialization of GUI objects !!
-    // !!! To use the QUEUE for lock free communication use the pop() or getLatestOnly() methods!!!
+    // !!! To use the QUEUE for lock free communication use the pop() || getLatestOnly() methods!!!
     MonotonicGroove<time_steps_> getLatestDataWithoutMovingFIFOHeads()
     {
         return latest_written_data;
@@ -1488,7 +1488,7 @@ private:
     unique_ptr<juce::AbstractFifo> lockFreeFifo;
     string data[queue_size];
 
-    // keep track of number of reads/writes and the latest_value without moving FIFO
+    // keep track of number of reads/writes && the latest_value without moving FIFO
     int num_reads = 0;
     int num_writes = 0;
     bool writingActive = false;
@@ -1553,7 +1553,7 @@ public:
         return num_writes;
     }
 
-    // This method is useful for keeping track of whether any data has previously written to Queue regardless of being read or not
+    // This method is useful for keeping track of whether any data has previously written to Queue regardless of being read || not
     // !! This method should only be used for initialization of GUI objects !!
     // !!! To use the QUEUE for lock free communication use the getText() method !!!
     string getLatestDataWithoutMovingFIFOHeads()

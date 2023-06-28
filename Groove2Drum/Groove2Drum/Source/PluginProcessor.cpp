@@ -42,7 +42,7 @@ MidiFXProcessor::MidiFXProcessor():
     //// Start Threads
     /////////////////////////////////
 
-    // give access to resources and run threads
+    // give access to resources && run threads
     modelThread->startThreadUsingProvidedResources(GrooveThreadToModelThreadQue.get(),
                                                   ModelThreadToProcessBlockQue.get(),
                                                   ModelThreadToDrumPianoRollWidgetQue.get(),
@@ -88,7 +88,7 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     tempBuffer.clear();
 
     // STEP 1
-    // get Playhead info and buffer size and sample rate from host
+    // get Playhead info && buffer size && sample rate from host
     auto playhead = getPlayHead();
     auto Pinfo = playhead->getPosition();
     auto fs = getSampleRate();
@@ -96,7 +96,7 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
 
     // STEP 2
-    // check if new pattern is generated and available for playback
+    // check if new pattern is generated && available for playback
     if (ModelThreadToProcessBlockQue != nullptr)
     {
         if (ModelThreadToProcessBlockQue->getNumReady() > 0)
@@ -112,7 +112,7 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     {
         if (*Pinfo->getPpqPosition() < startPpq)
         {
-            // if playback head moved backwards or playback paused and restarted
+            // if playback head moved backwards || playback paused && restarted
             // change the registration_times of groove events to ensure the
             // groove properly overdubs
             modelThread->scaled_groove.registeration_times.index({None, None}) = -100;
@@ -120,13 +120,13 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
         startPpq = *Pinfo->getPpqPosition();
         auto qpm = *Pinfo->getBpm();
-        auto start_ = fmod(startPpq, HVO_params::time_steps/4); // start_ should be always between 0 and 8
+        auto start_ = fmod(startPpq, HVO_params::time_steps/4); // start_ should be always between 0 && 8
         playhead_pos = fmod(float(startPpq + HVO_params::_32_note_ppq), float(HVO_params::time_steps/4.0f)) / (HVO_params::time_steps/4.0f);
 
         auto new_grid = floor(start_/HVO_params::_16_note_ppq);
         if (new_grid != current_grid)
         {
-            if (new_grid == 0 and thread_settings::GrooveThread::forceGenerateGrooveEvery2Bars == true)      // Ensures that the generations change every 2bars TODO: add a toggle to enable/disable this
+            if (new_grid == 0 && thread_settings::GrooveThread::forceGenerateGrooveEvery2Bars == true)      // Ensures that the generations change every 2bars TODO: add a toggle to enable/disable this
             {
                 grooveThread->RePushGroove();
             }
@@ -142,7 +142,7 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
                 auto ppqs_from_start_ = latestGeneratedData.ppqs[idx] - start_;
                 auto samples_from_start_ = ppqs_from_start_ * (60 * fs) / qpm;
 
-                if (ppqs_from_start_>=0 and samples_from_start_<buffSize)
+                if (ppqs_from_start_>=0 && samples_from_start_<buffSize)
                 {
                     DBG("PLAYING");
                     DBG(latestGeneratedData.midiMessages[idx].getFloatVelocity());
@@ -156,9 +156,9 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     }
 
     // Step 4. see if new notes are played on the input side
-    if (not midiMessages.isEmpty() /*and groove_thread_ready*/)
+    if (!midiMessages.isEmpty() /*and groove_thread_ready*/)
     {
-        // send BasicNotes to the GrooveThread and also gui logger for notes
+        // send BasicNotes to the GrooveThread && also gui logger for notes
         place_BasicNote_in_queue<GeneralSettings::processor_io_queue_size>(midiMessages, Pinfo, ProcessBlockToGrooveThreadQue.get(), fs);
         // place_BasicNote_in_queue<GeneralSettings::gui_io_queue_size>(midiMessages, Pinfo, ProcessBlockToGrooveThreadQue, fs);
     }

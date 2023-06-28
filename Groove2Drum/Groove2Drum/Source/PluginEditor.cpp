@@ -92,7 +92,7 @@ void MidiFXProcessorEditor::resized()
     PlayheadProgressBar.setBounds(area.removeFromLeft(
         GeneratedDrumsWidget->PianoRolls[0]->getPianoRollSectionWidth()));
 
-    // put buttons and GrooveControlSliders
+    // put buttons && GrooveControlSliders
     area = getLocalBounds();
     auto rightArea = area.removeFromRight(area.proportionOfWidth(gui_settings::PianoRolls::space_reserved_right_side_of_gui_ratio_of_width));
     rightArea.removeFromLeft(rightArea.proportionOfWidth(0.1));
@@ -112,7 +112,7 @@ void MidiFXProcessorEditor::paint(juce::Graphics& g)
 
 void MidiFXProcessorEditor::timerCallback()
 {
-    // get Generations and probs from model thread to display on drum piano rolls
+    // get Generations && probs from model thread to display on drum piano rolls
     {
         auto ptr_ = MidiFXProcessorPointer_->ModelThreadToDrumPianoRollWidgetQue.get();
         if (ptr_->getNumReady() > 0)

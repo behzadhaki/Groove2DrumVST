@@ -6,6 +6,8 @@
 
 #include <torch/script.h> // One-stop header.
 
+#include <iostream>
+
 
 // ======================================================================================
 // ==================     Drum Kit Defaults                ==============================
@@ -37,8 +39,24 @@
 // ======================================================================================
 // ==================     General Settings                 ==============================
 // ======================================================================================
-namespace GeneralSettings
-{
+
+#if _WIN32
+    namespace GeneralSettings
+    {
+        // Queue Sizes for communication
+        constexpr int gui_io_queue_size { 16 };
+        constexpr int processor_io_queue_size { 64 };
+
+        // model_settings
+        // FIXME add to readme.me for setup ==> model should be placed in root (/Library/Groove2Drum/trained_models) folder
+        char constexpr* default_model_folder {
+            (char*)"C:\\Program Files\\Groove2Drum\\trained_models"};
+        char constexpr* default_vae_model_folder {
+            (char*)"C:\\Program Files\\Groove2Drum\\trained_vae_models"};
+    }
+#else
+    namespace GeneralSettings
+    {
     // Queue Sizes for communication
     constexpr int gui_io_queue_size { 16 };
     constexpr int processor_io_queue_size { 64 };
@@ -46,12 +64,11 @@ namespace GeneralSettings
     // model_settings
     // char constexpr* default_model_path {(char*)"/Users/behzadhaki/Github/Groove2DrumVST/Groove2Drum/Groove2Drum/Source/model/misunderstood_bush_246-epoch_26_tst.pt"};
     // FIXME add to readme.me for setup ==> model should be placed in root (/Library/Groove2Drum/trained_models) folder
-    char constexpr* default_model_path {(char*)"/Library/Groove2Drum/trained_models/model_1.pt"};
     char constexpr* default_model_folder {(char*)"/Library/Groove2Drum/trained_models"};
     char constexpr* default_vae_model_folder {(char*)"/Library/Groove2Drum/trained_vae_models"};
 
-}
-
+    }
+#endif
 // ======================================================================================
 // ==================     HVO Settings                     ==============================
 // ======================================================================================

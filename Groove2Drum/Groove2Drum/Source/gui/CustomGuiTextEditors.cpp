@@ -67,7 +67,7 @@ void BasicNoteStructLoggerTextEditor::QueueDataProcessor()
 {
     if (note_queP != nullptr)
     {
-        while (note_queP->getNumReady() > 0 and not this->threadShouldExit())
+        while (note_queP->getNumReady() > 0 && !this->threadShouldExit())
         {
             BasicNote note;
             note_queP->ReadFrom(&note, 1); // here cnt result is 3
@@ -75,22 +75,22 @@ void BasicNoteStructLoggerTextEditor::QueueDataProcessor()
 
             if(this->getTotalNumChars()>gui_settings::BasicNoteStructLoggerTextEditor::maxChars)
             {
-                if (not threadShouldExit())
+                if (!threadShouldExit())
                     this->clear();
-                if (not threadShouldExit())
+                if (!threadShouldExit())
                     this->numNotesPrintedOnLine = 0;
             }
-            if (not threadShouldExit())
+            if (!threadShouldExit())
                 insertTextAtCaret(
                     note.getStringDescription());
 
-            if (not threadShouldExit())
+            if (!threadShouldExit())
                 this->numNotesPrintedOnLine += 1;
 
-            if(this->numNotesPrintedOnLine > 0 and
+            if(this->numNotesPrintedOnLine > 0 &&
                 this->numNotesPrintedOnLine % gui_settings::BasicNoteStructLoggerTextEditor::
                             nNotesPerLine == 0)
-                if (not threadShouldExit())
+                if (!threadShouldExit())
                     insertTextAtCaret(juce::newLine);
 
         }
@@ -123,7 +123,7 @@ void TextMessageLoggerTextEditor::QueueDataProcessor()
     if (text_message_queue != nullptr)
     {
         string msg_received;
-        while (text_message_queue->getNumReady() > 0 and not threadShouldExit())
+        while (text_message_queue->getNumReady() > 0 && !threadShouldExit())
         {
             msg_received = text_message_queue->getText();
 
@@ -131,19 +131,19 @@ void TextMessageLoggerTextEditor::QueueDataProcessor()
 
             if(this->getTotalNumChars()>gui_settings::TextMessageLoggerTextEditor::maxChars)
             {
-                if (not threadShouldExit())
+                if (!threadShouldExit())
                     this->clear();
             }
 
-            if (msg_received == "clear" or msg_received == "Clear") {
-                if (not threadShouldExit())
+            if (msg_received == "clear" || msg_received == "Clear") {
+                if (!threadShouldExit())
                     this->clear();
             }
             else
             {
-                if (not threadShouldExit())
+                if (!threadShouldExit())
                     insertTextAtCaret(msg_received);
-                if (not threadShouldExit())
+                if (!threadShouldExit())
                     insertTextAtCaret(juce::newLine);
             }
         }

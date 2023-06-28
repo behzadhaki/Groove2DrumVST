@@ -66,7 +66,7 @@ def initialize_model(params):
                                                                  lr=training_params['learning_rate'])
     epoch = 0
 
-    if load_model is not None:
+    if load_model is !None:
 
         # If model was saved locally
         if load_model['location'] == 'local':
@@ -162,7 +162,7 @@ def train_loop(dataloader, groove_transformer, loss_fn, bce_fn, mse_fn, opt, epo
         # save model during training (if the training crashes, models will still be available at wandb.ai)
         wandb.save(save_filename, base_path=wandb.run.dir)
 
-    if test_inputs is not None &&  test_gt is not None:
+    if test_inputs is !None &&  test_gt is !None:
         test_inputs = test_inputs.to(device)
         test_gt = test_gt.to(device)
         groove_transformer.eval()
@@ -181,7 +181,7 @@ def train_loop(dataloader, groove_transformer, loss_fn, bce_fn, mse_fn, opt, epo
                        'test_velocity_loss': test_mse_v, 'test_offset_loss': test_mse_o, 'epoch': epoch},
                       commit=True)
 
-    if validation_inputs is not None &&  validation_gt is not None:
+    if validation_inputs is !None &&  validation_gt is !None:
         validation_inputs = validation_inputs.to(device)
         validation_gt = validation_gt.to(device)
         groove_transformer.eval()

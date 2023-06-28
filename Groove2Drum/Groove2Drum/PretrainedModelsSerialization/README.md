@@ -37,7 +37,7 @@ Finally, run the python script
     SerializeModels.py
 
 
-Create a directory (at root not user -- don't use ~/Li...)
+Create a directory (at root !user -- don't use ~/Li...)
 
     /Library/Groove2Drum/trained_models
 

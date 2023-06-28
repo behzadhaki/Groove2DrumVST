@@ -24,7 +24,7 @@ using namespace std;
   * to use the template (see example class MidiNoteValueLoggerTextEditor):
   *     1.  override the QueueDataProcessor() --> define what needs to be done
   *             on the data received from the queue
-  *     2.  implement a startThreadUsingProvidedResources method which gets access to a queue and
+  *     2.  implement a startThreadUsingProvidedResources method which gets access to a queue &&
   *             calls the run() method
   * TO RECAP! MUST override QueueDataProcessor &&  implement a startThreadUsingProvidedResources method
 */

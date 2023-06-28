@@ -77,7 +77,7 @@ public:
 
 
     // ============================================================================================================
-    // ===          Utility Methods and Parameters
+    // ===          Utility Methods && Parameters
     // ============================================================================================================
     // ------------------------------------------------------------------------------------------------------------
     // ---         Per voice generation controls stored locally (defaults are in settings.h)
@@ -85,14 +85,14 @@ public:
     vector<float> perVoiceSamplingThresholds {nine_voice_kit_default_sampling_thresholds};
     vector<float> perVoiceMaxNumVoicesAllowed {nine_voice_kit_default_max_voices_allowed};
     // ------------------------------------------------------------------------------------------------------------
-    // ---         Input Groove and Generated HVO stored locally
+    // ---         Input Groove && Generated HVO stored locally
     // ------------------------------------------------------------------------------------------------------------
     MonotonicGroove<HVO_params::time_steps> scaled_groove;
     HVO<HVO_params::time_steps, HVO_params::num_voices > generated_hvo;
     // ------------------------------------------------------------------------------------------------------------
     // ---         Other
     // ------------------------------------------------------------------------------------------------------------
-    bool readyToStop; // Used to check if thread is ready to be stopped or externally stopped from a parent thread
+    bool readyToStop; // Used to check if thread is ready to be stopped || externally stopped from a parent thread
 
     void UpdateModelPath(std::string new_model_path_, std::string sample_mode_);
     // ============================================================================================================
@@ -122,8 +122,9 @@ private:
     std::optional<MonotonicGrooveTransformerV1> monotonicV1modelAPI{std::nullopt};
     std::optional<VAE_V1ModelAPI> vaeV1ModelAPI{std::nullopt};
     array <int, HVO_params::num_voices> drum_kit_midi_map {};
-    string new_model_path {""};
-    string sample_mode {"Threshold"}; //"Threshold" or "SampleProbability"
+    string new_model_path;
+    string current_model_path;
+    string sample_mode {"Threshold"}; //"Threshold" || "SampleProbability"
 };
 
 #endif //JUCECMAKEREPO_MODELTHREAD_H

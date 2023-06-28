@@ -47,10 +47,10 @@ public:
 
 
     // ============================================================================================================
-    // ===          Utility Methods and Parameters
+    // ===          Utility Methods && Parameters
     // ============================================================================================================
     void ForceResetGroove();        // reset Groove if requested
-    bool readyToStop; // Used to check if thread is ready to be stopped or externally stopped from a parent thread
+    bool readyToStop; // Used to check if thread is ready to be stopped || externally stopped from a parent thread
     void clearStep(int grid_ix, float start_ppq);    // clears a time step ONLY IF OVERDUBBING IS OFF!!!
 
     void randomizeExistingVelocities();         // randomizes the velocities of the existing groove
@@ -87,7 +87,7 @@ private:
     // ===          Parameters Locally Used for Calculations
     // ============================================================================================================
     // ------------------------------------------------------------------------------------------------------------
-    // ---          Velocity and Offset Ranges for Groove Manipulation / Compression
+    // ---          Velocity && Offset Ranges for Groove Manipulation / Compression
     // ------------------------------------------------------------------------------------------------------------
     array<float, 2> vel_range;
     array<float, 2> offset_range;

@@ -52,7 +52,7 @@ VAE_V1ModelAPI::VAE_V1ModelAPI(){
     model_path = "NO Path Specified Yet!!";
 }
 
-// Loads model either in eval mode or train modee
+// Loads model either in eval mode || train modee
 inline torch::jit::script::Module VAE_V1ModelAPI::LoadModel(std::string model_path)
 {
     torch::jit::script::Module model;
@@ -161,7 +161,7 @@ bool VAE_V1ModelAPI::set_sampling_temperature(float temperature)
     return true;
 }
 
-// Passes input through the model and updates logits, vels and offsets
+// Passes input through the model && updates logits, vels && offsets
 void VAE_V1ModelAPI::forward_pass(torch::Tensor monotonicGrooveInput)
 {
     assert(monotonicGrooveInput.sizes()[0]==time_steps &&
@@ -176,7 +176,7 @@ void VAE_V1ModelAPI::forward_pass(torch::Tensor monotonicGrooveInput)
     flat_groove.index_put_({row_indices, torch::indexing::Slice(1, 2)}, monotonicGrooveInput.index({row_indices, torch::indexing::Slice(11, 12)}));
     flat_groove.index_put_({row_indices, torch::indexing::Slice(2, 3)}, monotonicGrooveInput.index({row_indices, torch::indexing::Slice(20, 21)}));
 
-    // wrap as IValue vector and pass through InputLayerEncoder
+    // wrap as IValue vector && pass through InputLayerEncoder
     std::vector<torch::jit::IValue> inputs{flat_groove};
     //inputs.emplace_back(flat_groove);
     auto embedded = InputLayerEncoder.forward(inputs);
@@ -213,7 +213,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> VAE_V1ModelAPI::
     sample(std::string sample_mode)
 {
     DBG(sample_mode);
-    assert (sample_mode=="Threshold" or sample_mode=="SampleProbability");
+    assert (sample_mode=="Threshold" || sample_mode=="SampleProbability");
 
     hits = torch::zeros({time_steps, num_voices});
 
@@ -221,7 +221,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> VAE_V1ModelAPI::
     if (sample_mode=="Threshold")
     {
         // read CPU accessors in  https://pytorch.org/cppdocs/notes/tensor_basics.html
-        // asserts accessed part of tensor is 2-dimensional and holds floats.
+        // asserts accessed part of tensor is 2-dimensional && holds floats.
         //auto hits_probabilities_a = hits_probabilities.accessor<float,2>();
 
         for (int voice_i=0; voice_i < num_voices; voice_i++){
@@ -234,7 +234,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> VAE_V1ModelAPI::
             auto candidate_probs = std::get<0>(tup);
             auto candidate_prob_indices = std::get<1>(tup);
 
-            // Find locations exceeding threshold and set to 1 (hit)
+            // Find locations exceeding threshold && set to 1 (hit)
             auto accepted_candidate_indices = candidate_probs>=thres_voice_i;
             auto active_time_indices = candidate_prob_indices.index({accepted_candidate_indices});
 
@@ -254,7 +254,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> VAE_V1ModelAPI::
         }
     }
 
-    // Set non-hit vel and offset values to 0
+    // Set non-hit vel && offset values to 0
     // velocities = velocities * hits;
     // offsets = offsets * hits;
 

@@ -40,7 +40,7 @@ public:
     void set_max_count_per_voice_limits(vector<float> perVoiceMaxNumVoicesAllowed);
     bool set_sampling_temperature(float temperature);
 
-    // Step 1. Passes input through the model and updates logits, vels and offsets
+    // Step 1. Passes input through the model && updates logits, vels && offsets
     void forward_pass(torch::Tensor monotonicGrooveInput);
     // Step 2. Sample hvo after the forward pass
     std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sample(

@@ -40,7 +40,7 @@ void GrooveThread::startThreadUsingProvidedResources(LockFreeQueue<BasicNote, Ge
                                                      LockFreeQueue<std::array<float, 6>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_vel_offset_ranges_QuePntr,
                                                      LockFreeQueue<std::array<int, 2>, GeneralSettings::gui_io_queue_size>* APVTS2GrooveThread_groove_record_overdubToggles_QuePntr)
 {
-    // get the pointer to queues and control parameters instantiated
+    // get the pointer to queues && control parameters instantiated
     // in the main processor thread
     ProcessBlockToGrooveThreadQue = ProcessBlockToGrooveThreadQuePntr;
     GrooveThreadToModelThreadQue = GrooveThreadToModelThreadQuePntr;
@@ -69,7 +69,7 @@ void GrooveThread::run()
     bool isNewGrooveAvailableUsingHandDrawnNote;
 
 
-    // local variables to keep track of vel_range = (min_vel, max_vel) and offset ranges
+    // local variables to keep track of vel_range = (min_vel, max_vel) && offset ranges
     vel_range = {HVO_params::_min_vel, HVO_params::_max_vel};
     offset_range = {HVO_params::_min_offset, HVO_params::_max_offset};
 
@@ -91,12 +91,12 @@ void GrooveThread::run()
         }
 
         // 2. see if overdubbing is off, then if so, clear the timestep
-        // info for clearing (i.e. new time step and when it was requested comes from process block)
+        // info for clearing (i.e. new time step && when it was requested comes from process block)
         // see GrooveThread::clearStep(int grid_ix, float start_ppq)
-        if (overdubEnabled == 0 and lastClearedStepNumber!=clearStepNumber and lastClearedRequestedAtPositionPpq!=clearRequestedAtPositionPpq)
+        if (overdubEnabled == 0 && lastClearedStepNumber!=clearStepNumber && lastClearedRequestedAtPositionPpq!=clearRequestedAtPositionPpq)
         {
             if (GrooveThread2GGroovePianoRollWidgetQue!=nullptr
-                and GrooveThreadToModelThreadQue!= nullptr)
+                && GrooveThreadToModelThreadQue!= nullptr)
             {
                 if (abs(monotonic_groove.registeration_times[clearStepNumber].item().toFloat()
                         - clearRequestedAtPositionPpq)
@@ -117,7 +117,7 @@ void GrooveThread::run()
         }
 
         // 3. see if any randomization is requested
-        if (shouldRandomizeVelocities or shouldRandomizeOffsets or shouldRandomizeAll)
+        if (shouldRandomizeVelocities || shouldRandomizeOffsets || shouldRandomizeAll)
         {
             if (shouldRandomizeVelocities)
             {
@@ -138,7 +138,7 @@ void GrooveThread::run()
             GrooveThreadToModelThreadQue->push(monotonic_groove);
         }
 
-        // 4. get overdub and record states from APVTS
+        // 4. get overdub && record states from APVTS
         if (APVTS2GrooveThread_groove_record_overdubToggles_Que!= nullptr)
         {
             while (APVTS2GrooveThread_groove_record_overdubToggles_Que->getNumReady() > 0)
@@ -182,7 +182,7 @@ void GrooveThread::run()
         {
             // 6. see if new BasicNotes received from main processblock
             BasicNote read_note;
-            while (ProcessBlockToGrooveThreadQue->getNumReady() > 0 and not this->threadShouldExit())
+            while (ProcessBlockToGrooveThreadQue->getNumReady() > 0 && !this->threadShouldExit())
             {
                 // Step 1. get new note
                 ProcessBlockToGrooveThreadQue->ReadFrom(&read_note, 1); // here cnt result is 3
@@ -205,7 +205,7 @@ void GrooveThread::run()
             }
 
             // 7. apply compression if new notes overdubbed
-            if (isNewGrooveAvailable or isNewGrooveAvailableUsingHandDrawnNote)
+            if (isNewGrooveAvailable || isNewGrooveAvailableUsingHandDrawnNote)
             {
                 monotonic_groove.hvo.compressAll();
             }
@@ -217,7 +217,7 @@ void GrooveThread::run()
             array<float, 6> compression_params {};  // {Vel_Bias, Vel_Range, Offset_Bias, Offset_Range}
 
             while (APVTS2GrooveThread_groove_vel_offset_ranges_Que->getNumReady() > 0
-                   and not this->threadShouldExit())
+                   && !this->threadShouldExit())
             {
                 // Step 1. get new vel/offset ranges received
                 APVTS2GrooveThread_groove_vel_offset_ranges_Que->ReadFrom(&compression_params, 1);
@@ -231,7 +231,7 @@ void GrooveThread::run()
         }
 
         // 9. Send groove to other threads if new one available
-        if (isNewGrooveAvailable or isNewGrooveAvailableUsingHandDrawnNote or shouldResendGroove)
+        if (isNewGrooveAvailable || isNewGrooveAvailableUsingHandDrawnNote || shouldResendGroove)
         {
             DBG("GrooveThread::run() sending groove to other threads");
             if (GrooveThreadToModelThreadQue != nullptr)
@@ -279,7 +279,7 @@ void GrooveThread::prepareToStop()
 
 GrooveThread::~GrooveThread()
 {
-    if (not readyToStop)
+    if (!readyToStop)
     {
         prepareToStop();
     }
