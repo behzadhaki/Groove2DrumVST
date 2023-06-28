@@ -24,7 +24,7 @@ def load_model_in_eval_mode(model_param_dict):
                                                   model_param_dict['max_len'],
                                                   model_param_dict['device'])
 
-    # Load model and put in evaluation mode
+    # Load model &&  put in evaluation mode
     groove_transformer.load_state_dict(checkpoint['model_state_dict'])
     groove_transformer.eval()
 
@@ -36,14 +36,14 @@ if __name__ == '__main__':
     for model_name_, model_param_dict_ in prm.model_params.items():
         groove_transformer = load_model_in_eval_mode(model_param_dict_)
 
-        # Providing input and output names sets the display names for values
+        # Providing input &&  output names sets the display names for values
         # within the model's graph. Setting these does not change the semantics
         # of the graph; it is only for readability.
         #
         # The inputs to the network consist of the flat list of inputs (i.e.
         # the values you would pass to the forward() method) followed by the
         # flat list of parameters. You can partially specify names, i.e. provide
-        # a list here shorter than the number of inputs to the model, and we will
+        # a list here shorter than the number of inputs to the model, &&  we will
         # only set that subset of names, starting from the beginning.
 
 

@@ -32,15 +32,15 @@ namespace IntraProcessorFifos
 
 */
 /**
- *  Lock-free Queues  for communicating data back and forth between
- *  the Processor threads and the GUI widgets
+ *  Lock-free Queues  for communicating data back &&  forth between
+ *  the Processor threads &&  the GUI widgets
  *//*
 
 
 namespace GuiIOFifos
 {
 
-    // todo -> modelThread to gui ques for notifying if model loaded and also loading other models from a file browser
+    // todo -> modelThread to gui ques for notifying if model loaded &&  also loading other models from a file browser
 
     // ========= Processor To TextEditor =============================================
     struct ProcessorToTextEditorQues
@@ -56,7 +56,7 @@ namespace GuiIOFifos
 
     // =========      PianoRoll_InteractiveMonotonicGroove FIFOs  ===================
 
-    // used for sending velocities and offset compression values from MonotonicGroove XYSlider
+    // used for sending velocities &&  offset compression values from MonotonicGroove XYSlider
     // to GrooveThread in processor
     struct GrooveThread2GGroovePianoRollWidgetQues
     {
@@ -79,7 +79,7 @@ namespace GuiIOFifos
 
 
     // =========         Generated Drums PianoRoll            ========================
-    // used for receiving the latest perVoiceSamplingThresholds and maximum notes allowed from Generated Drums XYSliders
+    // used for receiving the latest perVoiceSamplingThresholds &&  maximum notes allowed from Generated Drums XYSliders
     struct ModelThreadToDrumPianoRollWidgetQues
     {
         //unique_ptr<HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size>> ModelThreadToDrumPianoRollWidgetQue {};        // todo To integrate in code

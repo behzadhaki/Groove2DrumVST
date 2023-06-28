@@ -20,13 +20,13 @@ using namespace std;
 /*
   *
   * A template class for A TextEditor that runs a separate thread in which continuosly
-  * reads data (if any) from a provided queue and prints it on screen
+  * reads data (if any) from a provided queue &&  prints it on screen
   * to use the template (see example class MidiNoteValueLoggerTextEditor):
   *     1.  override the QueueDataProcessor() --> define what needs to be done
   *             on the data received from the queue
   *     2.  implement a startThreadUsingProvidedResources method which gets access to a queue and
   *             calls the run() method
-  * TO RECAP! MUST override QueueDataProcessor and implement a startThreadUsingProvidedResources method
+  * TO RECAP! MUST override QueueDataProcessor &&  implement a startThreadUsingProvidedResources method
 */
 class LoggerTextEditorTemplate: public juce::TextEditor, public juce::Thread
 {
@@ -46,7 +46,7 @@ public:
 
 
 /**
- * A GUI TextEditor with a separate thread for receiving and displaying
+ * A GUI TextEditor with a separate thread for receiving &&  displaying
  * Note instances
  */
 class BasicNoteStructLoggerTextEditor: public LoggerTextEditorTemplate
@@ -67,7 +67,7 @@ private:
 
 
 /**
- * A GUI TextEditor with a separate thread for receiving and displaying
+ * A GUI TextEditor with a separate thread for receiving &&  displaying
  * String messages
  */
 class TextMessageLoggerTextEditor: public LoggerTextEditorTemplate

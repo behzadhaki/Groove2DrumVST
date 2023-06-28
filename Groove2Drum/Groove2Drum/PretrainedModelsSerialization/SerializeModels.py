@@ -24,7 +24,7 @@ def load_model_in_eval_mode(model_param_dict):
                                                   model_param_dict['max_len'],
                                                   model_param_dict['device'])
 
-    # Load model and put in evaluation mode
+    # Load model &&  put in evaluation mode
     groove_transformer.load_state_dict(checkpoint['model_state_dict'])
     groove_transformer.eval()
 

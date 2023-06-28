@@ -16,10 +16,10 @@ upgrade pip
 
     pip3 install --upgrade pip
 
-goto https://pytorch.org/get-started/locally/ and get the write pip command for installing torch on your computer.
+goto https://pytorch.org/get-started/locally/ &&  get the write pip command for installing torch on your computer.
 (double check the installers using the link)
 
-    MAC and Win:
+    MAC &&  Win:
     pip3 install torch torchvision torchaudio
 
     Linux:
@@ -28,7 +28,7 @@ goto https://pytorch.org/get-started/locally/ and get the write pip command for 
 
 ### Running Python script
 
-Go to CMC folder, and activate environment
+Go to CMC folder, &&  activate environment
 
     source TorchOSC_venv/bin/activate
 

@@ -9,7 +9,7 @@ namespace DrumsPianoRoll{
 struct Parameters
 {
 
-    //Raw pointers. They will be owned by either the processor or the APVTS (if you use it)
+    //Raw pointers. They will be owned by either the processor || the APVTS (if you use it)
     // XYSLIDER PARAMETERS
     vector<juce::AudioParameterFloat*> MaxHitsPerVoice;
     vector<juce::AudioParameterFloat*> SampleThresholdsPerVoice;
