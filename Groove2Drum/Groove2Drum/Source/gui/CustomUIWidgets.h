@@ -216,11 +216,11 @@ namespace SingleStepPianoRollBlock
         {
             if (hit == 1)
             {
-                GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue->push(BasicNote(100, velocity, grid_index, offset));
+                GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue->push(BasicNote(0, velocity, grid_index, offset));
             }
             else
             {
-                GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue->push(BasicNote(100, 0, grid_index, 0));
+                GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue->push(BasicNote(0, 0, grid_index, 0));
             }
         }
 
