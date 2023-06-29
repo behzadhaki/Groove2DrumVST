@@ -50,9 +50,9 @@
         // model_settings
         // FIXME add to readme.me for setup ==> model should be placed in root (/Library/Groove2Drum/trained_models) folder
         char constexpr* default_model_folder {
-            (char*)"C:\\Program Files\\Groove2Drum\\trained_models"};
+            (char*)"C:\\Groove2Drum\\trained_models"};
         char constexpr* default_vae_model_folder {
-            (char*)"C:\\Program Files\\Groove2Drum\\trained_vae_models"};
+            (char*)"C:\\Groove2Drum\\trained_vae_models"};
     }
 #else
     namespace GeneralSettings
