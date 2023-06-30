@@ -67,4 +67,9 @@ cmake -G "Visual Studio 16 2019" -B build
 
 ---------------------
 
+## VERY IMPORTANT FOR WINDOWS
+
+make sure you change the cmake settings as follows 
+
+![winSettings.PNG](winSettings.PNG)
 

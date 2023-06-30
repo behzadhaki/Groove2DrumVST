@@ -56,6 +56,7 @@ VAE_V1ModelAPI::VAE_V1ModelAPI(){
 inline torch::jit::script::Module VAE_V1ModelAPI::LoadModel(std::string model_path)
 {
     torch::jit::script::Module model;
+    DBG("Trying to load" << model_path);
     model = torch::jit::load(model_path);
     model.eval();
     return model;
