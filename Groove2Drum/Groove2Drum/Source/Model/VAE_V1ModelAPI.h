@@ -47,20 +47,17 @@ public:
 
 private:
 
-    torch::jit::script::Module InputLayerEncoder;
-    torch::jit::script::Module Encoder;
-    torch::jit::script::Module LatentEncoder;
-    torch::jit::script::Module Decoder;
-
+    torch::jit::script::Module model;
     int time_steps;
     int num_voices;
+    torch::Tensor latent_z;
     torch::Tensor hits_logits;
     torch::Tensor hits_probabilities;
     torch::Tensor hits;
     torch::Tensor velocities;
     torch::Tensor offsets;
     torch::Tensor per_voice_sampling_thresholds;            // per voice thresholds for sampling
-    vector<float> per_voice_max_count_allowed;              // per voice Maximum limit of hits
+    torch::Tensor per_voice_max_count_allowed;              // per voice Maximum limit of hits
     float sampling_temperature {1.0f};
 
     torch::jit::script::Module LoadModel(std::string model_path);

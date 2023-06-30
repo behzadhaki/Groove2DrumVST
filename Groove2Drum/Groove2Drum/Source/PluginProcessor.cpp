@@ -9,6 +9,12 @@ using namespace std;
 MidiFXProcessor::MidiFXProcessor():
     apvts(*this, nullptr, "PARAMETERS", createParameterLayout())
 {
+
+    std::vector<torch::jit::IValue> inputs{};
+    inputs.emplace_back(torch::ones({100, 1}));
+    inputs.emplace_back((int) 2);  // Convert int to Tensor to IValue
+
+
     model_paths = get_monotonic_v1_pt_files_in_default_path();
     model_paths.addArray(get_vae_directories_in_default_path());
 
@@ -199,6 +205,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout MidiFXProcessor::createParam
     // model selector combobox
     auto modelfiles = get_monotonic_v1_pt_files_in_default_path();
     modelfiles.addArray(get_vae_directories_in_default_path());
+    DBG("Found " + juce::String(modelfiles.size()) + " models");
     layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("MODEL", version_hint), "MODEL", 0, modelfiles.size()-1, 0));
 
     // buttons

@@ -27,17 +27,16 @@ inline juce::StringArray get_monotonic_v1_pt_files_in_default_path()
 
 inline juce::StringArray get_vae_directories_in_default_path()
 {
+
+    // find models in default folder
     juce::StringArray paths;
     paths.clear();
-
-    // find subdirectories in default vae folder
-    for (const auto& filenameThatWasFound : juce::File (GeneralSettings::default_vae_model_folder).findChildFiles (1, true, "*"))
+    for (const auto& filenameThatWasFound : juce::File (GeneralSettings::default_vae_model_folder).findChildFiles (2, true, "*.pt"))
     {
         paths.add (filenameThatWasFound.getFullPathName());
     }
     paths.sort(false);
     return paths;
-
 }
 
 class ModelThread: public juce::Thread/*, public juce::ChangeBroadcaster*/

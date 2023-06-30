@@ -79,24 +79,15 @@ bool VAE_V1ModelAPI::loadModel(std::string model_path_, int time_steps_, int num
     else
     {
         myFile.close();
-        DBG("Model Path is OK");
-        InputLayerEncoder = LoadModel(model_path + "/InputLayerEncoder.pt");
-        DBG("InputLayerEncoder is OK");
-        DBG(model_path);
-        Encoder = LoadModel(model_path + "/Encoder.pt");
-        DBG("Encoder is OK");
-        LatentEncoder = LoadModel(model_path + "/LatentEncoder.pt");
-        DBG("LatentEncoder is OK");
-        Decoder = LoadModel(model_path + "/Decoder.pt");
-        DBG("Decoder is OK");
 
+        model = LoadModel(model_path);
         hits_logits = torch::zeros({time_steps_, num_voices_});
         hits_probabilities = torch::zeros({time_steps_, num_voices_});
         hits = torch::zeros({time_steps_, num_voices_});
         velocities = torch::zeros({time_steps_, num_voices_});
         offsets = torch::zeros({time_steps_, num_voices_});
         per_voice_sampling_thresholds = vector2tensor(nine_voice_kit_default_sampling_thresholds);
-        per_voice_max_count_allowed = nine_voice_kit_default_max_voices_allowed;
+        per_voice_max_count_allowed = vector2tensor(nine_voice_kit_default_max_voices_allowed);
         return true;
     }
 
@@ -116,11 +107,7 @@ bool VAE_V1ModelAPI::changeModel(std::string model_path_)
     else
     {
         myFile.close();
-        model_path = model_path_;
-        InputLayerEncoder = LoadModel(model_path.append("/InputLayerEncoder.pt"));
-        Encoder = LoadModel(model_path.append("/Encoder.pt"));
-        LatentEncoder = LoadModel(model_path.append("/LatentEncoder.pt"));
-        Decoder = LoadModel(model_path.append("/Decoder.pt"));
+        model = LoadModel(model_path);
         return true;
     }
 }
@@ -146,7 +133,7 @@ void VAE_V1ModelAPI::set_max_count_per_voice_limits(vector<float> perVoiceMaxNum
     assert(perVoiceMaxNumVoicesAllowed.size()==num_voices &&
            "thresholds dim [num_voices]");
 
-    per_voice_max_count_allowed = perVoiceMaxNumVoicesAllowed;
+    per_voice_max_count_allowed = vector2tensor(perVoiceMaxNumVoicesAllowed);
 }
 
 // returns true if temperature has changed
@@ -178,35 +165,9 @@ void VAE_V1ModelAPI::forward_pass(torch::Tensor monotonicGrooveInput)
 
     // wrap as IValue vector && pass through InputLayerEncoder
     std::vector<torch::jit::IValue> inputs{flat_groove};
-    //inputs.emplace_back(flat_groove);
-    auto embedded = InputLayerEncoder.forward(inputs);
-
-    // pass through Encoder'
-    inputs.clear();
-    inputs.emplace_back(embedded);
-    auto encoded = Encoder.forward(inputs);
-
-    // pass through LatentEncoder
-    inputs.clear();
-    inputs.emplace_back(encoded);
-    auto latent = LatentEncoder.forward(inputs);
-
-    // latent is a tuple of 3 tensors (mean, logvar, z)
-    auto latent_tuple = latent.toTuple();
-    auto mean = latent_tuple->elements()[0].toTensor();
-    auto logvar = latent_tuple->elements()[1].toTensor();
-    auto z = latent_tuple->elements()[2].toTensor();
-
-    // pass through Decoder
-    inputs.clear();
-    inputs.emplace_back(z);
-    auto outputs = Decoder.forward(inputs);
-
-    auto hLogit_v_o_tuples = outputs.toTuple();
-    hits_logits = hLogit_v_o_tuples->elements()[0].toTensor().view({time_steps, num_voices});
-    hits_probabilities = torch::sigmoid(hits_logits/sampling_temperature).view({time_steps, num_voices});
-    velocities = torch::sigmoid(hLogit_v_o_tuples->elements()[1].toTensor().view({time_steps, num_voices}));
-    offsets = torch::sigmoid(hLogit_v_o_tuples->elements()[2].toTensor().view({time_steps, num_voices})) - 0.5f;
+    auto encoder = model.get_method("encode");
+    auto result = encoder(inputs);
+    latent_z = result.toTuple()->elements()[2].toTensor();
 }
 
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> VAE_V1ModelAPI::
@@ -215,50 +176,43 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> VAE_V1ModelAPI::
     DBG(sample_mode);
     assert (sample_mode=="Threshold" || sample_mode=="SampleProbability");
 
-    hits = torch::zeros({time_steps, num_voices});
-
-    auto row_indices = torch::arange(0, time_steps);
-    if (sample_mode=="Threshold")
+    // set to 0 if sample_mode == "Threshold"
+    int smp_md = 0;
+    if (sample_mode=="SampleProbability")
     {
-        // read CPU accessors in  https://pytorch.org/cppdocs/notes/tensor_basics.html
-        // asserts accessed part of tensor is 2-dimensional && holds floats.
-        //auto hits_probabilities_a = hits_probabilities.accessor<float,2>();
-
-        for (int voice_i=0; voice_i < num_voices; voice_i++){
-            // Get voice threshold value
-            auto thres_voice_i  = per_voice_sampling_thresholds[voice_i];
-            // Get probabilities of voice hits at all timesteps
-            auto voice_hit_probs = hits_probabilities.index(
-                {row_indices, voice_i});
-            auto tup = voice_hit_probs.topk((int) per_voice_max_count_allowed[size_t(voice_i)]);
-            auto candidate_probs = std::get<0>(tup);
-            auto candidate_prob_indices = std::get<1>(tup);
-
-            // Find locations exceeding threshold && set to 1 (hit)
-            auto accepted_candidate_indices = candidate_probs>=thres_voice_i;
-            auto active_time_indices = candidate_prob_indices.index({accepted_candidate_indices});
-
-            hits.index_put_({active_time_indices, voice_i}, 1);
-        }
-    } else if (sample_mode=="SampleProbability")
-    {
-        for (int voice_i=0; voice_i < num_voices; voice_i++){
-            // Get voice threshold value
-            auto thres_voice_i  = per_voice_sampling_thresholds[voice_i];
-            // Get probabilities of voice hits at all timesteps
-            auto voice_hit_probs = hits_probabilities.index(
-                {row_indices, voice_i});
-            voice_hit_probs = torch::where(voice_hit_probs>=thres_voice_i, voice_hit_probs, 0);
-
-            hits.index_put_({row_indices, voice_i}, torch::bernoulli(voice_hit_probs));
-        }
+        smp_md = 1;
     }
 
-    // Set non-hit vel && offset values to 0
-    // velocities = velocities * hits;
-    // offsets = offsets * hits;
+    //https://stackoverflow.com/questions/69884828/how-to-input-an-int-argument-to-the-forward-function-of-torchjitscriptmodu
+    std::vector<torch::jit::IValue> inputs;
+    inputs.push_back(latent_z);
+    inputs.push_back(per_voice_sampling_thresholds);
+    inputs.push_back(per_voice_max_count_allowed);
+    inputs.push_back(smp_md);  // Convert int to Tensor to IValue
+    inputs.push_back(sampling_temperature);  // Convert float to Tensor to IValue
+    DBG("sampling_temperature: " << sampling_temperature);
 
-    // DBG(tensor2string(hits));
+
+    auto sampler_method = model.get_method("sample");
+    auto res = sampler_method(inputs);
+
+    // hits is the first element of the tuple, remove the batch dim (first dim)
+    hits = res.toTuple()->elements()[0].toTensor().squeeze(0);
+    velocities = res.toTuple()->elements()[1].toTensor().squeeze(0);
+    offsets = res.toTuple()->elements()[2].toTensor().squeeze(0);
+    hits_probabilities = res.toTuple()->elements()[3].toTensor().squeeze(0);
+
+    // convert hits tensor to a string for debugging
+    //    std::stringstream ss;
+    //    ss << hits;
+    //    std::string hits_str = ss.str();
+    //    DBG("hits: " << hits_str);
+    //    auto sampler_method = model.get_method("sample");
+    //
+    //    auto res = sampler_method(
+    //        hits_probabilities, velocities, offsets,
+    //        per_voice_sampling_thresholds, per_voice_max_count_allowed,
+    //        per_voice_max_count_allowed, sample_mode);
 
     return {hits, velocities, offsets};
 }

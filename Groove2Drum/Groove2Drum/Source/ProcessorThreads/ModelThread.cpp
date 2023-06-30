@@ -103,8 +103,9 @@ void ModelThread::run()
             DBG("LOADING MODEL" << new_model_path);
 
             // check if vae in new_model_path
-            if (new_model_path.find("vae") != std::string::npos)
+            if (new_model_path.find("vae1") != std::string::npos)
             {
+                DBG("loading VAE Version 1 model");
                 vaeV1ModelAPI = (!vaeV1ModelAPI) ? VAE_V1ModelAPI() : vaeV1ModelAPI;
                 vaeV1ModelAPI->loadModel(new_model_path, HVO_params::time_steps, HVO_params::num_voices);
                 monotonicV1modelAPI = std::nullopt;
