@@ -20,7 +20,7 @@ private:
 
     // gui widgets
     unique_ptr<FinalUIWidgets::GeneratedDrums::GeneratedDrumsWidget> GeneratedDrumsWidget;
-    unique_ptr<FinalUIWidgets::MonotonicGrooves::MonotonicGrooveWidget>
+    unique_ptr<FinalUIWidgets::MonotonicGrooves::InputGrooveWidget>
         MonotonicGrooveWidget;
 
     //  GrooveControlSliders

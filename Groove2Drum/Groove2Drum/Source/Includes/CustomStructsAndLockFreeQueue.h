@@ -1233,6 +1233,13 @@ template <int time_steps_> struct MonotonicGroove
         time_steps = time_steps_;
     }
 
+    explicit MonotonicGroove(HVO<time_steps_, 1> hvo_)
+    {
+        registeration_times = torch::zeros({time_steps_, 1}, torch::kFloat32);
+        time_steps = time_steps_;
+        hvo = hvo_;
+    }
+
     void resetGroove()
     {
         hvo.reset();

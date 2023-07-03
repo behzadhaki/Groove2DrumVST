@@ -136,7 +136,7 @@ namespace gui_settings{
         constexpr float total_pianoRoll_ratio_of_width {timestep_ratio_of_width * HVO_params::time_steps};
         constexpr float XYPad_ratio_of_width {1.0f - (label_ratio_of_width + total_pianoRoll_ratio_of_width)};
 
-        constexpr float completePianoRollHeight {0.85f};
+        constexpr float completePianoRollHeight {0.75f};
         constexpr float completeMonotonicGrooveHeight {0.9f};
     }
 }

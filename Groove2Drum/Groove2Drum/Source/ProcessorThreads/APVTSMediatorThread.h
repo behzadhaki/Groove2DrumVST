@@ -30,6 +30,7 @@ class APVTSMediatorThread: public juce::Thread
 {
 public:
     juce::StringArray paths;
+    juce::StringArray i2g_paths;
 
     // ============================================================================================================
     // ===          Preparing Thread for Running
@@ -51,6 +52,8 @@ public:
         {
             std::cout << path << std::endl;
         }
+
+        i2g_paths = get_groove_converter_files_in_default_path();
     }
 
     // ------------------------------------------------------------------------------------------------------------
@@ -93,6 +96,7 @@ public:
         auto current_reset_buttons = std::array<int, 3> {};
         auto current_randomize_groove_buttons = std::array<int, 3>{};
         int current_model_selected = -1;
+        int current_instrument_specific_model_selected = -1;
         string current_sampling_method;
 
         while (!bExit)
@@ -209,13 +213,23 @@ public:
 
                 // check if new model selected
                 auto new_model_selected = get_model_selected();
+                auto new_instrument_specific_model_selected = get_instrument_specific_model_selected();
                 auto new_sampling_method = get_sampling_method();
-                if (current_model_selected != new_model_selected || current_sampling_method != new_sampling_method)
+
+                if (current_model_selected != new_model_selected ||
+                    current_sampling_method != new_sampling_method ||
+                    current_instrument_specific_model_selected != new_instrument_specific_model_selected)
                 {
                     current_model_selected = new_model_selected;
+                    current_instrument_specific_model_selected = new_instrument_specific_model_selected;
                     current_sampling_method = new_sampling_method;
                     auto new_model_path = (string)paths[current_model_selected].toStdString();
-                    modelThread->UpdateModelPath(new_model_path, current_sampling_method);
+                    auto new_instrument_specific_model_path =  (string)i2g_paths[current_instrument_specific_model_selected].toStdString();
+                    std::cout << "new_instrument_specific_model_path xx" << new_instrument_specific_model_path << std::endl;
+                    modelThread->UpdateModelPath(
+                        new_model_path,
+                        new_instrument_specific_model_path,
+                        current_sampling_method);
                     rebroadcast();
                 }
 
@@ -348,6 +362,12 @@ private:
     int get_model_selected()
     {
         auto model_selected = (int)*APVTS->getRawParameterValue("MODEL");
+        return model_selected;
+    }
+
+    int get_instrument_specific_model_selected()
+    {
+        auto model_selected = (int)*APVTS->getRawParameterValue("I2G");
         return model_selected;
     }
 

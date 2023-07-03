@@ -4,7 +4,7 @@
 
 #include "ModelThread.h"
 #include "../Includes/UtilityMethods.h"
-
+#include <stdio.h>
 // ============================================================================================================
 // ===          Preparing Thread for Running
 // ============================================================================================================
@@ -14,6 +14,7 @@
 ModelThread::ModelThread(): juce::Thread("Model_Thread")
 {
     GrooveThreadToModelThreadQue = nullptr;
+    ModelThread2GroovePianoRollWidgetQue = nullptr;
     ModelThreadToProcessBlockQue = nullptr;
     ModelThreadToDrumPianoRollWidgetQue = nullptr;
     APVTS2ModelThread_max_num_hits_Que = nullptr;
@@ -28,6 +29,7 @@ ModelThread::ModelThread(): juce::Thread("Model_Thread")
 void ModelThread::startThreadUsingProvidedResources(
     MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>*
         GrooveThreadToModelThreadQuesPntr,
+    MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>* ModelThread2GroovePianoRollWidgetQuePntr,
     GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>*
         ModelThreadToProcessBlockQuesPntr,
     HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size>*
@@ -37,6 +39,7 @@ void ModelThread::startThreadUsingProvidedResources(
     LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_midi_mappings_QuePntr)
 {
     GrooveThreadToModelThreadQue = GrooveThreadToModelThreadQuesPntr;
+    ModelThread2GroovePianoRollWidgetQue = ModelThread2GroovePianoRollWidgetQuePntr;
     ModelThreadToProcessBlockQue = ModelThreadToProcessBlockQuesPntr;
     ModelThreadToDrumPianoRollWidgetQue = ModelThreadToDrumPianoRollWidgetQuesPntr;
     APVTS2ModelThread_max_num_hits_Que = APVTS2ModelThread_max_num_hits_QuePntr;
@@ -97,15 +100,12 @@ void ModelThread::run()
         newGrooveAvailable = false;
         newTemperatureAvailable = false;
 
-        // 1. see if new model path is requested to load another model
+        // 1.A. see if new model path is requested to load another model
         if (current_model_path != new_model_path)
         {
-            DBG("LOADING MODEL" << new_model_path);
-
             // check if vae in new_model_path
             if (new_model_path.find("vae1") != std::string::npos)
             {
-                DBG("loading VAE Version 1 model");
                 vaeV1ModelAPI = (!vaeV1ModelAPI) ? VAE_V1ModelAPI() : vaeV1ModelAPI;
                 vaeV1ModelAPI->loadModel(new_model_path, HVO_params::time_steps, HVO_params::num_voices);
                 monotonicV1modelAPI = std::nullopt;
@@ -118,6 +118,39 @@ void ModelThread::run()
             }
             //monotonicV1modelAPI->changeModel(new_model_path);
             current_model_path = new_model_path;
+            newGrooveAvailable = true;
+            shouldResample = true;
+        }
+
+        // 1.B. see if new model path is requested to load another model
+        if (current_instrument_specific_model_path != new_instrument_specific_model_path)
+        {
+            if (new_instrument_specific_model_path.find(
+                    "Instrument_Agnostic") == std::string::npos)
+            {
+                if (I2G_GrooveConverterModelAPI == std::nullopt)
+                {
+                    I2G_GrooveConverterModelAPI = VAE_V1ModelAPI();
+                }
+
+                I2G_GrooveConverterModelAPI->loadModel(
+                    new_instrument_specific_model_path,
+                    HVO_params::time_steps, HVO_params::num_voices);
+
+                I2G_GrooveConverterModelAPI->set_max_count_per_voice_limits(
+                    vector<float> {32});
+                I2G_GrooveConverterModelAPI->set_sampling_temperature(0.5f);
+                I2G_GrooveConverterModelAPI->set_sampling_thresholds(
+                    vector<float> {0.5f});
+
+                std::cout << "Instrument Specific Model Loaded" << std::endl;
+            }
+            else
+            {
+                I2G_GrooveConverterModelAPI = std::nullopt;
+                std::cout << "Instrument Specific Model Removed" << std::endl;
+            }
+            current_instrument_specific_model_path = new_instrument_specific_model_path;
             newGrooveAvailable = true;
             shouldResample = true;
         }
@@ -190,7 +223,6 @@ void ModelThread::run()
             }
         }
 
-
         if (GrooveThreadToModelThreadQue != nullptr)
         {
             if (GrooveThreadToModelThreadQue->getNumReady() > 0
@@ -206,7 +238,6 @@ void ModelThread::run()
 
            if (newGrooveAvailable || newTemperatureAvailable)
             {
-                DBG("new groove available");
                 // 3. pass scaled version mapped to closed hats to input
                 // !!!! dont't forget to use the scaled tensor (with modified vel/offsets)
                 bool useGrooveWithModifiedVelOffset = true;
@@ -215,6 +246,40 @@ void ModelThread::run()
                 auto groove_tensor = scaled_groove.getFullVersionTensor(useGrooveWithModifiedVelOffset,
                                                                         mapGrooveToVoiceNumber,
                                                                         HVO_params::num_voices);
+
+                // 4. run model
+                // 3.B. map instrument specific groove to accompanying drum groove
+                if (I2G_GrooveConverterModelAPI.has_value())
+                {
+                    I2G_GrooveConverterModelAPI->forward_pass(groove_tensor);
+                    auto [hits, velocities, offsets] =
+                        I2G_GrooveConverterModelAPI->sample("Threshold");
+
+                    // get max velocity value of groove_tensor
+                    for (int i=0; i<HVO_params::time_steps; i++)
+                    {
+                        groove_tensor[i][0] = hits[i][0]; // hit
+                        groove_tensor[i][1] = velocities[i][0] * 2.0f; //vel
+                        groove_tensor[i][2] = offsets[i][0]; //offset
+                    }
+
+                    // Send new drum_groove to GUI
+                    auto drum_groove = MonotonicGroove<HVO_params::time_steps>(
+                        HVO<HVO_params::time_steps, 1>(
+                            hits, velocities, offsets));
+                    ModelThread2GroovePianoRollWidgetQue->push(drum_groove);
+                } else
+                {
+                    auto hits = scaled_groove.hvo.hits;
+                    auto velocities = scaled_groove.hvo.velocities_modified;
+                    auto offsets = scaled_groove.hvo.offsets_modified;
+                    auto drum_groove = MonotonicGroove<HVO_params::time_steps>(
+                        HVO<HVO_params::time_steps, 1>(
+                            scaled_groove.hvo.hits,scaled_groove.hvo.velocities_modified, offsets));
+                    ModelThread2GroovePianoRollWidgetQue->push(drum_groove);
+                }
+
+
                 if (monotonicV1modelAPI != std::nullopt) // if monotonic model is loaded
                 {
                     monotonicV1modelAPI->forward_pass(groove_tensor);
@@ -271,7 +336,6 @@ void ModelThread::run()
             // 6. send to processBlock && GUI
             if (ModelThreadToProcessBlockQue != nullptr)
             {
-                DBG("Sending to process block");
                 auto temp = generated_hvo.getModifiedGeneratedData(drum_kit_midi_map);
                 ModelThreadToProcessBlockQue->push(temp);
             }
@@ -317,10 +381,13 @@ ModelThread::~ModelThread()
 // ============================================================================================================
 // ===          Utility Methods
 // ============================================================================================================
-void ModelThread::UpdateModelPath(std::string new_model_path_, std::string sample_mode_)
+void ModelThread::UpdateModelPath(std::string new_model_path_,
+                                  std::string new_instrument_specific_model_path_,
+                                  std::string sample_mode_)
 {
     new_model_path = new_model_path_;
-
+    new_instrument_specific_model_path = new_instrument_specific_model_path_;
+    std::cout << "new_instrument_specific_model_path: " << new_instrument_specific_model_path << std::endl;
     assert (sample_mode_ == "Threshold"  || sample_mode_ == "SampleProbability");
     sample_mode = sample_mode_;
 }

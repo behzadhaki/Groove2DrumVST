@@ -872,13 +872,15 @@ namespace FinalUIWidgets {
      * Bottom one is unModified groove (interactive) && top one is Modified groove (non-interactive)
      * pianorolls.
      */
-        class MonotonicGrooveWidget:public juce::Component
+        class InputGrooveWidget :public juce::Component
         {
         public:
             unique_ptr<InteractiveMonotonicGrooveSingleRow> unModifiedGrooveGui;
             unique_ptr<InteractiveMonotonicGrooveSingleRow> ModifiedGrooveGui;
+            unique_ptr<InteractiveMonotonicGrooveSingleRow> InferenceGrooveGui;
 
-            MonotonicGrooveWidget(LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>* GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue = nullptr)
+            InputGrooveWidget(
+                LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>* GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue = nullptr)
             {
                 // Create Unmodified Piano ROll
                 unModifiedGrooveGui = make_unique<InteractiveMonotonicGrooveSingleRow>(true, "Unmodified Groove", GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue);
@@ -886,18 +888,24 @@ namespace FinalUIWidgets {
                 // Create Unmodified Piano ROll
                 ModifiedGrooveGui = make_unique<InteractiveMonotonicGrooveSingleRow>(false, "Adjusted Groove");
                 addAndMakeVisible(ModifiedGrooveGui.get());
+                // Create Unmodified Piano ROll
+                InferenceGrooveGui = make_unique<InteractiveMonotonicGrooveSingleRow>(false, "Drum Groove");
+                addAndMakeVisible(InferenceGrooveGui.get());
 
             }
 
             void resized() override {
                 auto area = getLocalBounds();
-                auto height = int((float) area.getHeight() *0.45f);
+                auto height = int((float) area.getHeight() *0.3f);
+                auto empty_height = int((float) area.getHeight() *0.08f);
+                InferenceGrooveGui->setBounds(area.removeFromTop(height));
+                area.removeFromTop(empty_height);
                 ModifiedGrooveGui->setBounds(area.removeFromTop(height));
-                unModifiedGrooveGui->setBounds(area.removeFromBottom(height));
-
+                area.removeFromTop(empty_height);
+                unModifiedGrooveGui->setBounds(area.removeFromTop(height));
             }
 
-            void updateWithNewGroove(MonotonicGroove<HVO_params::time_steps> new_groove)
+            void updateInputGroovesWithNewGroove(MonotonicGroove<HVO_params::time_steps> new_groove)
             {
                 for (int i = 0; i < HVO_params::time_steps; i++)
                 {
@@ -910,6 +918,17 @@ namespace FinalUIWidgets {
                         new_groove.hvo.hits[i].item().toInt(),
                         new_groove.hvo.velocities_modified[i].item().toFloat(),
                         new_groove.hvo.offsets_modified[i].item().toFloat());
+                }
+            }
+
+            void updateFinalDrumGrooveWithNewGroove(MonotonicGroove<HVO_params::time_steps> drum_groove)
+            {
+                for (int i = 0; i < HVO_params::time_steps; i++)
+                {
+                    InferenceGrooveGui->interactivePRollBlocks[(size_t) i]->addEvent(
+                        drum_groove.hvo.hits[i].item().toInt(),
+                        drum_groove.hvo.velocities_unmodified[i].item().toFloat(),
+                        drum_groove.hvo.offsets_unmodified[i].item().toFloat());
                 }
             }
 

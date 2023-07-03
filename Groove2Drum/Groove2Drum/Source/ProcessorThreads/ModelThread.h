@@ -45,6 +45,7 @@ inline juce::StringArray get_groove_converter_files_in_default_path()
     // find models in default folder
     juce::StringArray paths;
     paths.clear();
+    paths.add("00_Instrument_Agnostic");
     for (const auto& filenameThatWasFound : juce::File (GeneralSettings::default_groove_converter_model_folder).findChildFiles (2, true, "*.pt"))
     {
         paths.add (filenameThatWasFound.getFullPathName());
@@ -68,6 +69,7 @@ public:
     // ------------------------------------------------------------------------------------------------------------
     void startThreadUsingProvidedResources(
         MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>* GrooveThreadToModelThreadQuesPntr,
+        MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>* ModelThread2GroovePianoRollWidgetQuePntr,
         GeneratedDataQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::processor_io_queue_size>*  ModelThreadToProcessBlockQuesPntr,
         HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size>* ModelThreadToDrumPianoRollWidgetQuesPntr,
         LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_max_num_hits_QuePntr,
@@ -107,7 +109,9 @@ public:
     // ------------------------------------------------------------------------------------------------------------
     bool readyToStop; // Used to check if thread is ready to be stopped || externally stopped from a parent thread
 
-    void UpdateModelPath(std::string new_model_path_, std::string sample_mode_);
+    void UpdateModelPath(std::string new_model_path_,
+                         std::string new_instrument_specific_model_path_,
+                         std::string sample_mode_);
     // ============================================================================================================
 
 
@@ -125,6 +129,7 @@ private:
     // ---          Input Queues
     // ------------------------------------------------------------------------------------------------------------
     MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>* GrooveThreadToModelThreadQue;
+    MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>* ModelThread2GroovePianoRollWidgetQue;
     LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_max_num_hits_Que;
     LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_sampling_thresholds_and_temperature_Que;
     LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_midi_mappings_Que;
@@ -134,9 +139,12 @@ private:
     // ============================================================================================================
     std::optional<MonotonicGrooveTransformerV1> monotonicV1modelAPI{std::nullopt};
     std::optional<VAE_V1ModelAPI> vaeV1ModelAPI{std::nullopt};
+    std::optional<VAE_V1ModelAPI> I2G_GrooveConverterModelAPI{std::nullopt};
     array <int, HVO_params::num_voices> drum_kit_midi_map {};
     string new_model_path;
     string current_model_path;
+    string new_instrument_specific_model_path;
+    string current_instrument_specific_model_path;
     string sample_mode {"Threshold"}; //"Threshold" || "SampleProbability"
 };
 

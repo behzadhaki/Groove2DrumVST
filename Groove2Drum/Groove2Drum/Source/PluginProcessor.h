@@ -27,7 +27,14 @@ public:
     juce::AudioProcessorEditor* createEditor() override;
 
     // grooveThread i.o queues w/ GroovePianoRollWidget
-    unique_ptr<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>> GrooveThread2GGroovePianoRollWidgetQue;
+    unique_ptr<
+        MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>>
+        GrooveThread2GGroovePianoRollWidgetQue;
+    // sends the groove used for inference, either prior to or after
+    // inference if an I2G model is selected;
+    unique_ptr<
+        MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>>
+    ModelThread2GroovePianoRollWidgetQue;
 
     // modelThread i.o queues w/ DrumPianoRoll Widget
     unique_ptr<HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size>> ModelThreadToDrumPianoRollWidgetQue;

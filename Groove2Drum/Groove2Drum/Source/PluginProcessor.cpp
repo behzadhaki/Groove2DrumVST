@@ -9,6 +9,7 @@ using namespace std;
 MidiFXProcessor::MidiFXProcessor():
     apvts(*this, nullptr, "PARAMETERS", createParameterLayout())
 {
+    DBG("MidiFXProcessor Constructor");
 
     std::vector<torch::jit::IValue> inputs{};
     inputs.emplace_back(torch::ones({100, 1}));
@@ -24,8 +25,8 @@ MidiFXProcessor::MidiFXProcessor():
     //////////////////////////////////////////////////////////////////
     // GuiIOFifos
     GrooveThread2GGroovePianoRollWidgetQue = make_unique<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>>();
-    ModelThreadToDrumPianoRollWidgetQue = make_unique<HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size>>();
-
+    ModelThread2GroovePianoRollWidgetQue = make_unique<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::gui_io_queue_size>>();
+    DBG("HERE");
     // Intra Processor Threads
     ProcessBlockToGrooveThreadQue = make_shared<LockFreeQueue<BasicNote, GeneralSettings::processor_io_queue_size>>();
     GrooveThreadToModelThreadQue = make_shared<MonotonicGrooveQueue<HVO_params::time_steps, GeneralSettings::processor_io_queue_size>>();
@@ -36,7 +37,7 @@ MidiFXProcessor::MidiFXProcessor():
     APVTS2ModelThread_sampling_thresholds_and_temperature_Que = make_shared<LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>>();
     GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue = make_shared<LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>>();
     APVTS2ModelThread_midi_mappings_Que = make_shared<LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>>();
-
+    ModelThreadToDrumPianoRollWidgetQue = make_unique<HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size>>();
 
     //////////////////////////////////////////////////////////////////
     //// Create shared pointers for Threads (shared with APVTSMediator)
@@ -51,6 +52,7 @@ MidiFXProcessor::MidiFXProcessor():
 
     // give access to resources && run threads
     modelThread->startThreadUsingProvidedResources(GrooveThreadToModelThreadQue.get(),
+                                                   ModelThread2GroovePianoRollWidgetQue.get(),
                                                   ModelThreadToProcessBlockQue.get(),
                                                   ModelThreadToDrumPianoRollWidgetQue.get(),
                                                   APVTS2ModelThread_max_num_hits_Que.get(),
@@ -210,11 +212,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout MidiFXProcessor::createParam
     layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("MODEL", version_hint), "MODEL", 0, modelfiles.size()-1, 0));
 
     // groove_converter (i2g - instrument2drum) model selector combobox
-    juce::StringArray i2g_modelfiles;
-    i2g_modelfiles.add(juce::String("None"));
-    i2g_modelfiles.addArray(get_groove_converter_files_in_default_path());
+    auto i2g_modelfiles= get_groove_converter_files_in_default_path();
     DBG("Found " + juce::String(modelfiles.size()) + " models");
-    layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("I2G", version_hint), "MODEL", 0, modelfiles.size()-1, 0));
+    layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("I2G", version_hint), "I2G", 0, i2g_modelfiles.size()-1, 0));
 
     // buttons
     layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("RESET_GROOVE", version_hint), "RESET_GROOVE", 0, 1, 0));
