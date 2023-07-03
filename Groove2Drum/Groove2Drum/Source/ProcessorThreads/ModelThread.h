@@ -25,13 +25,27 @@ inline juce::StringArray get_monotonic_v1_pt_files_in_default_path()
     return paths;
 }
 
-inline juce::StringArray get_vae_directories_in_default_path()
+inline juce::StringArray get_vae_files_in_default_path()
 {
 
     // find models in default folder
     juce::StringArray paths;
     paths.clear();
     for (const auto& filenameThatWasFound : juce::File (GeneralSettings::default_vae_model_folder).findChildFiles (2, true, "*.pt"))
+    {
+        paths.add (filenameThatWasFound.getFullPathName());
+    }
+    paths.sort(false);
+    return paths;
+}
+
+inline juce::StringArray get_groove_converter_files_in_default_path()
+{
+
+    // find models in default folder
+    juce::StringArray paths;
+    paths.clear();
+    for (const auto& filenameThatWasFound : juce::File (GeneralSettings::default_groove_converter_model_folder).findChildFiles (2, true, "*.pt"))
     {
         paths.add (filenameThatWasFound.getFullPathName());
     }

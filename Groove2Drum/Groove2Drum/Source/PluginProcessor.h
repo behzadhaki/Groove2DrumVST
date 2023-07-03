@@ -52,6 +52,7 @@ public:
 
     // model paths
     juce::StringArray model_paths{};
+    juce::StringArray instrument_model_paths{};
 
 private:
     // =========  Queues for communicating Between the main threads in proce    ssor  =============================================

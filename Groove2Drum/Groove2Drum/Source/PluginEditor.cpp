@@ -52,10 +52,13 @@ MidiFXProcessorEditor::MidiFXProcessorEditor(MidiFXProcessor& MidiFXProcessorPoi
     addAndMakeVisible (ControlsWidget.get());
 
     // model selector
-    ModelSelectorWidget = make_unique<FinalUIWidgets::ModelSelectorWidget> (&MidiFXProcessorPointer_->apvts,
-                                                                           "MODEL",
-                                                                           MidiFXProcessorPointer_->model_paths,
-                                                                           "SAMPLINGMETHOD");
+    ModelSelectorWidget = make_unique<FinalUIWidgets::ModelSelectorWidget> (
+        &MidiFXProcessorPointer_->apvts,
+        "MODEL",
+        MidiFXProcessorPointer_->model_paths,
+        "I2G",
+        MidiFXProcessorPointer_->instrument_model_paths,
+        "SAMPLINGMETHOD");
     addAndMakeVisible (ModelSelectorWidget.get());
 
 
@@ -98,8 +101,8 @@ void MidiFXProcessorEditor::resized()
     rightArea.removeFromLeft(rightArea.proportionOfWidth(0.1));
     rightArea.removeFromRight(rightArea.proportionOfWidth(0.1));
     ButtonsWidget->setBounds(rightArea.removeFromTop(rightArea.proportionOfHeight(0.3)));
-    ModelSelectorWidget->setBounds(rightArea.removeFromTop(rightArea.proportionOfHeight(0.1)));
-    ControlsWidget->setBounds(rightArea.removeFromBottom(rightArea.proportionOfHeight(0.6)));
+    ModelSelectorWidget->setBounds(rightArea.removeFromTop(rightArea.proportionOfHeight(0.2)));
+    ControlsWidget->setBounds(rightArea.removeFromBottom(rightArea.proportionOfHeight(0.5)));
 
 }
 

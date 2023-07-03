@@ -1079,18 +1079,32 @@ namespace FinalUIWidgets {
         MidiFXProcessor* MidiFXProcessorPntr;
 
         juce::StringArray model_paths;
+        juce::StringArray instrument_paths;
+
         // Model selector
         int num_choices {0};
         juce::Label textLabel { {}, "Select Model:" };
         juce::ComboBox ComboBox;
         unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> ComboBoxAPVTSAttacher;
 
+        // instrument to drum selector
+        int num_choices1 {0};
+        juce::Label textLabel1 { {}, "Instrument:" };
+        juce::ComboBox ComboBox1;
+        unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> ComboBoxAPVTSAttacher1;
+
+        // sampling method selector
         juce::Label textLabel2 { {}, "Sampling Method:" };
         juce::ComboBox ComboBox2;
         unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> ComboBoxAPVTSAttacher2;
 
-        ModelSelectorWidget(juce::AudioProcessorValueTreeState* apvtsPntr, string model_ParameterID_, juce::StringArray model_paths_,
-                            string sampling_method_ParameterID_)
+        ModelSelectorWidget(
+            juce::AudioProcessorValueTreeState* apvtsPntr,
+            string model_ParameterID_,
+            juce::StringArray model_paths_,
+            string instrument_ParameterID_,
+            juce::StringArray instrument_paths_,
+            string sampling_method_ParameterID_)
         {
             addAndMakeVisible(ComboBox);
 
@@ -1103,6 +1117,20 @@ namespace FinalUIWidgets {
             }
 
             ComboBoxAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (*apvtsPntr, model_ParameterID_, ComboBox);
+
+
+            addAndMakeVisible(ComboBox1);
+            instrument_paths = instrument_paths_;
+
+            for (auto instrument_path: instrument_paths)
+            {
+                num_choices1++;
+                ComboBox1.addItem((string)instrument_path.toStdString(), num_choices1);
+            }
+
+            ComboBoxAPVTSAttacher1 = make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (*apvtsPntr, instrument_ParameterID_, ComboBox1);
+
+
 
             // combo box for sampling method
             addAndMakeVisible(ComboBox2);
@@ -1118,10 +1146,12 @@ namespace FinalUIWidgets {
             auto area = getLocalBounds();
             area.removeFromLeft(proportionOfWidth(0.15f));
             area.removeFromRight(proportionOfWidth(0.15f));
-            textLabel.setBounds(area.removeFromTop(proportionOfHeight(0.25f)));
-            ComboBox.setBounds(area.removeFromTop(proportionOfHeight(0.25f)));
-            textLabel2.setBounds(area.removeFromTop(proportionOfHeight(0.25f)));
-            ComboBox2.setBounds(area.removeFromTop(proportionOfHeight(0.25f)));
+            textLabel.setBounds(area.removeFromTop(proportionOfHeight(0.15f)));
+            ComboBox.setBounds(area.removeFromTop(proportionOfHeight(0.15f)));
+            textLabel1.setBounds(area.removeFromTop(proportionOfHeight(0.15f)));
+            ComboBox1.setBounds(area.removeFromTop(proportionOfHeight(0.15f)));
+            textLabel2.setBounds(area.removeFromTop(proportionOfHeight(0.15f)));
+            ComboBox2.setBounds(area.removeFromTop(proportionOfHeight(0.15f)));
 
         }
 

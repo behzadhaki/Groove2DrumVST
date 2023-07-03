@@ -42,7 +42,7 @@ public:
         grooveThread = grooveThreadPntr;
         modelThread = modelThreadPntr;
         auto monotonic_paths = get_monotonic_v1_pt_files_in_default_path();
-        auto vae_folders = get_vae_directories_in_default_path();
+        auto vae_folders = get_vae_files_in_default_path();
         // append the paths to the paths array
         paths.addArray(monotonic_paths);
         paths.addArray(vae_folders);

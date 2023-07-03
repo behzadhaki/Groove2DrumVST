@@ -53,6 +53,8 @@
             (char*)"C:\\Groove2Drum\\trained_models"};
         char constexpr* default_vae_model_folder {
             (char*)"C:\\Groove2Drum\\trained_vae_models"};
+        char constexpr* default_groove_converter_model_folder {
+            (char*)"C:\\Groove2Drum\\groove_converters"};
     }
 #else
     namespace GeneralSettings
@@ -66,6 +68,8 @@
     // FIXME add to readme.me for setup ==> model should be placed in root (/Library/Groove2Drum/trained_models) folder
     char constexpr* default_model_folder {(char*)"/Library/Groove2Drum/trained_models"};
     char constexpr* default_vae_model_folder {(char*)"/Library/Groove2Drum/trained_vae_models"};
+    char constexpr* default_vae_model_folder {
+        (char*)"/Library/Groove2Drum/groove_converters"};
 
     }
 #endif
