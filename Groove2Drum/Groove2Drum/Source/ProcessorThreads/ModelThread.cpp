@@ -135,13 +135,11 @@ void ModelThread::run()
 
                 I2G_GrooveConverterModelAPI->loadModel(
                     new_instrument_specific_model_path,
-                    HVO_params::time_steps, HVO_params::num_voices);
+                    HVO_params::time_steps, 1);
 
-                I2G_GrooveConverterModelAPI->set_max_count_per_voice_limits(
-                    vector<float> {32});
-                I2G_GrooveConverterModelAPI->set_sampling_temperature(0.5f);
-                I2G_GrooveConverterModelAPI->set_sampling_thresholds(
-                    vector<float> {0.5f});
+                I2G_GrooveConverterModelAPI->set_max_count_per_voice_limits({32});
+                I2G_GrooveConverterModelAPI->set_sampling_temperature(1.0f);
+                I2G_GrooveConverterModelAPI->set_sampling_thresholds({0.75f});
 
                 std::cout << "Instrument Specific Model Loaded" << std::endl;
             }
@@ -247,10 +245,13 @@ void ModelThread::run()
                                                                         mapGrooveToVoiceNumber,
                                                                         HVO_params::num_voices);
 
+                std::cout << "groove_tensor, size: " << groove_tensor.sizes() << " , " << groove_tensor << std::endl;
+
                 // 4. run model
                 // 3.B. map instrument specific groove to accompanying drum groove
                 if (I2G_GrooveConverterModelAPI.has_value())
                 {
+
                     I2G_GrooveConverterModelAPI->forward_pass(groove_tensor);
                     auto [hits, velocities, offsets] =
                         I2G_GrooveConverterModelAPI->sample("Threshold");
