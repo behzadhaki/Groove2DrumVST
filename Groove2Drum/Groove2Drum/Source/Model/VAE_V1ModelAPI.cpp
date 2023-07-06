@@ -148,23 +148,42 @@ bool VAE_V1ModelAPI::set_sampling_temperature(float temperature)
 // Passes input through the model && updates logits, vels && offsets
 void VAE_V1ModelAPI::forward_pass_v1(torch::Tensor monotonicGrooveInput)
 {
-    assert(monotonicGrooveInput.sizes()[0]==time_steps &&
-           "shape [time_steps, num_voices*3]");
-    assert(monotonicGrooveInput.sizes()[1]==(num_voices*3) &&
-           "shape [time_steps, num_voices*3]");
+    std::vector<torch::jit::IValue> inputs;
 
-    // flatten groove into single voice
-    auto row_indices = torch::arange(0, time_steps);
-    auto flat_groove = torch::zeros({time_steps, 3});
-    flat_groove.index_put_({row_indices, torch::indexing::Slice(0, 1)}, monotonicGrooveInput.index({row_indices, torch::indexing::Slice(2, 3)}));
-    flat_groove.index_put_({row_indices, torch::indexing::Slice(1, 2)}, monotonicGrooveInput.index({row_indices, torch::indexing::Slice(11, 12)}));
-    flat_groove.index_put_({row_indices, torch::indexing::Slice(2, 3)}, monotonicGrooveInput.index({row_indices, torch::indexing::Slice(20, 21)}));
+//    assert(monotonicGrooveInput.sizes()[0]==time_steps &&
+//           "shape [time_steps, num_voices*3]");
 
-    // wrap as IValue vector && pass through InputLayerEncoder
-    std::vector<torch::jit::IValue> inputs{flat_groove};
+    std::cout << "shape [time_steps, num_voices*3]: " << monotonicGrooveInput.sizes() << std::endl;
+    if (monotonicGrooveInput.sizes()[1] != 3)
+    {
+//        assert(monotonicGrooveInput.sizes()[1] == (num_voices * 3)
+//               && "shape [time_steps, num_voices*3]");
+
+        // flatten groove into single voice
+        auto row_indices = torch::arange(0, time_steps);
+        auto flat_groove = torch::zeros({time_steps, 3});
+        flat_groove.index_put_(
+            {row_indices, torch::indexing::Slice(0, 1)},
+            monotonicGrooveInput.index({row_indices, torch::indexing::Slice(2, 3)}));
+        flat_groove.index_put_(
+            {row_indices, torch::indexing::Slice(1, 2)},
+            monotonicGrooveInput.index({row_indices, torch::indexing::Slice(11, 12)}));
+        flat_groove.index_put_(
+            {row_indices, torch::indexing::Slice(2, 3)},
+            monotonicGrooveInput.index({row_indices, torch::indexing::Slice(20, 21)}));
+        inputs.emplace_back(flat_groove);
+    }
+    else
+    {
+        inputs.emplace_back(monotonicGrooveInput);
+    }
+
     auto encoder = model.get_method("encode");
     auto result = encoder(inputs);
-    latent_z = result.toTuple()->elements()[2].toTensor();
+    result.toTuple()->elements();
+    result.toTuple()->elements()[2];
+    auto x = result.toTuple()->elements()[2].toTensor();
+    latent_z = x;
 }
 
 // Passes input through the model && updates logits, vels && offsets
