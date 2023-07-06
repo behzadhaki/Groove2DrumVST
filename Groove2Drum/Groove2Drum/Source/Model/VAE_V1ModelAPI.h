@@ -37,13 +37,20 @@ public:
     bool set_sampling_temperature(float temperature);
 
     // Step 1. Passes input through the model && updates logits, vels && offsets
-    void forward_pass(torch::Tensor monotonicGrooveInput);
+    void forward_pass_v1(torch::Tensor monotonicGrooveInput);
+    void forward_pass_v2_v3(torch::Tensor monotonicGrooveInput, torch::Tensor density);
+
     // Step 2. Sample hvo after the forward pass
     std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> sample(
         std::string sample_mode = "SampleProbability");
 
     // store path locally
     std::string model_path;
+
+    // utils
+    bool is_version1_vae();
+    bool is_version2_vae();
+    bool is_version3_vae();
 
 private:
 
@@ -59,7 +66,7 @@ private:
     torch::Tensor per_voice_sampling_thresholds;            // per voice thresholds for sampling
     torch::Tensor per_voice_max_count_allowed;              // per voice Maximum limit of hits
     float sampling_temperature {1.0f};
-
+    int vae_type {-1};
     torch::jit::script::Module LoadModel(std::string model_path);
 };
 

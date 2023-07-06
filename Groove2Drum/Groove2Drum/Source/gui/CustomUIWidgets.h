@@ -967,6 +967,12 @@ namespace FinalUIWidgets {
         juce::Label  temperatureLabel;
         unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> temperatureSliderAPVTSAttacher;
 
+        // sliders for Randomness
+        juce::Slider densitySlider;
+        juce::Label densityLabel;
+        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>
+            densitySliderAPVTSAttacher;
+
         ControlsWidget(juce::AudioProcessorValueTreeState* apvtsPntr)
         {
             // add toggles
@@ -1002,6 +1008,12 @@ namespace FinalUIWidgets {
             addAndMakeVisible (temperatureLabel);
             temperatureLabel.setText ("Randomness", juce::dontSendNotification);
             temperatureSliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "TEMPERATURE", temperatureSlider);
+
+            // add randomness Slider
+            addAndMakeVisible (densitySlider);
+            addAndMakeVisible (densityLabel);
+            densityLabel.setText ("Density", juce::dontSendNotification);
+            densitySliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "DENSITY", densitySlider);
         }
 
         void resized() override
@@ -1023,6 +1035,9 @@ namespace FinalUIWidgets {
                 auto temperatureArea = area.removeFromBottom(int(height));
                 temperatureLabel.setBounds(temperatureArea.removeFromRight(temperatureArea.proportionOfWidth(slider_labels_width_ratio)));
                 temperatureSlider.setBounds(temperatureArea);
+                auto densityArea = area.removeFromBottom(int(height));
+                densityLabel.setBounds(densityArea.removeFromRight(densityArea.proportionOfWidth(slider_labels_width_ratio)));
+                densitySlider.setBounds(densityArea);
 
                 area.removeFromLeft(proportionOfWidth(0.1f));
                 area.removeFromRight(proportionOfWidth(0.1f));

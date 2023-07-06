@@ -10,6 +10,11 @@ find_package(Torch)
 if(NOT Torch_FOUND)
     set(TORCH_VERSION 2.0.0)
     set(LIBTORCH_INSTALL_DIR "C:/libtorch-${TORCH_VERSION}")
+    # if directory exists, delete it
+    if(EXISTS ${LIBTORCH_INSTALL_DIR})
+        message(STATUS "Deleting existing libtorch directory...")
+        file(REMOVE_RECURSE ${LIBTORCH_INSTALL_DIR})
+    endif()
 
     # Check if we're running on Windows
     if(MSVC)

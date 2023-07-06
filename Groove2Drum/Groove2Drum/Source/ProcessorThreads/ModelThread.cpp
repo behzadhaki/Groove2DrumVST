@@ -35,7 +35,8 @@ void ModelThread::startThreadUsingProvidedResources(
     HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size>*
         ModelThreadToDrumPianoRollWidgetQuesPntr,
     LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_max_num_hits_QuePntr,
-    LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_sampling_thresholds_and_temperature_QuePntr,
+    LockFreeQueue<std::array<float, HVO_params::num_voices+2>, GeneralSettings::gui_io_queue_size>*
+        APVTS2ModelThread_sampling_thresholds_and_temperature_and_density_QuePntr,
     LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>* APVTS2ModelThread_midi_mappings_QuePntr)
 {
     GrooveThreadToModelThreadQue = GrooveThreadToModelThreadQuesPntr;
@@ -43,7 +44,8 @@ void ModelThread::startThreadUsingProvidedResources(
     ModelThreadToProcessBlockQue = ModelThreadToProcessBlockQuesPntr;
     ModelThreadToDrumPianoRollWidgetQue = ModelThreadToDrumPianoRollWidgetQuesPntr;
     APVTS2ModelThread_max_num_hits_Que = APVTS2ModelThread_max_num_hits_QuePntr;
-    APVTS2ModelThread_sampling_thresholds_and_temperature_Que = APVTS2ModelThread_sampling_thresholds_and_temperature_QuePntr;
+    APVTS2ModelThread_sampling_thresholds_and_temperature_Que =
+        APVTS2ModelThread_sampling_thresholds_and_temperature_and_density_QuePntr;
     APVTS2ModelThread_midi_mappings_Que = APVTS2ModelThread_midi_mappings_QuePntr;
 
    /* // load model
@@ -92,6 +94,7 @@ void ModelThread::run()
     bool newGrooveAvailable;
     bool newTemperatureAvailable;
     string currentSampleMethod = sample_mode;
+    float density = 0.0f;
 
     while (!bExit)
     {
@@ -104,7 +107,7 @@ void ModelThread::run()
         if (current_model_path != new_model_path)
         {
             // check if vae in new_model_path
-            if (new_model_path.find("vae1") != std::string::npos)
+            if (new_model_path.find(".vae") != std::string::npos)
             {
                 vaeV1ModelAPI = (!vaeV1ModelAPI) ? VAE_V1ModelAPI() : vaeV1ModelAPI;
                 vaeV1ModelAPI->loadModel(new_model_path, HVO_params::time_steps, HVO_params::num_voices);
@@ -135,7 +138,7 @@ void ModelThread::run()
 
                 I2G_GrooveConverterModelAPI->loadModel(
                     new_instrument_specific_model_path,
-                    HVO_params::time_steps, HVO_params::num_voices);
+                    HVO_params::time_steps, 1);
 
                 I2G_GrooveConverterModelAPI->set_max_count_per_voice_limits(
                     vector<float> {32});
@@ -191,7 +194,13 @@ void ModelThread::run()
             if (APVTS2ModelThread_sampling_thresholds_and_temperature_Que->getNumReady()>0)
             {
                 auto new_thresh_with_temperature_array = APVTS2ModelThread_sampling_thresholds_and_temperature_Que->getLatestOnly();
-                vector<float> new_thresh_vect(begin(new_thresh_with_temperature_array), end(new_thresh_with_temperature_array)-1);
+                vector<float> new_thresh_vect(begin(new_thresh_with_temperature_array), end(new_thresh_with_temperature_array)-2);
+                if (density != new_thresh_with_temperature_array[HVO_params::num_voices+1])
+                {
+                    density = new_thresh_with_temperature_array[HVO_params::num_voices+1];
+                    newGrooveAvailable = true;
+                }
+
                 if (monotonicV1modelAPI != std::nullopt) // if monotonic model is loaded
                 {
                     monotonicV1modelAPI->set_sampling_thresholds(new_thresh_vect);
@@ -210,6 +219,7 @@ void ModelThread::run()
                 }
 
                 shouldResample = true;
+
             }
         }
 
@@ -251,7 +261,7 @@ void ModelThread::run()
                 // 3.B. map instrument specific groove to accompanying drum groove
                 if (I2G_GrooveConverterModelAPI.has_value())
                 {
-                    I2G_GrooveConverterModelAPI->forward_pass(groove_tensor);
+                    I2G_GrooveConverterModelAPI->forward_pass_v1(groove_tensor);
                     auto [hits, velocities, offsets] =
                         I2G_GrooveConverterModelAPI->sample("Threshold");
 
@@ -286,9 +296,28 @@ void ModelThread::run()
                     shouldResample = true;
                 } else if (vaeV1ModelAPI != std::nullopt) // if vae model is loaded
                 {
-                    DBG("forward pass");
-                    vaeV1ModelAPI->forward_pass(groove_tensor);
-                    shouldResample = true;
+                    if (vaeV1ModelAPI->is_version1_vae())
+                    {
+                        DBG("forward pass");
+                        vaeV1ModelAPI->forward_pass_v1(groove_tensor);
+                        shouldResample = true;
+                    } else if (vaeV1ModelAPI->is_version2_vae() ||
+                             vaeV1ModelAPI->is_version3_vae())
+                    {
+                        std::cout << "Here: " << std::endl;
+
+                        auto params = torch::ones({1}, torch::kF32);
+                        std::cout << "params: " << params << std::endl;
+                        params = params * density;
+                        std::cout << "params: " << params << std::endl;
+                        vaeV1ModelAPI->forward_pass_v2_v3(
+                            groove_tensor, params);
+                        std::cout << "here" << std::endl;
+                        shouldResample = true;
+                    } else
+                    {
+                        DBG("No model is loaded");
+                    }
 
                 } else
                 {

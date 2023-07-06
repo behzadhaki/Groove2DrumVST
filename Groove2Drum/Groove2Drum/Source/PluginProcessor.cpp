@@ -34,7 +34,7 @@ MidiFXProcessor::MidiFXProcessor():
     APVTS2GrooveThread_groove_vel_offset_ranges_Que = make_shared<LockFreeQueue<std::array<float, 6>, GeneralSettings::gui_io_queue_size>>();
     APVTS2GrooveThread_groove_record_overdubToggles_Que = make_shared<LockFreeQueue<std::array<int, 2>, GeneralSettings::gui_io_queue_size>>();
     APVTS2ModelThread_max_num_hits_Que = make_shared<LockFreeQueue<std::array<float, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>>();
-    APVTS2ModelThread_sampling_thresholds_and_temperature_Que = make_shared<LockFreeQueue<std::array<float, HVO_params::num_voices+1>, GeneralSettings::gui_io_queue_size>>();
+    APVTS2ModelThread_sampling_thresholds_and_temperature_and_density_Que = make_shared<LockFreeQueue<std::array<float, HVO_params::num_voices+2>, GeneralSettings::gui_io_queue_size>>();
     GroovePianoRollWidget2GrooveThread_manually_drawn_noteQue = make_shared<LockFreeQueue<BasicNote, GeneralSettings::gui_io_queue_size>>();
     APVTS2ModelThread_midi_mappings_Que = make_shared<LockFreeQueue<std::array<int, HVO_params::num_voices>, GeneralSettings::gui_io_queue_size>>();
     ModelThreadToDrumPianoRollWidgetQue = make_unique<HVOLightQueue<HVO_params::time_steps, HVO_params::num_voices, GeneralSettings::gui_io_queue_size>>();
@@ -56,7 +56,7 @@ MidiFXProcessor::MidiFXProcessor():
                                                   ModelThreadToProcessBlockQue.get(),
                                                   ModelThreadToDrumPianoRollWidgetQue.get(),
                                                   APVTS2ModelThread_max_num_hits_Que.get(),
-                                                  APVTS2ModelThread_sampling_thresholds_and_temperature_Que.get(),
+                                                   APVTS2ModelThread_sampling_thresholds_and_temperature_and_density_Que.get(),
                                                   APVTS2ModelThread_midi_mappings_Que.get());
 
     grooveThread->startThreadUsingProvidedResources(ProcessBlockToGrooveThreadQue.get(),
@@ -70,7 +70,7 @@ MidiFXProcessor::MidiFXProcessor():
                                                           APVTS2GrooveThread_groove_vel_offset_ranges_Que.get(),
                                                           APVTS2GrooveThread_groove_record_overdubToggles_Que.get(),
                                                           APVTS2ModelThread_max_num_hits_Que.get(),
-                                                          APVTS2ModelThread_sampling_thresholds_and_temperature_Que.get(),
+        APVTS2ModelThread_sampling_thresholds_and_temperature_and_density_Que.get(),
                                                           APVTS2ModelThread_midi_mappings_Que.get());
 }
 
@@ -235,6 +235,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout MidiFXProcessor::createParam
     layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("OFFSET_INVERT", version_hint), "OFFSET_INVERT", 0, 1, 0));
 
     layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("TEMPERATURE", version_hint), "TEMPERATURE", 0.00001f, 10.0f, 1.0f));
+    layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("DENSITY", version_hint), "DENSITY", 0.00001f, 1.0f, 0.5f));
 
     // toggle for bernoulli sampling
     layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("SAMPLINGMETHOD", version_hint), "SAMPLINGMETHOD", 0, 1, 0));

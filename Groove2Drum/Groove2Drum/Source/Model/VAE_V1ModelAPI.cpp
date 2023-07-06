@@ -79,6 +79,21 @@ bool VAE_V1ModelAPI::loadModel(std::string model_path_, int time_steps_, int num
     }
     else
     {
+        // check if model path has vae1 in it
+        if (model_path.find("vae1") != string::npos)
+        {
+            vae_type = 1;
+        } else if (model_path.find("vae_density1") != string::npos)
+        {
+            vae_type = 2;
+        } else if (model_path.find("vae_density2") != string::npos)
+        {
+            vae_type = 3;
+        } else {
+            vae_type = -1;
+        }
+
+
         myFile.close();
 
         model = LoadModel(model_path);
@@ -92,25 +107,6 @@ bool VAE_V1ModelAPI::loadModel(std::string model_path_, int time_steps_, int num
         return true;
     }
 
-}
-
-bool VAE_V1ModelAPI::changeModel(std::string model_path_)
-{
-    ifstream myFile;
-    myFile.open(model_path_.append("/InputLayerEncoder.pt"));
-    // Check for errors
-
-    // check if path works fine
-    if (myFile.fail())
-    {
-        return false;
-    }
-    else
-    {
-        myFile.close();
-        model = LoadModel(model_path);
-        return true;
-    }
 }
 
 // getters
@@ -150,7 +146,7 @@ bool VAE_V1ModelAPI::set_sampling_temperature(float temperature)
 }
 
 // Passes input through the model && updates logits, vels && offsets
-void VAE_V1ModelAPI::forward_pass(torch::Tensor monotonicGrooveInput)
+void VAE_V1ModelAPI::forward_pass_v1(torch::Tensor monotonicGrooveInput)
 {
     assert(monotonicGrooveInput.sizes()[0]==time_steps &&
            "shape [time_steps, num_voices*3]");
@@ -166,6 +162,19 @@ void VAE_V1ModelAPI::forward_pass(torch::Tensor monotonicGrooveInput)
 
     // wrap as IValue vector && pass through InputLayerEncoder
     std::vector<torch::jit::IValue> inputs{flat_groove};
+    auto encoder = model.get_method("encode");
+    auto result = encoder(inputs);
+    latent_z = result.toTuple()->elements()[2].toTensor();
+}
+
+// Passes input through the model && updates logits, vels && offsets
+void VAE_V1ModelAPI::forward_pass_v2_v3(torch::Tensor monotonicGrooveInput,
+                                        torch::Tensor density)
+{
+
+    // wrap as IValue vector && pass through InputLayerEncoder
+    std::vector<torch::jit::IValue> inputs{monotonicGrooveInput.unsqueeze_(0)};
+    inputs.emplace_back(density);
     auto encoder = model.get_method("encode");
     auto result = encoder(inputs);
     latent_z = result.toTuple()->elements()[2].toTensor();
@@ -218,6 +227,35 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> VAE_V1ModelAPI::
     return {hits, velocities, offsets};
 }
 
+bool VAE_V1ModelAPI::is_version1_vae()
+{
+    if (vae_type == 1)
+    {
+        return true;
+    } else
+    {
+        return false;
+    }
+}
 
+bool VAE_V1ModelAPI::is_version2_vae()
+{
+    if (vae_type == 2)
+    {
+        return true;
+    } else
+    {
+        return false;
+    }
+}
 
-
+bool VAE_V1ModelAPI::is_version3_vae()
+{
+    if (vae_type == 3)
+    {
+        return true;
+    } else
+    {
+        return false;
+    }
+}
