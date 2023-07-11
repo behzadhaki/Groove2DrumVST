@@ -135,9 +135,15 @@ void MidiFXProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         auto new_grid = floor(start_/HVO_params::_16_note_ppq);
         if (new_grid != current_grid)
         {
-            if (new_grid == 0 && thread_settings::GrooveThread::forceGenerateGrooveEvery2Bars == true)      // Ensures that the generations change every 2bars TODO: add a toggle to enable/disable this
+            // Ensures that the generations change every 2bars
+
+
+            if (new_grid == 0)
             {
-                grooveThread->RePushGroove();
+                auto param = apvts.getParameter("AUTO_REGENERATE");
+                if (param->getValue() > 0){
+                    grooveThread->RePushGroove();
+                }
             }
 
             current_grid = new_grid;
@@ -223,7 +229,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout MidiFXProcessor::createParam
     layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("RANDOMIZE_VEL", version_hint), "RANDOMIZE_VEL", 0, 1, 0));
     layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("RANDOMIZE_OFFSET", version_hint), "RANDOMIZE_OFFSET", 0, 1, 0));
     layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("RANDOMIZE_ALL", version_hint), "RANDOMIZE_ALL", 0, 1, 0));
-
+    layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("RANDOM_GENERATION", version_hint), "RANDOM_GENERATION", 0, 1, 0));
     // xy velocity pad
     layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("VEL_DYNAMIC_RANGE", version_hint), "VEL_DYNAMIC_RANGE", 0.0f, 200.0f, 100.0f));
     layout.add (std::make_unique<juce::AudioParameterFloat> (juce::ParameterID("VEL_BIAS", version_hint), "VEL_BIAS", -0.60f, 1.0f, 0));
@@ -239,6 +245,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout MidiFXProcessor::createParam
 
     // toggle for bernoulli sampling
     layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("SAMPLINGMETHOD", version_hint), "SAMPLINGMETHOD", 0, 1, 0));
+
+    // slider for automated regeneration
+    layout.add (std::make_unique<juce::AudioParameterInt> (juce::ParameterID("AUTO_REGENERATE", version_hint), "AUTO_REGENERATE", 0, 1, 0));
 
     // these parameters are used with the xySliders for each individual voice
     // Because xySliders are neither slider nor button, we

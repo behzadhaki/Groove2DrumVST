@@ -945,6 +945,10 @@ namespace FinalUIWidgets {
         juce::ToggleButton recordToggle {"Record"};
         unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> recordToggleAttachment;
 
+        // checkbox for enabling auto generation
+        juce::ToggleButton autoGenerateToggle {"Auto ReGen"};
+        unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> autoGenerateToggleAttachment;
+
         // xy controls for manipulation of velocity profile of the groove
         unique_ptr<SingleStepPianoRollBlock::XYVelocityPad> velocityPad;
         juce::ToggleButton velocityInvertToggle{"Invert Vel Profile"};
@@ -954,6 +958,7 @@ namespace FinalUIWidgets {
         unique_ptr<SingleStepPianoRollBlock::XYVelocityPad> offsetPad;
         juce::ToggleButton offsetInvertToggle{"Invert Offset Profile"};
         unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> offsetInvertToggleAttachment;
+
 
         juce::Slider OffsetBiasSlider;
         juce::Label  OffsetBiasLabel;
@@ -973,6 +978,12 @@ namespace FinalUIWidgets {
         unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>
             densitySliderAPVTSAttacher;
 
+        // slider for automatic resample
+        juce::Slider resampleSlider;
+        juce::Label resampleLabel;
+        unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>
+            resampleSliderAPVTSAttacher;
+
         ControlsWidget(juce::AudioProcessorValueTreeState* apvtsPntr)
         {
             // add toggles
@@ -980,6 +991,8 @@ namespace FinalUIWidgets {
             addAndMakeVisible (overdubToggle);
             recordToggleAttachment = make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (*apvtsPntr, "RECORD", recordToggle);
             addAndMakeVisible (recordToggle);
+            autoGenerateToggleAttachment = make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (*apvtsPntr, "AUTO_REGENERATE", autoGenerateToggle);
+            addAndMakeVisible (autoGenerateToggle);
 
             // add sliders for vel manipulation of groove
             velocityPad = make_unique<SingleStepPianoRollBlock::XYVelocityPad>(apvtsPntr, "VEL_BIAS", "VEL_DYNAMIC_RANGE");
@@ -1014,6 +1027,7 @@ namespace FinalUIWidgets {
             addAndMakeVisible (densityLabel);
             densityLabel.setText ("Density", juce::dontSendNotification);
             densitySliderAPVTSAttacher = make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(*apvtsPntr, "DENSITY", densitySlider);
+
         }
 
         void resized() override
@@ -1023,9 +1037,10 @@ namespace FinalUIWidgets {
             {
                 auto area = getLocalBounds();
                 area.removeFromBottom(proportionOfHeight(1.0f - toggle_height_ratio));
-                auto toggle_w = proportionOfWidth(.5f);
+                auto toggle_w = proportionOfWidth(.33f);
                 overdubToggle.setBounds(area.removeFromLeft(toggle_w));
                 recordToggle.setBounds(area.removeFromLeft(toggle_w));
+                autoGenerateToggle.setBounds(area.removeFromRight(toggle_w));
             }
 
             {
@@ -1068,6 +1083,8 @@ namespace FinalUIWidgets {
             addAndMakeVisible(*randomOffsetButton);
             randomAllButton = make_unique<ButtonWithAttachment>(apvtsPntr, "Random Groove", "RANDOMIZE_ALL");
             addAndMakeVisible(*randomAllButton);
+            randomGeneration = make_unique<ButtonWithAttachment>(apvtsPntr, "Random Generation", "RANDOM_GENERATION");
+            addAndMakeVisible(*randomGeneration);
         }
 
         void resized() override
@@ -1079,7 +1096,7 @@ namespace FinalUIWidgets {
             area.removeFromBottom(proportionOfHeight(0.1f));
 
             auto gap_h = area.proportionOfHeight(0.1f);
-            auto button_h = area.proportionOfHeight(0.15f);
+            auto button_h = area.proportionOfHeight(0.1f);
 
             // layout buttom up
             resetAllButton->setBounds(area.removeFromBottom(button_h));
@@ -1088,10 +1105,10 @@ namespace FinalUIWidgets {
 
             area.removeFromBottom(gap_h);
 
+            randomGeneration->setBounds(area.removeFromBottom(button_h));
             randomAllButton->setBounds(area.removeFromBottom(button_h));
             randomOffsetButton->setBounds(area.removeFromBottom(button_h));
             randomVelButton->setBounds(area.removeFromBottom(button_h));
-
         }
 
         // buttons for reseting groove || xyslider params
@@ -1103,6 +1120,7 @@ namespace FinalUIWidgets {
         unique_ptr<ButtonWithAttachment> randomVelButton;
         unique_ptr<ButtonWithAttachment> randomOffsetButton;
         unique_ptr<ButtonWithAttachment> randomAllButton;
+        unique_ptr<ButtonWithAttachment> randomGeneration;
 
     };
 

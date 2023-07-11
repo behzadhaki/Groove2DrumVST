@@ -89,8 +89,4 @@ private:
 
     // Parameter Layout for apvts
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
-
-
-
-
 };

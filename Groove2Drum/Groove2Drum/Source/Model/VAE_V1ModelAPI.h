@@ -51,6 +51,7 @@ public:
     bool is_version1_vae();
     bool is_version2_vae();
     bool is_version3_vae();
+    void randomize_latent_z();
 
 private:
 
@@ -67,6 +68,7 @@ private:
     torch::Tensor per_voice_max_count_allowed;              // per voice Maximum limit of hits
     float sampling_temperature {1.0f};
     int vae_type {-1};
+    int latent_z_dim {-1};
     torch::jit::script::Module LoadModel(std::string model_path);
 };
 

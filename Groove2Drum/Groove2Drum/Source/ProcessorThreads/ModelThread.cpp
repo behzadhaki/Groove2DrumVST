@@ -257,7 +257,6 @@ void ModelThread::run()
                                                                         mapGrooveToVoiceNumber,
                                                                         HVO_params::num_voices);
 
-                // 4. run model
                 // 3.B. map instrument specific groove to accompanying drum groove
                 if (I2G_GrooveConverterModelAPI.has_value())
                 {
@@ -289,7 +288,7 @@ void ModelThread::run()
                     ModelThread2GroovePianoRollWidgetQue->push(drum_groove);
                 }
 
-
+                // 4. run model
                 if (monotonicV1modelAPI != std::nullopt) // if monotonic model is loaded
                 {
                     monotonicV1modelAPI->forward_pass(groove_tensor);
@@ -329,6 +328,18 @@ void ModelThread::run()
 
         }
 
+        // check if a random pattern should be generated
+        if (shouldGenerateRandomPattern) {
+            shouldGenerateRandomPattern = false;
+
+            // only works for vae models
+            if (vaeV1ModelAPI != std::nullopt) {
+                vaeV1ModelAPI->randomize_latent_z();
+                shouldResample = true;
+            }
+
+
+        }
         // 5. should resample output if, input new groove received
         if (shouldResample)
         {
@@ -419,6 +430,10 @@ void ModelThread::UpdateModelPath(std::string new_model_path_,
     std::cout << "new_instrument_specific_model_path: " << new_instrument_specific_model_path << std::endl;
     assert (sample_mode_ == "Threshold"  || sample_mode_ == "SampleProbability");
     sample_mode = sample_mode_;
+}
+void ModelThread::generateRandomPattern()
+{
+    shouldGenerateRandomPattern = true;
 }
 
 // ============================================================================================================

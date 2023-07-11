@@ -95,7 +95,7 @@ public:
             std::array<float, HVO_params::num_voices+2>{};
         auto current_per_voice_midi_numbers = std::array<int, HVO_params::num_voices> {};
         auto current_reset_buttons = std::array<int, 3> {};
-        auto current_randomize_groove_buttons = std::array<int, 3>{};
+        auto current_randomize_groove_buttons = std::array<int, 4>{};
         int current_model_selected = -1;
         int current_instrument_specific_model_selected = -1;
         string current_sampling_method;
@@ -209,6 +209,20 @@ public:
                         grooveThread->randomizeAll();
                     }
 
+                    if (current_randomize_groove_buttons[3] != new_randomize_groove_buttons[3])
+                    {
+                        // check if vae is in model path
+                        auto model_path = (string)paths[current_model_selected].toStdString();
+                        auto vae_in_model_path = (model_path.find("vae") != string::npos);
+
+                        // if not vae, then generate random groove
+                        if (!vae_in_model_path)
+                            grooveThread->randomizeAll();
+                        else
+                            modelThread->generateRandomPattern();
+                    }
+
+
                     reset_random_buttons();
                 }
 
@@ -236,7 +250,8 @@ public:
 
                 bExit = threadShouldExit();
 
-                sleep (thread_settings::APVTSMediatorThread::waitTimeBtnIters); // avoid burning CPU, if reading is returning immediately
+                // avoid burning CPU, if reading is returning immediately
+                sleep (thread_settings::APVTSMediatorThread::waitTimeBtnIters);
             }
         }
     }
@@ -342,11 +357,13 @@ private:
     }
 
     // returns RANDOMIZE_VEL, RANDOMIZE_OFFSET && RANDOMIZE_ALL all
-    std::array<int, 3> get_randomize_groove_buttons()
+    std::array<int, 4> get_randomize_groove_buttons()
     {
         return {(int)*APVTS->getRawParameterValue("RANDOMIZE_VEL"),
                 (int)*APVTS->getRawParameterValue("RANDOMIZE_OFFSET"),
-                (int)*APVTS->getRawParameterValue("RANDOMIZE_ALL")};
+                (int)*APVTS->getRawParameterValue("RANDOMIZE_ALL"),
+                (int)*APVTS->getRawParameterValue("RANDOM_GENERATION")};
+
     }
 
     // returns all reset buttons (buttons are toggles, so when mouse release they should jump back)
@@ -357,6 +374,8 @@ private:
         param = APVTS->getParameter("RANDOMIZE_OFFSET");
         param->setValueNotifyingHost(0);
         param = APVTS->getParameter("RANDOMIZE_ALL");
+        param->setValueNotifyingHost(0);
+        param = APVTS->getParameter("RANDOM_GENERATION");
         param->setValueNotifyingHost(0);
     }
 

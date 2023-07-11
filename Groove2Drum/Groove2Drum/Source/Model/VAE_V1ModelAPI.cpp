@@ -184,6 +184,8 @@ void VAE_V1ModelAPI::forward_pass_v1(torch::Tensor monotonicGrooveInput)
     result.toTuple()->elements()[2];
     auto x = result.toTuple()->elements()[2].toTensor();
     latent_z = x;
+    latent_z_dim = latent_z.sizes()[1];
+    std::cout << "++++++++++++++++ latent_z_dim: " << latent_z_dim << std::endl;
 }
 
 // Passes input through the model && updates logits, vels && offsets
@@ -197,6 +199,8 @@ void VAE_V1ModelAPI::forward_pass_v2_v3(torch::Tensor monotonicGrooveInput,
     auto encoder = model.get_method("encode");
     auto result = encoder(inputs);
     latent_z = result.toTuple()->elements()[2].toTensor();
+    latent_z_dim = latent_z.sizes()[1];
+    std::cout << "++++++++++++++++ latent_z_dim: " << latent_z_dim << std::endl;
 }
 
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> VAE_V1ModelAPI::
@@ -278,3 +282,9 @@ bool VAE_V1ModelAPI::is_version3_vae()
         return false;
     }
 }
+
+void VAE_V1ModelAPI::randomize_latent_z()
+{
+    latent_z = torch::randn({1, latent_z_dim});
+}
+

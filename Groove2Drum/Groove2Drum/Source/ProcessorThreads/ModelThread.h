@@ -114,7 +114,7 @@ public:
                          std::string sample_mode_);
     // ============================================================================================================
 
-
+    void generateRandomPattern();
 private:
 
     // ============================================================================================================
@@ -146,6 +146,7 @@ private:
     string new_instrument_specific_model_path;
     string current_instrument_specific_model_path;
     string sample_mode {"Threshold"}; //"Threshold" || "SampleProbability"
+    bool shouldGenerateRandomPattern {false};
 };
 
 #endif //JUCECMAKEREPO_MODELTHREAD_H
