@@ -68,8 +68,9 @@ cmake -G "Visual Studio 16 2019" -B build
 ---------------------
 
 ## VERY IMPORTANT FOR WINDOWS
-
-make sure you change the cmake settings as follows 
+- make sure the project is cloned into c:\ drive
+- make sure git is installed
+- make sure you change the cmake settings as follows 
 
 ![winSettings.PNG](winSettings.PNG)
 
